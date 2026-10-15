@@ -1,109 +1,112 @@
 {
   "investigation_id": "inv-never-attempted",
   "workflow": {
-    "version": "wf-e1a7231bc595",
+    "version": "wf-9ec67a7a34c8",
     "scope": {
-      "commit_sha": "uncommitted",
+      "commit_sha": "71f51fab8496f9baaa055db18aedf0729cc20d6d",
       "searched_files": [
         "src/ApplyModal.tsx",
         "src/App.tsx",
         "src/wallet.ts",
-        "src/track.ts",
         "src/MockWalletPopup.tsx",
+        "src/track.ts",
         "src/types.ts",
         "src/probe.ts",
         "src/Modal.tsx",
         "src/ProbeCard.tsx",
         "src/ProjectList.tsx",
         "src/ProjectPage.tsx",
+        "src/SessionFinishBar.tsx",
         "src/data/projects.json",
         "src/session.ts"
       ],
-      "unresolved_imports": [],
+      "unresolved_imports": [
+        "../../shared/SiteHeader"
+      ],
       "truncated": false
     },
     "states": [
       {
-        "id": "project_page_apply",
-        "desc": "On the project page the user clicks Apply, which records the click and opens the wallet gate by generating a new gate id.",
+        "id": "consent_screen",
+        "desc": "Before anything else the user sees a consent page with two buttons and must choose whether to allow optional feedback, which is stored in session storage.",
         "code_ref": {
           "file": "src/App.tsx",
           "lines": [
-            130,
-            135
+            189,
+            219
           ],
-          "quote": "tracker.track(\"apply_clicked\", \"ProjectPage\", { project_id: project.id });"
+          "quote": "onClick={() => chooseConsent(false)}"
         },
         "instrumentation": "unknown"
       },
       {
-        "id": "wallet_gate_no_wallet",
-        "desc": "When no wallet is connected the apply surface renders the wallet gate modal with permission copy and Connect / Not now buttons.",
+        "id": "apply_button_on_project",
+        "desc": "On the project page the user clicks Apply, which records an apply_clicked event and opens the wallet gate modal.",
+        "code_ref": {
+          "file": "src/App.tsx",
+          "lines": [
+            134,
+            139
+          ],
+          "quote": "tracker.track(\"apply_clicked\", \"ProjectPage\", { project_id: project.id });"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "wallet_gate_shown",
+        "desc": "When no wallet is connected and the gate modal displays, a wallet_gate_shown event is recorded once per display id.",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            21,
+            28
+          ],
+          "quote": "tracker.track(\"wallet_gate_shown\", \"ApplyModal\", {"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "wallet_gate_modal",
+        "desc": "The gate modal blocks progress until the user connects a wallet; it offers Connect and Not now buttons and shows a permission explanation.",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            62,
+            69
+          ],
+          "quote": "<button className=\"button primary\" onClick={onConnect}>"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "mock_wallet_popup",
+        "desc": "Clicking Connect opens a mock in-page wallet popup where the user must Approve or Reject the connection request.",
+        "code_ref": {
+          "file": "src/MockWalletPopup.tsx",
+          "lines": [
+            25,
+            32
+          ],
+          "quote": "<button className=\"button primary\" onClick={attempt.approve}>"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "application_form_after_connect",
+        "desc": "Once a wallet is connected the modal switches to the practice application form with project name and description fields.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
             34,
-            34
-          ],
-          "quote": "if (!wallet) return requireWallet();"
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "wallet_gate_shown_tracked",
-        "desc": "The gate logs a wallet_gate_shown event once per distinct gate display id when no wallet is present.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            22,
-            27
-          ],
-          "quote": "tracker.track(\"wallet_gate_shown\", \"ApplyModal\", {"
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "wallet_popup_open",
-        "desc": "Connecting starts a mock wallet popup attempt, which App renders as an overlay while attempt is set.",
-        "code_ref": {
-          "file": "src/App.tsx",
-          "lines": [
-            253,
-            253
-          ],
-          "quote": "{attempt && <MockWalletPopup attempt={attempt} />}"
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "wallet_attempt_recorded",
-        "desc": "The connectWallet call records a wallet_attempted event with the attempt id before any approval happens.",
-        "code_ref": {
-          "file": "src/wallet.ts",
-          "lines": [
-            32,
-            37
-          ],
-          "quote": "track(\n    \"wallet_attempted\","
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "application_form_state",
-        "desc": "Once a wallet is present the apply surface renders the application form instead of the gate.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            35,
             35
           ],
-          "quote": "return <ApplicationForm project={project} onClose={props.onClose} />;"
+          "quote": "if (!wallet) return requireWallet();\n  return <ApplicationForm project={project} onClose={props.onClose} />;"
         },
         "instrumentation": "unknown"
       },
       {
-        "id": "submitted_confirmation_state",
-        "desc": "Submitting the form sets a local submitted flag and swaps the form for a completion message and a Back to project button.",
+        "id": "application_submitted",
+        "desc": "Submitting the practice form sets a local submitted flag and shows a completion message stating nothing was sent or stored.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
@@ -111,159 +114,120 @@
             85
           ],
           "quote": "event.preventDefault();\n    setSubmitted(true);"
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "not_now_exit",
-        "desc": "Clicking Not now records not_now_clicked, closes the gate, and offers a probe at DP1.",
-        "code_ref": {
-          "file": "src/App.tsx",
-          "lines": [
-            137,
-            145
-          ],
-          "quote": "const exit = tracker.track(\"not_now_clicked\", \"ApplyModal\", {"
         },
         "instrumentation": "unknown"
       }
     ],
     "outcomes": [
       {
-        "id": "outcome_connected",
-        "desc": "Approval succeeds under the error-rate check, so wallet_connected is tracked and the wallet is set connected with the attempt cleared.",
+        "id": "wallet_connected",
+        "desc": "The user approves the mock wallet request and the wallet is connected unless the first-attempt simulated error branch fires; the connected outcome records a wallet_connected event.",
         "code_ref": {
           "file": "src/wallet.ts",
           "lines": [
-            67,
-            73
+            57,
+            63
           ],
           "quote": "track(\n      \"wallet_connected\","
         },
         "instrumentation": "found_in_code"
       },
       {
-        "id": "outcome_failure_rpc_error",
-        "desc": "Approval randomly hits the simulated RPC error branch and reports the error message to the caller, with the wallet_errored tracking gated behind the INSTRUMENT_REJECT constant set to false.",
+        "id": "wallet_error_first_attempt",
+        "desc": "On a first attempt, approve may take the simulated error branch and fail with a network error message, recorded as wallet_errored.",
         "code_ref": {
           "file": "src/wallet.ts",
           "lines": [
-            55,
-            65
+            47,
+            56
           ],
-          "quote": "if (random() < RPC_ERROR_RATE) {"
+          "quote": "if (firstAttempt && random() < RPC_ERROR_RATE) {"
         },
-        "instrumentation": "unknown"
+        "instrumentation": "found_in_code"
       },
       {
-        "id": "outcome_user_reject",
-        "desc": "Rejecting the popup calls onReject, which reports the rejection message; wallet_rejected tracking is inside an INSTRUMENT_REJECT branch that is constant false.",
+        "id": "wallet_rejected_by_user",
+        "desc": "The user clicks Reject in the popup, which calls onFailure with a message that they chose not to connect.",
         "code_ref": {
           "file": "src/wallet.ts",
           "lines": [
-            79,
-            87
+            69,
+            77
           ],
           "quote": "reject: () => {"
         },
         "instrumentation": "unknown"
       },
       {
-        "id": "outcome_popup_dismiss",
-        "desc": "Dismissing the popup modal triggers the same reject handler as the Reject button.",
+        "id": "wallet_rejected_by_dismissal",
+        "desc": "Dismissing the popup (cancel event) routes to the same reject handler, producing the not-connected failure message.",
         "code_ref": {
           "file": "src/MockWalletPopup.tsx",
           "lines": [
             6,
-            8
+            10
           ],
-          "quote": "onDismiss={attempt.reject}"
+          "quote": "titleId=\"wallet-title\"\n      onDismiss={attempt.reject}"
         },
-        "instrumentation": "not_found_in_scope"
+        "instrumentation": "unknown"
       },
       {
-        "id": "outcome_failure_message_shown",
-        "desc": "On failure App stores the error message and clears the attempt, returning the user to the gate where the error text is rendered in an alert paragraph.",
+        "id": "not_now_dismissal",
+        "desc": "Clicking Not now in the gate modal records not_now_clicked, closes the gate, and may offer a probe question.",
         "code_ref": {
           "file": "src/App.tsx",
           "lines": [
-            162,
-            165
-          ],
-          "quote": "onFailure: (message) => {\n            setError(message);\n            setAttempt(null);"
-        },
-        "instrumentation": "not_found_in_scope"
-      },
-      {
-        "id": "outcome_gate_dismissed_not_now",
-        "desc": "Choosing Not now closes the gate and logs not_now_clicked for the project.",
-        "code_ref": {
-          "file": "src/App.tsx",
-          "lines": [
-            139,
-            141
+            141,
+            150
           ],
           "quote": "const exit = tracker.track(\"not_now_clicked\", \"ApplyModal\", {"
         },
         "instrumentation": "found_in_code"
       },
       {
-        "id": "outcome_gate_closed_via_modal_dismiss",
-        "desc": "Closing the gate through the modal's dismiss handler clears the gate id without recording any analytics event.",
+        "id": "application_completed_demo",
+        "desc": "Finishing the practice application form shows a completion state stating the demo application is complete and nothing was sent or stored.",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            92,
+            98
+          ],
+          "quote": "<p>Your demo application is complete. Nothing was sent or stored.</p>"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "application_closed",
+        "desc": "The user can close the modal via the Close button or the Back to project button, which calls the onClose handler to clear the gate id.",
         "code_ref": {
           "file": "src/App.tsx",
           "lines": [
-            250,
-            250
+            241,
+            241
           ],
           "quote": "onClose={() => setGateId(null)}"
         },
-        "instrumentation": "not_found_in_scope"
-      },
-      {
-        "id": "outcome_form_closed",
-        "desc": "Clicking Close in the application form dismisses the modal through onClose with no analytics call.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            127,
-            129
-          ],
-          "quote": "<button className=\"button text\" type=\"button\" onClick={onClose}>"
-        },
-        "instrumentation": "not_found_in_scope"
-      },
-      {
-        "id": "outcome_form_submitted",
-        "desc": "Submitting the form sets the submitted flag locally; no analytics event is recorded for the submission.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            82,
-            85
-          ],
-          "quote": "event.preventDefault();\n    setSubmitted(true);"
-        },
-        "instrumentation": "not_found_in_scope"
+        "instrumentation": "unknown"
       }
     ],
     "ui_facts": [
       {
-        "id": "permission_copy_text",
-        "desc": "The gate shows permission copy stating the connection can see the public account and request approval but cannot move funds without approval.",
+        "id": "permission_copy_present",
+        "desc": "The gate modal explains what connecting allows, including that it cannot move funds without approval.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
             39,
             40
           ],
-          "quote": "\"Connecting lets this application see your public account and request approval for actions. It cannot move funds without your approval.\";"
+          "quote": "\"Connecting lets this application see your public account and request approval for actions. It cannot move funds without your approval.\""
         },
         "instrumentation": "unknown"
       },
       {
-        "id": "mock_wallet_notice_gate",
-        "desc": "The gate states that the demo uses a mock wallet and that no real wallet or funds are involved.",
+        "id": "mock_wallet_disclosure",
+        "desc": "The gate modal states this demo uses a mock wallet and no real wallet or funds are involved.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
@@ -275,21 +239,8 @@
         "instrumentation": "unknown"
       },
       {
-        "id": "error_alert_visible",
-        "desc": "When an error is present the gate renders it in a paragraph with role alert.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            57,
-            61
-          ],
-          "quote": "<p className=\"error\" role=\"alert\">"
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "not_now_button_available",
-        "desc": "The gate offers a Not now text button that lets the user leave the gate without connecting.",
+        "id": "not_now_escape_button",
+        "desc": "The gate modal provides a Not now button that lets the user leave without connecting.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
@@ -301,97 +252,88 @@
         "instrumentation": "unknown"
       },
       {
-        "id": "rpc_error_rate_disclosed",
-        "desc": "The mock wallet popup displays the simulated RPC error rate and states that no real transaction will be made.",
+        "id": "simulated_error_disclosure",
+        "desc": "The mock wallet popup tells the user that the first connection only may show a simulated network error and that retrying always succeeds.",
         "code_ref": {
           "file": "src/MockWalletPopup.tsx",
           "lines": [
             20,
-            23
+            24
           ],
-          "quote": "Simulated RPC error rate: {Math.round(RPC_ERROR_RATE * 100)}%. No real"
+          "quote": "First connection only: {Math.round(RPC_ERROR_RATE * 100)}% simulated\n        network error. Retrying always succeeds."
         },
         "instrumentation": "unknown"
       },
       {
-        "id": "form_analytics_reassurance",
-        "desc": "The application form tells the user that typed text stays in the form and is never sent to analytics.",
+        "id": "error_message_in_gate",
+        "desc": "When a connection attempt fails, the gate modal renders the error message in a status region.",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            57,
+            61
+          ],
+          "quote": "{error && ("
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "practice_application_disclosure",
+        "desc": "The application form tells the user this is a practice application and their details are not submitted.",
         "code_ref": {
           "file": "src/ApplyModal.tsx",
           "lines": [
             119,
-            122
+            121
           ],
-          "quote": "Demo only. Typed text stays in this form and is never sent to\n            analytics."
-        },
-        "instrumentation": "unknown"
-      },
-      {
-        "id": "connect_button_no_requirement_detail",
-        "desc": "The gate's Connect button starts the wallet flow without stating what the connection is required for before the user clicks it.",
-        "code_ref": {
-          "file": "src/ApplyModal.tsx",
-          "lines": [
-            63,
-            65
-          ],
-          "quote": "<button className=\"button primary\" onClick={onConnect}>"
+          "quote": "This is a practice application. Your details are not submitted."
         },
         "instrumentation": "unknown"
       }
     ]
   },
   "hypotheses": {
-    "workflow_version": "wf-e1a7231bc595",
+    "workflow_version": "wf-9ec67a7a34c8",
     "hypotheses": [
       {
         "id": "H1",
-        "statement": "I clicked Apply just to see what the application involved, and when the connect-wallet dialog appeared I decided not to go further.",
-        "class_id": "HC-browsing",
+        "statement": "I clicked Apply expecting to fill in an application form, and the wallet connection prompt was a step I wasn't expecting, so I backed out instead of connecting.",
+        "class_id": "HC-unaware-requirement",
         "code_evidence": [
-          "project_page_apply",
-          "wallet_gate_no_wallet",
-          "not_now_button_available"
+          "apply_button_on_project",
+          "wallet_gate_shown",
+          "wallet_gate_modal"
         ],
         "generic": false
       },
       {
         "id": "H2",
-        "statement": "I wasn't expecting the application to need a wallet connection, so I stopped when the gate told me to connect one.",
-        "class_id": "HC-unaware-requirement",
+        "statement": "I read what connecting would let this application do with my account and I wasn't comfortable granting that, so I chose not to connect.",
+        "class_id": "HC-gate-permission",
         "code_evidence": [
-          "wallet_gate_no_wallet",
-          "connect_button_no_requirement_detail"
+          "wallet_gate_modal",
+          "permission_copy_present"
         ],
         "generic": false
       },
       {
         "id": "H3",
-        "statement": "The permission description in this dialog made me uneasy about what the connection would let the application do, so I didn't connect.",
-        "class_id": "HC-gate-permission",
+        "statement": "I was only looking through the grant projects to see what they fund, and I never intended to submit an application right now, so I left the gate.",
+        "class_id": "HC-browsing",
         "code_evidence": [
-          "permission_copy_text",
-          "wallet_gate_shown_tracked"
+          "wallet_gate_modal",
+          "not_now_escape_button"
         ],
         "generic": false
       },
       {
         "id": "H4",
-        "statement": "When the dialog asked me to connect, I couldn't tell whether the application or my wallet was the one asking, so I left it.",
+        "statement": "I couldn't tell whether it was the site, my wallet, or the browser asking for the connection, so I didn't know what I would be agreeing to and stopped.",
         "class_id": "HC-unclear-requester",
         "code_evidence": [
-          "wallet_gate_no_wallet",
-          "permission_copy_text"
-        ],
-        "generic": false
-      },
-      {
-        "id": "H5",
-        "statement": "I reached the project page only to read about the grant and never intended to apply in this session.",
-        "class_id": "HC-browsing",
-        "code_evidence": [
-          "not_now_exit",
-          "wallet_gate_shown_tracked"
+          "wallet_gate_modal",
+          "mock_wallet_disclosure",
+          "permission_copy_present"
         ],
         "generic": false
       },
@@ -407,62 +349,48 @@
   "class_mappings": [
     {
       "hypothesis_id": "H1",
-      "class_id": "HC-browsing",
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "class_id": "HC-unaware-requirement",
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     },
     {
       "hypothesis_id": "H2",
-      "class_id": "HC-unaware-requirement",
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "class_id": "HC-gate-permission",
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     },
     {
       "hypothesis_id": "H3",
-      "class_id": "HC-gate-permission",
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "class_id": "HC-browsing",
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     },
     {
       "hypothesis_id": "H4",
       "class_id": "HC-unclear-requester",
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
-    },
-    {
-      "hypothesis_id": "H5",
-      "class_id": "HC-browsing",
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     }
   ],
   "questions": [
     {
-      "question_version": "dp1.7b380a9520de",
+      "question_version": "dp1.f119ceb78c5a",
       "investigation_id": "inv-never-attempted",
       "decision_point": "DP1",
       "stem": "What best describes your decision not to connect right now?",
       "options": [
         {
           "id": "o1",
-          "label": "I only wanted to look at the application, not go through with it",
+          "label": "I didn't expect a wallet step before I could apply",
           "hypothesis_ids": [
             "H1"
           ]
         },
         {
           "id": "o2",
-          "label": "I didn't expect applying to need a wallet connection",
+          "label": "I wasn't comfortable with the access this app asked for",
           "hypothesis_ids": [
             "H2"
-          ]
-        },
-        {
-          "id": "o3",
-          "label": "I was uneasy about what connecting would let the app do",
-          "hypothesis_ids": [
-            "H3",
-            "H4"
           ]
         },
         {
@@ -480,35 +408,34 @@
           ]
         }
       ],
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     },
     {
-      "question_version": "dp2.bef17db26f32",
+      "question_version": "dp2.ca0266354e69",
       "investigation_id": "inv-never-attempted",
       "decision_point": "DP2",
       "stem": "What were you hoping to do on this page?",
       "options": [
         {
           "id": "o1",
-          "label": "Read about the grant and see whether it fit my idea",
+          "label": "I was just looking at the grant projects",
           "hypothesis_ids": [
-            "H5"
+            "H3"
           ]
         },
         {
           "id": "o2",
-          "label": "Start an application for this project",
+          "label": "I wanted to read the project details before deciding anything",
           "hypothesis_ids": [
-            "H1"
+            "H3"
           ]
         },
         {
           "id": "o3",
-          "label": "Check what applying would involve before deciding",
+          "label": "I was looking for how to apply and couldn't find it",
           "hypothesis_ids": [
-            "H1",
-            "H2"
+            "H1"
           ]
         },
         {
@@ -519,15 +446,15 @@
           ]
         }
       ],
-      "approved_by": "e2e-operator",
-      "approved_at": "2026-10-15T05:31:34.645714Z"
+      "approved_by": "chanitnan0jr",
+      "approved_at": "2026-10-15T19:40:43.503345Z"
     }
   ],
   "plans": [
     {
-      "plan_id": "plan-dp1.7b380a9520de",
+      "plan_id": "plan-dp1.f119ceb78c5a",
       "investigation_id": "inv-never-attempted",
-      "question_version": "dp1.7b380a9520de",
+      "question_version": "dp1.f119ceb78c5a",
       "target_cohorts": [
         "gate_event_no_attempt"
       ],
@@ -536,9 +463,9 @@
       "ends_at": "2026-10-16T17:00:00+07:00"
     },
     {
-      "plan_id": "plan-dp2.bef17db26f32",
+      "plan_id": "plan-dp2.ca0266354e69",
       "investigation_id": "inv-never-attempted",
-      "question_version": "dp2.bef17db26f32",
+      "question_version": "dp2.ca0266354e69",
       "target_cohorts": [
         "no_gate_event"
       ],

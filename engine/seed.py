@@ -51,7 +51,7 @@ Answer = list[int] | str | None
 PATHS: list[tuple[int, list[Step], str | None, list[Answer]]] = [
     (6, [VIEW, BACK], "DP2", [[0], [0], [1], "skip", [0], None]),
     (7, [VIEW, APPLY, GATE, NOT_NOW], "DP1",
-     [[1], [1], [0], "requester", [2], [1, 2], "skip"]),
+     [[0], [0], [1], "requester", [1], [0, 1], "skip"]),
     (3, [VIEW, APPLY, GATE, *_attempt("a1", "wallet_connected")], None, []),
     (1, [VIEW, APPLY, GATE, *_attempt("a1", "wallet_errored"),
          *_attempt("a2", "wallet_connected")], None, []),

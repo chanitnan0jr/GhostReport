@@ -15,8 +15,8 @@ const VISITS: Visit[] = [
   { path: "connect", video: "connect" },
   { path: "reject", video: "reject" },
   { path: "error-retry", video: "error-retry" },
-  { path: "not-now", answer: [1], video: "not-now-answer" },
-  ...([[1], [0], "requester", [2], [1, 2], "skip"] as Answer[]).map(
+  { path: "not-now", answer: [0], video: "not-now-answer" },
+  ...([[0], [1], "requester", [1], [0, 1], "skip"] as Answer[]).map(
     (answer): Visit => ({ path: "not-now", answer }),
   ),
   ...([[0], [0], [1], "skip", [0], "leave"] as Answer[]).map(
