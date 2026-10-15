@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import re
-import subprocess
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -22,10 +21,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
-from engine.context_builder import build_context
+from engine.context_builder import build_context, git_commit
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
 from engine.llm import LLM, LLMError
-from engine.models import DecisionPoint, Event, Exposure, ProbeResponse, Run
+from engine.models import DecisionPoint, Event, Exposure, ProbeResponse, Run, Verification
 from engine.probe import plan_probe
 from engine.records import ProbeRecords
 from engine.report import (
@@ -44,13 +43,12 @@ ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
 MAX_BATCH = 100
 
 
-def _git_commit() -> str:
-    try:
-        return subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
-        ).stdout.strip() or "uncommitted"
-    except (OSError, subprocess.CalledProcessError):
-        return "uncommitted"
+def load_verifications(path: Path) -> tuple[Verification, ...]:
+    """Written by `engine.demo verify`; a missing file means nothing is verified."""
+    if not path.exists():
+        return ()
+    return tuple(Verification.model_validate(v)
+                 for v in json.loads(path.read_text(encoding="utf-8")))
 
 
 @dataclass
@@ -60,8 +58,6 @@ class Settings:
     run_id: str = field(default_factory=lambda: os.getenv("GHOST_RUN_ID", "dev"))
     mode: str = field(default_factory=lambda: os.getenv("GHOST_MODE", "live"))
     app_build: str = field(default_factory=lambda: os.getenv("GHOST_APP_BUILD", "dev"))
-    build_verified: bool = field(
-        default_factory=lambda: os.getenv("GHOST_BUILD_VERIFIED", "0") == "1")
     db_dir: Path = field(default_factory=lambda: Path(os.getenv("GHOST_DB_DIR", "runs")))
     fixture: Path = field(
         default_factory=lambda: Path(os.getenv("GHOST_FIXTURE", str(DEFAULT_FIXTURE))))
@@ -70,16 +66,23 @@ class Settings:
     ends_at: datetime = field(default_factory=lambda: datetime.fromisoformat(
         os.getenv("GHOST_ENDS_AT", "2026-10-16T18:00:00+07:00")))
     dp0_seconds: float = 30.0
+    autolock: bool = False
     llm: Callable[[], LLM] = LLM
     cors_origins: tuple[str, ...] = field(default_factory=lambda: tuple(
         os.getenv("GHOST_CORS", "http://localhost:5173,http://localhost:5174").split(",")))
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
 
+    code_commit: str = field(default_factory=lambda: git_commit(
+        Path(os.getenv("GHOST_TARGET_REPO", "app"))))
+    verifications: tuple[Verification, ...] = field(default_factory=lambda: load_verifications(
+        Path(os.getenv("GHOST_VERIFICATION", "runs/verification.json"))))
+
     def run(self) -> Run:
-        return Run.model_validate({
-            "run_id": self.run_id, "mode": self.mode, "code_commit": _git_commit(),
-            "app_build": self.app_build, "build_verified": self.build_verified,
-        })
+        return Run(
+            run_id=self.run_id, mode=self.mode,
+            code_commit=self.code_commit, app_build=self.app_build,
+            verifications=self.verifications,
+        )
 
 
 class ExposureIn(BaseModel):
@@ -182,6 +185,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings.db_dir.mkdir(parents=True, exist_ok=True)
         state["store"] = Store(settings.db_dir / f"{settings.run_id}.sqlite", settings.run())
         state["records"] = ProbeRecords(state["store"].connection)
+        if settings.autolock:
+            snapshot, digest = lock_v1(state["store"], state["records"], inv(),
+                                       now=settings.clock())
+            log.warning("v1 LOCKED  digest=%s  cutoff=%s", digest,
+                        snapshot.data_cutoff.isoformat())
         task = asyncio.create_task(dp0_loop()) if settings.dp0_seconds > 0 else None
         try:
             yield
@@ -198,7 +206,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
-        return {"ok": True, "run": store().run.model_dump(mode="json"),
+        return {"ok": True, "run": store().run.summary(),
                 "locked": bool(snapshots(store(), inv().investigation_id))}
 
     @app.post("/api/events")

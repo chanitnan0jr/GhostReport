@@ -198,7 +198,7 @@ def build_report(
         v1 = {"digest": digest, "data_cutoff": state.data_cutoff, "sessions": state.sessions,
               "decisions": state.decisions}
     return {
-        "run": store.run,
+        "run": store.run.summary(),
         "investigation_id": investigation.investigation_id,
         "workflow": investigation.workflow,
         "hypotheses": investigation.hypotheses.hypotheses,

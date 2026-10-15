@@ -55,16 +55,52 @@ class Event(Model):
         return self
 
 
+RULE_EVENTS = frozenset({"wallet_gate_shown"})  # events that reviewed rules (R2) rely on
+
+
+class Verification(Model):
+    """A passing instrumentation test for one event, at one commit."""
+
+    event: EventName
+    test: Identifier
+    commit: Identifier
+    passed_at: AwareDatetime
+
+
 class Run(Model):
     """One database belongs to one run, with explicit provenance."""
 
     run_id: Identifier
-    mode: Literal["live", "seed", "pilot", "replay"]
+    mode: Literal["live", "demo", "seed", "pilot", "replay"]
     code_commit: Identifier
     app_build: Identifier
-    build_verified: bool = False
+    verifications: tuple[Verification, ...] = ()
     policy_version: Literal["mvp-v1"] = "mvp-v1"
     catalog_version: Literal["mvp-v1"] = "mvp-v1"
+
+    def verification(self) -> dict[str, dict[str, object]]:
+        """Per rule event: verified only by a passing test on this run's exact commit."""
+        result: dict[str, dict[str, object]] = {}
+        for event in sorted(RULE_EVENTS):
+            match = next((v for v in self.verifications
+                          if v.event == event and v.commit == self.code_commit), None)
+            result[event] = {
+                "verified": match is not None, "commit": match.commit if match else None,
+                "test": match.test if match else None,
+                "passed_at": match.passed_at.isoformat() if match else None,
+            }
+        return result
+
+    def summary(self) -> dict[str, object]:
+        """Run provenance for API responses, including derived verification state."""
+        return {**self.model_dump(mode="json"), "build_verified": self.build_verified,
+                "verification": self.verification()}
+
+    @property
+    def build_verified(self) -> bool:
+        """Absence rules apply only if every rule event was verified on this exact commit."""
+        verified = {v.event for v in self.verifications if v.commit == self.code_commit}
+        return RULE_EVENTS <= verified
 
 
 class CodeRef(Model):

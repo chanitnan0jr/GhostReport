@@ -4,6 +4,8 @@ Nothing here claims absence beyond `scope.searched_files`; truncation and
 unresolved analytics imports are recorded so instrumentation degrades to unknown.
 """
 
+import hashlib
+import os
 import re
 import subprocess
 from dataclasses import dataclass, field
@@ -96,13 +98,33 @@ def _globs(include: tuple[str, ...], exclude: tuple[str, ...]) -> list[str]:
     return keep + [a for g in exclude for a in ("--glob", f"!{g}")]
 
 
-def _commit(root: Path) -> str:
+def git_commit(root: Path) -> str:
+    """HEAD of the repo containing `root`, suffixed -dirty if `root` has changes.
+
+    GHOST_COMMIT overrides it where there is no .git (e.g. inside the deploy image).
+    """
+    if override := os.getenv("GHOST_COMMIT"):
+        return override
     try:
         out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True,
                              text=True, check=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain", "--", "."], cwd=root,
-                               capture_output=True, text=True).stdout.strip()
-        return f"{out}{'-dirty' if dirty else ''}" if out else "uncommitted"
+        status = subprocess.run(["git", "status", "--porcelain", "-uall", "--", "."], cwd=root,
+                                capture_output=True, text=True).stdout
+        if not out:
+            return "uncommitted"
+        if not status.strip():
+            return out
+        # Dirty trees get a content hash, so a verification cannot outlive a later edit.
+        digest = hashlib.sha256(subprocess.run(
+            ["git", "diff", "HEAD", "--", "."], cwd=root, capture_output=True, text=True,
+        ).stdout.encode())
+        top = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root,
+                                  capture_output=True, text=True).stdout.strip())
+        for line in sorted(status.splitlines()):
+            if line.startswith("??"):
+                digest.update(line.encode())
+                digest.update((top / line[3:].strip('"')).read_bytes())
+        return f"{out}-dirty.{digest.hexdigest()[:8]}"
     except (OSError, subprocess.CalledProcessError):
         return "uncommitted"
 
@@ -201,7 +223,7 @@ def build_context(
         files.append(PackFile(path, ((1, len(lines)),) if lines else (), lines))
     truncated = False
     pack = ContextPack(
-        CodeScope(commit_sha=_commit(root), searched_files=tuple(ordered),
+        CodeScope(commit_sha=git_commit(root), searched_files=tuple(ordered),
                   unresolved_imports=tuple(sorted(unresolved)), truncated=False),
         tuple(files), tuple(edges), () if strip_analytics else tuple(calls), counts,
     )

@@ -9,8 +9,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from engine.api import Settings, create_app
+from engine.models import Verification
 
 T0 = datetime(2026, 10, 16, 3, 0, tzinfo=UTC)
+GATE_VERIFIED = (Verification(event="wallet_gate_shown", test="gate test", commit="c1",
+                              passed_at=T0 - timedelta(hours=1)),)
+VERIFIED = {"code_commit": "c1", "verifications": GATE_VERIFIED}
 
 
 class Clock:
@@ -28,7 +32,7 @@ def clock() -> Clock:
 
 @pytest.fixture
 def client(tmp_path: Path, clock: Clock) -> Iterator[TestClient]:
-    settings = Settings(run_id="test", mode="seed", build_verified=True, db_dir=tmp_path,
+    settings = Settings(run_id="test", mode="seed", db_dir=tmp_path, **VERIFIED,
                         dp0_seconds=0, clock=clock)
     with TestClient(create_app(settings)) as test_client:
         yield test_client
@@ -165,7 +169,7 @@ def test_analyze_then_approve_replaces_fixture(tmp_path: Path, clock: Clock) -> 
         return LLM(cache_path=tmp_path / "cache.sqlite", model="fake", thinking=False,
                    replay=False, complete=Script([WORKFLOW, HYPOTHESES]))
 
-    settings = Settings(run_id="t", mode="seed", build_verified=True, db_dir=tmp_path,
+    settings = Settings(run_id="t", mode="seed", db_dir=tmp_path, **VERIFIED,
                         dp0_seconds=0, clock=clock, target_repo=repo, llm=fake)
     with TestClient(create_app(settings)) as client:
         assert client.post("/api/approve", json={"approved_by": "m"}).status_code == 404
@@ -181,3 +185,17 @@ def test_analyze_then_approve_replaces_fixture(tmp_path: Path, clock: Clock) -> 
     with TestClient(create_app(settings)) as client:  # survives a restart
         report = client.get("/api/report").json()
         assert report["workflow"]["version"] == draft["workflow"]["version"]
+
+
+def test_verification_must_match_the_run_commit(tmp_path: Path, clock: Clock) -> None:
+    stale = Settings(run_id="stale", mode="seed", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                     code_commit="c2", verifications=GATE_VERIFIED)
+    with TestClient(create_app(stale)) as client:
+        client.post("/api/events", json={"events": gate_then_not_now("s1")})
+        session = client.get("/api/report").json()["current"]["sessions"][0]
+        assert session["coverage"] == "unknown"
+        assert "unverified_build" in session["coverage_reasons"]
+        run = client.get("/api/health").json()["run"]
+        assert run["build_verified"] is False
+        assert run["verification"]["wallet_gate_shown"] == {
+            "verified": False, "commit": None, "test": None, "passed_at": None}
