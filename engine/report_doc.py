@@ -21,8 +21,8 @@ from engine.llm import LLM
 from engine.narrative import BARE_K_OF_N, K_OF_N, NUMBER, SPLIT, VAGUE
 from engine.stages import LLMModel
 
-DOCUMENT = ("report_doc", 1)
-SYSTEM = ("report_doc_system", 1)
+DOCUMENT = ("report_doc", 2)
+SYSTEM = ("report_doc_system", 2)
 TITLE = "Investigating wallet onboarding drop-off"
 OUTLINE = (
     "Executive Summary", "1. Investigation Scope", "2. Observed User Behavior",
@@ -56,13 +56,14 @@ FORBIDDEN = re.compile(
     r"impl(?:y|ies|ied)|demonstrat\w*|so that|which means|meaning that|shows? that)\b|%",
     re.IGNORECASE,
 )
-NUMBER_WORDS = re.compile(
-    r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen|half)\b",
-    re.IGNORECASE)
+WORD_VALUES = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+               "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12}
+NUMBER_WORDS = re.compile(rf"\b({'|'.join(WORD_VALUES)}|dozen|half)\b", re.IGNORECASE)
 GAP_WORDS = re.compile(r"\b(gap|missing|untracked|not tracked|absent)\b", re.IGNORECASE)
 GAP_HEDGE = re.compile(r"\b(not established|unknown|unresolved|cannot|undetermined)\b",
                        re.IGNORECASE)
 CITATION = re.compile(r"\[fact:([a-z0-9_]+)\]")
+PLACEHOLDER = re.compile(r"\{(f\d+)(?:\.([a-z0-9_]+))?\}")  # {f12}, {f12.2}, {f12.statement}
 CODE_SPAN = re.compile(r"`[^`\n]*`")
 HYPOTHESIS = re.compile(r"\bH(\d+|_other)\b")
 # A citation after the full stop belongs to the sentence before it.
@@ -252,8 +253,8 @@ def context(body: Mapping[str, Any]) -> dict[str, Any]:
         numbers=[checked, 2],
         data={"evaluated": bool(r2), **groups, "checked": checked, "cohorts_checked": 2,
               "contradicted_hypotheses": contradicted,
-              "scope": "Complete-coverage sessions that meet R2 only; it does not refute a "
-                       "cohort or establish why sessions stopped."},
+              "scope": "complete-coverage sessions that meet R2 only; it never counts "
+                       "against a cohort or establishes why sessions stopped"},
     ))
 
     outcomes = workflow.get("outcomes", [])
@@ -406,6 +407,8 @@ def check(markdown: str, value: Mapping[str, Any]) -> list[str]:
         if line.startswith(">") and line != ">" and not line.startswith("> "):
             problems.append(f"line {number}: callout lines start with '> '")
 
+    problems += [f"unknown placeholder {m.group(0)}: use one listed in the fact's placeholders"
+                 for m in PLACEHOLDER.finditer(markdown)]
     known_h = {f["label"] for f in value["facts"] if f["kind"] == "hypothesis"}
     quoted = _known_strings(value)
     cited_in: dict[str, set[str]] = {}
@@ -424,13 +427,16 @@ def check(markdown: str, value: Mapping[str, Any]) -> list[str]:
             continue
         problems += [f"unknown hypothesis {h} in: {text[:80]}"
                      for h in sorted({f"H{m}" for m in HYPOTHESIS.findall(plain)} - known_h)]
-        problems += [f"spelled-out quantity {m.group(0)!r}: write digits and cite a fact"
-                     for m in NUMBER_WORDS.finditer(plain)]
         problems += [f"vague quantity {m.group(0)!r}: write 'k of n' and cite a fact"
                      for m in VAGUE.finditer(plain)]
         problems += [f"'{m.group(0)}' without a unit (respondents or sessions)"
                      for m in BARE_K_OF_N.finditer(plain)]
-        numbers = NUMBER.findall(plain)
+        # Spelled-out quantities are checked like digits ("two outcomes" = 2).
+        words = [m.group(0) for m in NUMBER_WORDS.finditer(plain)]
+        problems += [f"vague quantity {w!r}: write 'k of n' and cite a fact"
+                     for w in words if w.lower() not in WORD_VALUES]
+        numbers = NUMBER.findall(plain) + [str(WORD_VALUES[w.lower()]) for w in words
+                                           if w.lower() in WORD_VALUES]
         if numbers and not cited:
             problems.append(f"numbers without a citation: {text[:80]}")
             continue
@@ -524,9 +530,10 @@ def template(value: Mapping[str, Any]) -> str:
                  key=lambda f: (-f["data"]["selected"], f["data"]["hypothesis_id"]))[:2]
     for f in top:
         d = f["data"]
+        statement = facts[_id("hypothesis", d["hypothesis_id"])]["data"]["statement"]
         out.append(f"- **What participants reported.** At {d['decision_point']}, "
-                   f"{d['hypothesis_id']} was selected by {d['selected']} of "
-                   f"{d['respondents']} respondents. [fact:{f['id']}]")
+                   f"{d['hypothesis_id']} (\u201c{statement}\u201d) was selected by "
+                   f"{d['selected']} of {d['respondents']} respondents. [fact:{f['id']}]")
     out.append(f"- **What remains unknown.** {sessions(coverage['unknown'])} have unknown "
                f"coverage, and {tally['unknown']} workflow outcomes have unresolved "
                "instrumentation. [fact:coverage] [fact:instrumentation]")
@@ -680,13 +687,102 @@ def template(value: Mapping[str, Any]) -> str:
     return "\n".join(out) + "\n"
 
 
+def handles(value: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Short handles the LLM writes instead of numbers: f1, f2, … in fact order."""
+    return {f"f{i}": fact for i, fact in enumerate(value["facts"], 1)}
+
+
+def _placeholder(fact: Mapping[str, Any], key: str | None) -> str | None:
+    """`{fN}` is the fact's first count, `{fN.2}` its second, `{fN.statement}` the quoted
+    statement or question stem, `{fN.<field>}` a number or word from its data."""
+    pairs = fact["pairs"]
+    if key is None or key.isdigit():
+        index = int(key or 1) - 1
+        if 0 <= index < len(pairs):
+            k, n, unit = pairs[index]
+            return f"{k} of {n} {unit}"
+        return str(fact["data"]["value"]) if key is None and "value" in fact["data"] else None
+    item = fact["data"].get(key)
+    if key in ("statement", "stem") and isinstance(item, str):
+        return f"\u201c{item}\u201d"
+    if isinstance(item, (int, str)) and not isinstance(item, bool):
+        return str(item)
+    return None
+
+
+def placeholders(value: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    """Every placeholder each fact offers, with the text it becomes."""
+    table: dict[str, dict[str, str]] = {}
+    for handle, fact in handles(value).items():
+        keys: list[str | None] = [None, *(str(i) for i in range(2, len(fact["pairs"]) + 1)),
+                                  *fact["data"]]
+        offered = {(f"{{{handle}}}" if key is None else f"{{{handle}.{key}}}"):
+                   text for key in keys if (text := _placeholder(fact, key)) is not None}
+        table[fact["id"]] = offered
+    return table
+
+
+def expand(markdown: str, value: Mapping[str, Any]) -> str:
+    """Insert each placeholder's text, and cite its fact in the same sentence or row."""
+    table = handles(value)
+
+    def fill(text: str, used: list[str]) -> str:
+        def one(match: re.Match[str]) -> str:
+            fact = table.get(match.group(1))
+            text = _placeholder(fact, match.group(2)) if fact else None
+            if fact is None or text is None:
+                return match.group(0)  # left in place; `check` reports it
+            if fact["id"] not in used:
+                used.append(fact["id"])
+            return text
+        return PLACEHOLDER.sub(one, text)
+
+    def cite(text: str, used: list[str]) -> str:
+        missing = "".join(f" [fact:{i}]" for i in used if f"[fact:{i}]" not in text)
+        if not missing:
+            return text
+        body, end = re.match(r"^(.*?)([.!?]?\s*)$", text, re.DOTALL).groups()  # type: ignore[union-attr]
+        return body.rstrip() + missing + end
+
+    out = []
+    for line in markdown.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#") or not PLACEHOLDER.search(line):
+            out.append(fill(line, []) if stripped.startswith("#") else line)
+            continue
+        if stripped.startswith("|"):
+            used: list[str] = []
+            row = fill(line.rstrip(), used)
+            cells = row.rsplit("|", 2)
+            out.append(f"{cells[0]}|{cite(cells[1], used).rstrip()} |"
+                       if len(cells) == 3 else row)
+            continue
+        line = TRAILING_CITES.sub(r"\2\1", line)
+        parts = re.split(r"(?<=[.!?])(\s+)", line)
+        rebuilt = []
+        for part in parts:
+            if part.isspace() or not part:
+                rebuilt.append(part)
+                continue
+            used = []
+            rebuilt.append(cite(fill(part, used), used))
+        out.append("".join(rebuilt))
+    return "\n".join(out) + ("\n" if markdown.endswith("\n") else "")
+
+
 def generate(llm: LLM, value: Mapping[str, Any], *, attempts: int = 2) -> dict[str, Any]:
     """LLM document that passes `check`, else the template (with the reasons)."""
     fallback = template(value)
     problems: list[str] = []
     markdown = ""
+    offered = placeholders(value)
     for _ in range(attempts):
-        payload: dict[str, Any] = {"outline": OUTLINE, "context": value}
+        payload: dict[str, Any] = {
+            "outline": OUTLINE,
+            "context": {**value, "facts": [
+                {"handle": handle, **fact, "placeholders": offered[fact["id"]]}
+                for handle, fact in handles(value).items()]},
+        }
         if problems:
             payload["previous_markdown"] = markdown
             payload["checker_problems"] = problems[:40]
@@ -696,7 +792,7 @@ def generate(llm: LLM, value: Mapping[str, Any], *, attempts: int = 2) -> dict[s
                              system=SYSTEM)
         except Exception as error:  # noqa: BLE001 - any LLM failure falls back to the template
             return {"markdown": fallback, "source": "template", "rejected": [f"llm: {error}"]}
-        markdown = draft.markdown.strip() + "\n"
+        markdown = expand(draft.markdown.strip() + "\n", value)
         problems = check(markdown, value)
         if not problems:
             return {"markdown": markdown, "source": "llm", "rejected": []}

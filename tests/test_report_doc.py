@@ -43,7 +43,9 @@ def test_context_digest_ignores_the_current_cutoff() -> None:
     (lambda: replace("[fact:limit_commit]", ""), "must cite [fact:limit_commit]"),
     (lambda: replace("## Appendix", "<b>x</b>\n\n## Appendix"), "no HTML"),
     (lambda: replace("## Appendix", "Two respondents agreed.\n\n## Appendix"),
-     "spelled-out quantity"),
+     "numbers without a citation"),
+    (lambda: replace("## Appendix", "Nine outcomes. [fact:instrumentation]\n\n## Appendix"),
+     "number 9 is not in the cited facts"),
     (lambda: replace("## Appendix", "It was seen in 4 sessions.\n\n## Appendix"),
      "numbers without a citation"),
 ])
@@ -115,7 +117,32 @@ def test_a_count_of_the_cited_facts_is_traceable() -> None:
         "## Appendix",
         "2 outcomes were not found in the searched files. "
         "[fact:outcome_wallet_rejected] [fact:outcome_wallet_errored]\n\n"
-        "3 outcomes were reviewed. [fact:outcome_wallet_rejected]\n\n## Appendix")
+        "3 outcomes were reviewed. [fact:outcome_wallet_rejected]\n\n"
+        "The two outcomes are listed. [fact:outcome_wallet_rejected] "
+        "[fact:outcome_wallet_errored]\n\n## Appendix")
     problems = check(counted, ctx)
     assert not any("2 outcomes" in p for p in problems)
     assert any("number 3 is not in the cited facts" in p for p in problems)
+
+
+def test_placeholders_become_cited_numbers_that_pass_the_checker() -> None:
+    from engine.report_doc import expand, handles, placeholders
+
+    by_id = {fact["id"]: handle for handle, fact in handles(CONTEXT).items()}
+    gate, h1 = by_id["cohort_gate_event_no_attempt"], by_id["finding_dp1_h1"]
+    hyp = by_id["hypothesis_h1"]
+    assert placeholders(CONTEXT)["cohort_gate_event_no_attempt"][f"{{{gate}}}"] == (
+        "4 of 6 sessions")
+    draft = DOC.replace(
+        "## Appendix",
+        f"The gate was recorded without an attempt in {{{gate}}}.\n\n"
+        f"H1 {{{hyp}.statement}} was selected by {{{h1}}}.\n\n"
+        f"| Cohort | Sessions |\n| --- | --- |\n| Gate | {{{gate}}} |\n\n## Appendix")
+    expanded = expand(draft, CONTEXT)
+    assert "in 4 of 6 sessions [fact:cohort_gate_event_no_attempt]." in expanded
+    assert "selected by 2 of 3 respondents [fact:hypothesis_h1] [fact:finding_dp1_h1]." in (
+        expanded)
+    assert "| Gate | 4 of 6 sessions [fact:cohort_gate_event_no_attempt] |" in expanded
+    assert check(expanded, CONTEXT) == []
+    unknown = expand(DOC.replace("## Appendix", "Seen in {f999}.\n\n## Appendix"), CONTEXT)
+    assert any("unknown placeholder {f999}" in p for p in check(unknown, CONTEXT))
