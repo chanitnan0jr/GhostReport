@@ -193,7 +193,13 @@ export default function App() {
           </span>
           common ground
         </a>
-        <span className="header-note">A place for ideas to grow</span>
+        <nav className="main-navigation" aria-label="Main navigation">
+          <a href="/" aria-current="page">
+            DAO
+          </a>
+          <a href="/seed/">Demo User Seed</a>
+          <a href="/report/">Report</a>
+        </nav>
       </header>
       {consent === null ? (
         <main className="consent-page">

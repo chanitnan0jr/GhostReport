@@ -776,3 +776,41 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+.main-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.main-navigation a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 999px;
+}
+.main-navigation a[aria-current="page"] {
+  background: #e4ebdc;
+  color: var(--green);
+}
+.main-navigation a:hover {
+  background: #edf1e9;
+}
+@media (max-width: 760px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .main-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .main-navigation a {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
