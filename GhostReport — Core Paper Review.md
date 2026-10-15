@@ -1,6 +1,6 @@
 # GhostReport — Core Paper Review
 
-Oct 14, 2026 · @Sinu
+Oct 15, 2026 · @Sinu
 
 งานหลักทั้งหกเรื่องรองรับ GhostReport ได้จริง แต่หลายเรื่องรองรับคนละแบบกับที่เราเคยอ้างไว้ และมีสองเรื่อง (Tao, Rodler) ที่ช่วยลดงานของเราได้ Tao, Rodler และ Borlund อ่านจากฉบับเต็ม ส่วนอีกสามเรื่องอ่านจาก abstract
 
@@ -8,7 +8,7 @@ Oct 14, 2026 · @Sinu
 
 | Paper | อ่านจาก | รองรับอะไร | อ้างอะไรไม่ได้ | ผลต่อ design |
 | --- | --- | --- | --- | --- |
-| [Tao et al. 2026](https://arxiv.org/pdf/2607.05785v1) | ฉบับเต็ม | การมี log ไม่เท่ากับการมีหลักฐานพอวินิจฉัย | intent ของผู้ใช้, การหาช่องว่าง, และ KeyBag F1 ไม่ได้พิสูจน์ว่าเพียงพอต่อการวินิจฉัย | E1a แบบ strip-and-restore พร้อม leakage check |
+| [Tao et al. 2026](https://arxiv.org/pdf/2607.05785v1) | ฉบับเต็ม | การมี log ไม่เท่ากับการมีหลักฐานพอวินิจฉัย | intent ของผู้ใช้, การหาช่องว่าง, และ KeyBag F1 ไม่ได้พิสูจน์ว่าเพียงพอต่อการวินิจฉัย | E1a แบบ strip-and-restore พร้อม leakage check (เลื่อนไปหลังงาน) |
 | [Rodler 2018](https://easychair.org/publications/paper/zHgj/open) | ฉบับเต็ม | การจัดอันดับ query โดยไม่ใช้ prior (SPL1.1) | เหตุผลของคนที่ซ้อนกันได้, คำตอบของคนที่ไม่ใช่ oracle | ใช้ SPL1.1 กับ binary query ที่ partition มีเหตุผลรองรับ ส่วน survey เป็นหลักฐานที่มี noise |
 | [Baxter 2014](https://research.google/pubs/esm-versus-logs-filling-in-the-gaps/) | abstract | log บอก WHAT ไม่บอก WHY | ว่า probe แบบแตะครั้งเดียวได้ผล | ใช้เป็น hook บนสไลด์ปัญหา |
 | [Harbach & Johnson 2026](https://research.google/pubs/who-am-i-talking-to-a-large-scale-measurement-of-surface-attribution-across-real-world-security-and-privacy-interfaces/) | abstract | ผู้ใช้มักบอกไม่ได้ว่าใครเป็นคนขอสิทธิ์ | พฤติกรรมจริงกับ crypto wallet, ว่าตัวเลือกใหม่ใน probe ได้ผล | ตัวเลือก probe เป็น design hypothesis ของเรา และข้อจำกัดของ mock |
@@ -37,6 +37,8 @@ Oct 14, 2026 · @Sinu
 - ใส่ analytics calls ที่มีอยู่แล้วใน repo ลงใน ContextPack เป็นตัวอย่าง few-shot (ยกเว้นตอนรัน E1a ที่ลบออกแล้ว)
 
 เกณฑ์ยอมรับของ E1b (code grounding, ความถูกต้องของ gap, ความเกี่ยวข้องกับสมมติฐาน, actionability) อยู่ในข้อ 7 ของเอกสาร System Design
+
+**สถานะในงาน (15 ต.ค.):** ไม่รัน E1a ในงาน เพราะเกณฑ์ตัดสินไม่ได้ให้คะแนนส่วนนี้ ส่วนการพิสูจน์ว่า code-awareness ใช้กับโค้ดที่ทีมไม่ได้เขียนได้ ใช้ Part B บน ensdomains/ens-app-v3 ที่ commit 3c10925f (license MIT) ใน code\_only mode แทน
 
 ## 2. Rodler (2018): ใช้ได้ แต่ข้อสมมติต่างจากโจทย์ของเราสองข้อ
 
@@ -91,7 +93,7 @@ Oct 14, 2026 · @Sinu
 - **Nonresponse:** ในกลุ่มที่มีโอกาส ใครเลือกไม่ตอบ
 - **Generalization:** คำตอบสรุปถึงกลุ่มใดได้จริง
 
-กฎ "k of n respondents" เหมาะกับการรายงาน แต่**ไม่ได้กำจัด selection bias** ทุก report จึงต้องบันทึกนิยามประชากรเป้าหมายและจำนวน exposure (eligible → reserved → shown → answered / skipped โดย reserved คือการจอง probe budget ให้ session ไม่ใช่การสุ่ม และนับ session ที่ inactive ซึ่งถามไม่ได้แยกต่างหาก) ไว้คู่กันเสมอ
+กฎ "k of n respondents" เหมาะกับการรายงาน แต่**ไม่ได้กำจัด selection bias** ทุก report จึงต้องบันทึกนิยามประชากรเป้าหมายและจำนวน exposure (eligible → shown → answered / skipped / shown\_no\_response ตาม probe\_exposures ใน System Design และนับ session ที่ inactive ซึ่งถามไม่ได้แยกต่างหาก) ไว้คู่กันเสมอ
 
 ## 6. Borlund (2003): ใช้ออกแบบ role card ได้ตรงที่สุด
 
@@ -99,21 +101,21 @@ Simulated work task คือเรื่องเล่าสั้นๆ ท�
 
 **คำแนะนำที่นำมาใช้ได้:**
 
-- ออกแบบสถานการณ์ให้ผู้ทดสอบเห็นตัวเองในนั้น หัวข้อน่าสนใจ และมีบริบทพอให้จินตนาการตาม ใช้สองการ์ดคือ **Funding Applicant** ("คุณกำลังหาทุนเพื่อทำโปรเจกต์ต่อหลังจบงานวันศุกร์") และ **Explorer**
+- ออกแบบสถานการณ์ให้ผู้ทดสอบเห็นตัวเองในนั้น หัวข้อน่าสนใจ และมีบริบทพอให้จินตนาการตาม ใช้สองการ์ดคือ **Funding Applicant** และ **Explorer** ข้อความฉบับจริงเป็นภาษาอังกฤษตาม UI ของแอป และล็อกไว้ในข้อ 7 ของ System Design
 - Borlund แนะนำให้ใช้ความต้องการจริงคู่กับความต้องการจำลอง โดยให้ความต้องการจริงเป็น baseline แต่ความต้องการจริงต้องมาจากผู้ใช้เอง การให้คนเข้ามาโดยไม่มี task **ไม่เท่ากับ** real information need กลุ่มแบบนั้นเป็นแค่เงื่อนไขการทดลองเพิ่มเติมที่เราเสนอเอง และไม่ใส่ใน MVP เพราะคนในห้องมีน้อย
-- Pilot test ก่อนทดสอบจริง ตรงกับ pilot กับ mentor ในวันศุกร์เช้า ข้อแนะนำนี้มาจากประสบการณ์ที่ผู้วิจัยรายงาน ไม่ใช่ผลการทดลอง
+- Pilot test ก่อนทดสอบจริง ในงานนี้คือรัน seed และลองเว็บเดโมเองก่อนส่งงาน (พฤหัสเย็นถึงศุกร์เช้า) ข้อแนะนำนี้มาจากประสบการณ์ที่ผู้วิจัยรายงาน ไม่ใช่ผลการทดลอง
 
 **ข้อจำกัด:** หลักฐานในงานนี้มาจากพฤติกรรมการค้นข้อมูล (IR) การนำมาใช้กับ wallet onboarding เป็นสมมติฐานของเรา
 
-## สิ่งที่ควรแก้ในเอกสาร System Design
+## สิ่งที่แก้ในเอกสาร System Design แล้ว
 
-ทุกข้อทำให้งานเล็กลงหรือเท่าเดิม ไม่มีข้อไหนเพิ่มงาน ข้อ 1 ควรตัดสินใจคืนนี้ เพราะจะเปลี่ยนงานที่ต้องทำก่อนเข้างาน
+ทั้งห้าข้อใส่ใน System Design แล้วเมื่อ 15 ต.ค. ทุกข้อทำให้งานเล็กลงหรือเท่าเดิม
 
-- [ ] แยก E1 เป็น E1a (strip-and-restore: กู้คืน instrumentation ที่เคยมีได้ไหม มีเฉลยอัตโนมัติ) และ E1b (semantic evidence gap: ตรวจด้วยคน 1–2 กรณีตามเกณฑ์สี่ข้อในเอกสาร System Design) เพราะ event ที่คนไม่เคยเขียนไม่มีอยู่ในเฉลยแบบ strip-and-restore
-- [ ] ใช้ SPL1.1 เฉพาะ diagnostic query ที่มี binary partition ที่มีเหตุผลรองรับ และไม่อ้างการรับประกันการตัดสมมติฐานกับ human intent ที่มีหลายสาเหตุซ้อนกัน
-- [ ] Contradiction rule ผูกกับนิยามสมมติฐานที่ทีมเขียน ไม่ใช่กับ ID ที่ LLM สร้าง
-- [ ] เพิ่มตัวเลือก "Not sure who is asking" ใน probe และข้อจำกัดของ mock wallet เรื่องแหล่งที่มาของ UI
-- [ ] Report แยก coverage, nonresponse และ generalization
+- [x] แยก E1 เป็น E1a (strip-and-restore: กู้คืน instrumentation ที่เคยมีได้ไหม มีเฉลยอัตโนมัติ) และ E1b (semantic evidence gap: ตรวจด้วยคน 1–2 กรณีตามเกณฑ์สี่ข้อในเอกสาร System Design) เพราะ event ที่คนไม่เคยเขียนไม่มีอยู่ในเฉลยแบบ strip-and-restore
+- [x] ใช้ SPL1.1 เฉพาะ diagnostic query ที่มี binary partition ที่มีเหตุผลรองรับ และไม่อ้างการรับประกันการตัดสมมติฐานกับ human intent ที่มีหลายสาเหตุซ้อนกัน
+- [x] Contradiction rule ผูกกับนิยามสมมติฐานที่ทีมเขียน ไม่ใช่กับ ID ที่ LLM สร้าง
+- [x] เพิ่มตัวเลือก "Not sure who is asking" ใน probe และข้อจำกัดของ mock wallet เรื่องแหล่งที่มาของ UI
+- [x] Report แยก coverage, nonresponse และ generalization
 
 ## Sources
 

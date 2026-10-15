@@ -1,10 +1,16 @@
-# GhostReport v5 — System Design
+# GhostReport — System Design
 
-Oct 14, 2026 · @Sinu
+Oct 15, 2026 · @Sinu
 
 ## 1. สรุปและขอบเขต
 
-MVP คือ vertical slice เดียว: workflow ขอทุน DAO ที่มี mock wallet หนึ่งตัว, investigation หนึ่งเรื่อง (ทำไม cohort Never attempted ไม่เริ่ม connect) และ report ที่เปลี่ยนตามหลักฐานจริงจากคนในห้อง ส่วนเสริมคือ Part B ที่ให้ analyzer อ่าน repo dApp แบบ open source ที่ทีมไม่ได้เขียน เพื่อพิสูจน์ว่า code-awareness ไม่ได้ทำงานแค่กับโค้ดที่เราเขียนเอง
+MVP คือ vertical slice เดียว: workflow ขอทุน DAO ที่มี mock wallet หนึ่งตัว, investigation หนึ่งเรื่อง (ทำไมผู้ใช้กลุ่มที่ไม่มี attempt ไม่เริ่ม connect) และ report ที่เปลี่ยนตามหลักฐานจริงจากผู้ที่เข้ามาลองเว็บเดโม ส่วนเสริมคือ Part B ที่ให้ analyzer อ่าน repo dApp แบบ open source ที่ทีมไม่ได้เขียน เพื่อพิสูจน์ว่า code-awareness ไม่ได้ทำงานแค่กับโค้ดที่เราเขียนเอง
+
+**Positioning (15 ต.ค.):** แอปการเงินเสียผู้ใช้ที่ด่านเริ่มใช้งาน เช่น เชื่อม wallet ยืนยันตัวตน หรือผูกบัญชี log บอกว่าผู้ใช้หลุดตรงไหน แต่ไม่บอกว่าทำไม GhostReport ฝังอยู่ใน log ตรวจหลักฐานที่มีก่อน แล้วถามเฉพาะตอนที่ log ตอบไม่ได้ เดโมยังใช้ wallet gate ตัวเดิม
+
+**กรรมการตัดสินจากงานที่ส่ง:** GitHub repo สาธารณะ, demo website, pitch deck บน Google Drive และ write-up ปิดรับศุกร์ 16 ต.ค. 14:00 เกณฑ์คือ App execution 40%, Practicality 40%, Usability & Design 10%, Innovation & Ecosystem 5% และ U-Bot integration 5% นำเสนอสดเฉพาะ top 3 ของแต่ละ track ตอน 20:00
+
+**DEMO mode:** เว็บเดโมเปิดด้วย judging run ที่มี seed ประมาณ 20 sessions และผลสืบของ LLM ที่ lock ไว้แล้ว session ของผู้เยี่ยมชมต่อท้าย run นั้น และ report v2 คำนวณใหม่แบบตายตัวโดยไม่เรียก LLM ต่อการเข้าชม หน้าแรกพาเดิน 3 ขั้น คือลองเป็นผู้ใช้ ดู report และวิธีติดตั้ง ส่วน `REPLAY=1` เป็นโหมดอ่านอย่างเดียวไว้สำรอง
 
 **สิ่งที่สร้างในงาน (5 ชิ้น)**
 
@@ -16,7 +22,7 @@ MVP คือ vertical slice เดียว: workflow ขอทุน DAO ท�
 
 **สิ่งที่ไม่สร้าง:** blockchain จริง, PostHog, session replay, graph database, instrumentation PR อัตโนมัติ, การ deploy dApp ของคนอื่น
 
-**ก่อนวันงานทำอะไรได้บ้าง** (ตีความจากประกาศบน Luma ยังไม่ใช่คำยืนยันจากผู้จัด)
+**ก่อนวันงานทำอะไรได้บ้าง** (FAQ ของผู้จัดยืนยันแล้ว: research ทำก่อนได้ แต่โค้ดต้องเริ่มในงาน)
 
 | งาน | ทำก่อนงานได้ไหม |
 | --- | --- |
@@ -24,7 +30,7 @@ MVP คือ vertical slice เดียว: workflow ขอทุน DAO ท�
 | ทดสอบ prompt กับ repo open source ผ่านหน้าแชต แล้วจดผล | ได้ (pre-research) |
 | เลือก repo, ปัก commit SHA, อ่าน license | ได้ |
 | ออกแบบ role card และกำหนด metric ล่วงหน้า | ได้ |
-| เขียนโค้ด GhostReport หรือ Micro Wallet Flow | **ไม่ทำ** จนกว่าจะเริ่มงานวันพฤหัส 10:00 |
+| เขียนโค้ด GhostReport หรือ Micro Wallet Flow | **ไม่ทำ** จนกว่าจะเริ่ม build วันพฤหัส 11:30 |
 
 ข้อที่ต้องพูดบนเวทีตรงๆ: ช่องว่างใน Micro Wallet Flow (Part A) เป็นโค้ดที่ทีมเขียนเอง ความน่าเชื่อถือเรื่อง code-awareness จึงต้องมาจาก Part B
 
@@ -34,7 +40,9 @@ MVP คือ vertical slice เดียว: workflow ขอทุน DAO ท�
 
 &#91;embedded content: GhostReport architecture · 13 components, 2 LLM stages\]
 
-กล่องสีคือจุดเดียวที่ใช้ LLM ส่วน Roles DB ถูกเขียนตอนสแกน QR และเปิดดูได้หลังเดโมจบเท่านั้น เพื่อใช้เทียบใน E3
+กล่องสีคือจุดเดียวที่ใช้ LLM ส่วน Roles DB ถูกเขียนตอนผู้เยี่ยมชมเริ่มจากหน้าแรก และเปิดดูได้หลังปิดการเก็บข้อมูลเท่านั้น เพื่อใช้เทียบใน E3
+
+**Deploy:** frontend และ backend ขึ้น URL สาธารณะตั้งแต่ walking skeleton (เป้า \~15:30 วันพฤหัส) DeepSeek key อยู่ใน env ฝั่ง server เท่านั้น และ `.env` อยู่ใน `.gitignore` ตั้งแต่ commit แรก เพราะ repo เป็น public roles อยู่ใน service แยกคนละ process ตามข้อ 3 และข้อ 6
 
 ## 3. Input / Output Data Pipeline
 
@@ -103,7 +111,7 @@ LLM เสนอได้เฉพาะ `action_type` ที่อยู่ใ�
 
 | Table | ฟิลด์หลัก | หมายเหตุ |
 | --- | --- | --- |
-| `run` | run\_id, mode (live / seed / pilot / replay), code\_commit, app\_build, build\_verified, policy\_version, catalog\_version | หนึ่งไฟล์ SQLite ต่อหนึ่ง run |
+| `run` | run\_id, mode (live / seed / pilot / replay / demo), code\_commit, app\_build, verifications (event, test, commit, passed\_at), policy\_version, catalog\_version | หนึ่งไฟล์ SQLite ต่อหนึ่ง run |
 | `events` | event\_id (unique), session\_id, seq, attempt\_id, event, occurred\_at, received\_at, schema\_version, page, props | dedupe ด้วย event\_id |
 | `investigations` | id, version, data\_cutoff, state\_json, sha256, prev\_sha256, digest\_shown\_at | digest ของ v1 แสดงนอกระบบ |
 | `class_mappings` | investigation\_id, hypothesis\_id, class\_id, approved\_by, approved\_at | rule ใช้ได้เฉพาะ mapping ที่อนุมัติแล้ว |
@@ -123,7 +131,7 @@ LLM ทำแค่สองงาน คืออ่านโค้ดให้
 
 `ProjectList → ProjectPage → [Apply] → ApplyModal (gated: "Connect wallet to apply") → [Connect] → MockWalletPopup (Approve / Reject) → Connected → Application form`
 
-ทางออกที่ตั้งใจ: ปุ่ม Not now ใน ApplyModal และการกดย้อนจาก ProjectPage กลับไป ProjectList Mock wallet มี simulated RPC error ที่อัตราตายตัวและบอกบนจอ ตัวเลขอัตราให้ทีมกำหนดก่อนงาน
+ทางออกที่ตั้งใจ: ปุ่ม Not now ใน ApplyModal และการกดย้อนจาก ProjectPage กลับไป ProjectList Mock wallet มี simulated RPC error ที่อัตราตายตัวและบอกบนจอ อัตราคือ 0.10 เฉพาะการเชื่อมต่อครั้งแรกของ session ลองใหม่แล้วผ่านเสมอ และข้อความ error บอกว่าเป็นการจำลอง ผล Reject ไม่มี track() ในโค้ด (ลบ call ออก ไม่ใช้ flag) analyzer จึงต้องเจอช่องว่างนี้จากโค้ดเอง ส่วน error ยังเก็บ event ตามปกติ
 
 ### 4.2 Code Context Builder (ไม่ใช้ LLM)
 
@@ -147,14 +155,16 @@ Cohort คำนวณ ณ data cutoff ของแต่ละ snapshot ระ�
 | Attempt | `connected` / `rejected` / `errored` | มี outcome event ของ attempt\_id นั้น (rejected และ errored มีได้เฉพาะเมื่อ instrument แล้ว) |
 | Attempt | `pending` | เริ่มไม่ถึง 60 วินาทีก่อน cutoff และยังไม่มี outcome |
 | Attempt | `no_outcome_observed` | เกิน 60 วินาทีแล้วยังไม่มี outcome |
-| Session 1 | `connected` | มีอย่างน้อยหนึ่ง attempt ที่ connected (ติดป้าย after\_retry ถ้าเคย reject ก่อน) |
+| Session 1 | `connected` | มีอย่างน้อยหนึ่ง attempt ที่ connected (ติดป้าย after\_retry ถ้ามี attempt ก่อนหน้าที่ไม่สำเร็จ คือ errored หรือ no\_outcome\_observed) |
 | Session 2 | `attempted_no_success` | มี attempt แต่ไม่มี connected |
 | Session 3 | `gate_event_no_attempt` | มี `wallet_gate_shown` แต่ไม่มี attempt |
 | Session 4 | `no_gate_event` | ไม่เข้าเงื่อนไขข้างบน (รวมกรณี event หาย) |
 
 ทุก session ยังมี **coverage** แยกจาก cohort ค่า `complete` ต้องผ่านสามข้อ: (1) `seq` ต่อเนื่องภายในรอบที่วิเคราะห์ ตั้งแต่เข้า ProjectPage จนถึง exit event (2) มี exit event (`not_now` หรือ `back`) และ (3) แอปเป็น build ที่ผ่าน instrumentation test ว่ายิง event ที่ rule ต้องใช้ทุกครั้ง (`build_verified`) `seq` ต่อเนื่องบอกได้แค่ว่า event ที่ถูกสร้างส่งมาครบ แต่ไม่ได้บอกว่าโค้ดสร้าง event ครบทุกเหตุการณ์ ใน MVP มีแค่ Micro Wallet Flow ที่เป็น verified build แอปอื่นจึงได้ `unknown` เสมอ ชื่อ cohort บอกแค่ว่ามีหรือไม่มี event ที่บันทึกไว้ ไม่ได้บอกว่าเหตุการณ์เกิดหรือไม่เกิด
 
-`wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate หนึ่งครั้ง (ไม่ใช่ทุก React re-render) ไม่ใช้ `apply_clicked` แทน เพราะการกดไม่ได้ยืนยันว่าผู้ใช้เห็น gate ค่า 60 วินาทีเป็นค่าเริ่มต้นที่ต้องล็อกก่อนงาน Cohort ที่ใช้นับคำตอบคือ `server_cohort_at_shown` ซึ่ง **server สร้างเอง** จาก event ที่ seq ไม่เกิน `event_seq_at_shown` ไม่เชื่อค่าที่ client ส่งมาโดยตรง ถ้า event ก่อนหน้ายังมาไม่ครบ (seq ขาด) สถานะเป็น `pending` และยังไม่นับเข้ากลุ่มใด เมื่อหมดเวลารอให้เป็น `unknown_coverage` ถ้าผู้ใช้กลับไป connect สำเร็จหลังตอบ คำตอบยังนับในกลุ่มตอนที่ถูกถาม
+**`build_verified` นับทีละ event ไม่ใช่ทั้ง build:** R2 ใช้ได้เมื่อเทสต์ว่า `wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate ผ่านบน commit เดียวกับที่ deploy ระบบบันทึก event, test, commit และ passed\_at ลงช่อง verifications ของตาราง `run` เพื่อให้ report อ้างได้ว่า verified by test X at commit Y
+
+`wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate หนึ่งครั้ง (ไม่ใช่ทุก React re-render) ไม่ใช้ `apply_clicked` แทน เพราะการกดไม่ได้ยืนยันว่าผู้ใช้เห็น gate ค่า 60 วินาทีล็อกแล้ว Cohort ที่ใช้นับคำตอบคือ `server_cohort_at_shown` ซึ่ง **server สร้างเอง** จาก event ที่ seq ไม่เกิน `event_seq_at_shown` ไม่เชื่อค่าที่ client ส่งมาโดยตรง ถ้า event ก่อนหน้ายังมาไม่ครบ (seq ขาด) สถานะเป็น `pending` และยังไม่นับเข้ากลุ่มใด เมื่อหมดเวลารอให้เป็น `unknown_coverage` ถ้าผู้ใช้กลับไป connect สำเร็จหลังตอบ คำตอบยังนับในกลุ่มตอนที่ถูกถาม
 
 แต่ละ session ยังติดป้าย exit type: `not_now` (กด Not now), `back` (ย้อนกลับเอง), `inactive` (ไม่มี event ≥ 10 นาที ซึ่งเป็นแค่เกณฑ์ inactivity ไม่ใช่หลักฐานว่าปิดแท็บ) และ `open` (ยัง active ตอน cutoff) ถามได้เฉพาะ `not_now` กับ `back` ที่เหลือรายงานแยกโดยไม่เดาเหตุผล
 
@@ -209,9 +219,9 @@ def at_exit(session, plan, now, local_state):       # DP1/DP2 ฝั่ง clien
 
 - `contradiction_value(a)` = จำนวนสมมติฐานที่ผลบางแบบของ `a` ขัดได้ตาม rule ที่ review แล้ว นับเฉพาะ session ที่ coverage complete และสมมติฐานที่มี class mapping อนุมัติแล้ว
 - `relevance(p)` = จำนวนสมมติฐานใน sub-cohort ที่ตัวเลือกของ probe map ถึง ใช้ตอบว่า**คำถามนี้ถามเรื่องที่ถูกหรือไม่** แยกจากเรื่องเก็บคำตอบครบหรือยัง
-- `collection_open(p)` = จำนวนคำตอบยังไม่ถึง `target_n`, จำนวนที่แสดงยังไม่ถึง `budget` และยังไม่ถึง `ends_at` ทั้งสามค่ากำหนดก่อนงาน คำตอบแรกไม่ทำให้หยุดเก็บจากคนอื่น
+- `collection_open(p)` = จำนวนคำตอบยังไม่ถึง `target_n`, จำนวนที่แสดงยังไม่ถึง `budget` และยังไม่ถึง `ends_at` ทั้งสามค่าล็อกแล้ว: target\_n 10, budget 30 และ ends\_at แยกตาม run (judging run ปิดศุกร์ 17:00, live run ปิดหลัง lock 12 นาที) คำตอบแรกไม่ทำให้หยุดเก็บจากคนอื่น
 - `target_n` และ `budget` เป็น**เป้าหมายที่อาจเกินได้** ผู้ใช้ที่โหลดแผนไว้แล้วอาจได้เห็นคำถามหลังครบเป้า คำตอบเหล่านั้นเก็บตามจริง ส่วน `ends_at` ตรวจซ้ำตอนแสดงเสมอ และ `closed_hint` คือสถานะปิดที่ client ได้รับล่าสุดจาก server ถ้าไม่ได้รับก็ไม่ขวางการแสดง
-- `eligible_now` ตรวจในเครื่องตอนแสดงจริง: ยอมรับ consent ตอนสแกน QR แล้ว, ยังไม่เคยถูกถามใน session นี้, ไม่อยู่ใน wallet popup และถ้าแผนเป็นของกลุ่มที่ไม่มี attempt ต้องยังไม่มี attempt เกิดขึ้น
+- `eligible_now` ตรวจในเครื่องตอนแสดงจริง: ยอมรับ consent ที่หน้าแรกของเว็บ แล้ว, ยังไม่เคยถูกถามใน session นี้, ไม่อยู่ใน wallet popup และถ้าแผนเป็นของกลุ่มที่ไม่มี attempt ต้องยังไม่มี attempt เกิดขึ้น
 - Gate check ใน MVP **ไม่คำนวณ SPL1.1** เพราะฝั่ง V− ว่าง ตามนิยามของ Rodler (2018) จึงไม่ใช่ discriminating query SPL1.1 ใช้เฉพาะเมื่อ catalog มี check ที่ทั้งสองฝั่งไม่ว่าง
 
 * **MVP ไม่ตัดสมมติฐานทิ้ง** ผลจาก tier 0 ทำได้แค่ติดป้าย Contradicted by rule Rx ให้สมมติฐานใน sub-cohort นั้น
@@ -221,7 +231,7 @@ def at_exit(session, plan, now, local_state):       # DP1/DP2 ฝั่ง clien
 * ทุก decision รวมถึง no\_action เขียนลง `decisions` พร้อม `data_version`
 * **Test ที่ต้องผ่านก่อน G2:** ตรวจ event แล้วไม่ได้ข้อมูลใหม่ → เลือก probe ได้ → ตอบหรือข้ามได้ → report เปลี่ยนเฉพาะสิ่งที่หลักฐานรองรับ
 
-**ตัวอย่าง:** sub-cohort ที่ไม่มี attempt มี H1, H2, H3 และ H\_other ที่ DP0 console รัน `check_event(wallet_gate_shown)` ผลแตกเป็นสามกลุ่ม: session ที่มี gate event, session ที่ไม่มี gate event และ coverage complete (H2 ติดป้าย Contradicted by rule R2) และ session ที่ coverage ไม่ครบ (ไม่ใช้กฎ) รอบถัดไป action เดิมถูกข้ามเพราะประเมินกับ data\_version นี้แล้ว พร้อมกันนั้น `plan_probe()` เตรียมแผนของกลุ่มนี้ไว้ ที่ DP1 หรือ DP2 client แสดง probe ถ้า grant ยังไม่หมดอายุและ session ยังเข้าเกณฑ์ ณ ตอนนั้น กลุ่ม inactive ไม่ถูกถาม
+**ตัวอย่าง:** sub-cohort ที่ไม่มี attempt มี H1, H2, H3 และ H\_other ที่ DP0 console รัน `check_event(wallet_gate_shown)` ผลแตกเป็นสามกลุ่ม: session ที่มี gate event, session ที่ไม่มี gate event และ coverage complete (H2 ติดป้าย Contradicted by rule R2) และ session ที่ coverage ไม่ครบ (ไม่ใช้กฎ) รอบถัดไป action เดิมถูกข้ามเพราะประเมินกับ data\_version นี้แล้ว พร้อมกันนั้น `plan_probe()` เตรียมแผนของกลุ่มนี้ไว้ ที่ DP1 หรือ DP2 client แสดง probe ถ้าแผนยังไม่ถึง ends\_at และ session ยังเข้าเกณฑ์ ณ ตอนนั้น กลุ่ม inactive ไม่ถูกถาม
 
 ### 4.7 Probe
 
@@ -292,7 +302,7 @@ Guard เหล่านี้รันทุกครั้งที่ pipelin
 | Lock | sha256 ของ v1 ตรงกับ digest ที่แสดงนอกระบบก่อน probe แรก | หยุด report และแสดง error |
 | Claim checker | ทุก claim ใน narrative ตรงกับ facts JSON ทั้ง numerator, denominator และ population | ใช้ข้อความ template แทน |
 | Privacy | `props` มีแค่ key ใน whitelist ไม่มีรูปแบบที่ดูเหมือน address (`0x` ตามด้วย hex 40 ตัว) | ทิ้ง event นั้น |
-| Probe grant | บันทึก probe\_shown ทุกครั้งที่แสดง, ไม่แสดงหลัง ends\_at, cohort นับจากตอนแสดงจริง, ไม่ถาม inactive หรือ open, ไม่ถามซ้ำ, Skip ไม่เปลี่ยนสถานะ, Not now ไม่รอ probe | unit test ล้ม |
+| Probe eligibility | บันทึก probe\_shown ทุกครั้งที่แสดง, ไม่แสดงหลัง ends\_at, cohort นับจากตอนแสดงจริง, ไม่ถาม inactive หรือ open, ไม่ถามซ้ำ, Skip ไม่เปลี่ยนสถานะ, Not now ไม่รอ probe | unit test ล้ม |
 | Untrusted repo | เนื้อหาใน repo ส่งให้ LLM เป็นข้อมูลในตัวคั่น, LLM ไม่มี tool ที่ execute ได้, prompt ไม่มี secret หรือ roles | ข้อความที่ฝังใน repo **ยังเปลี่ยน hypotheses และ action ที่เสนอได้** (indirect prompt injection) จึงต้องมี catalog และ rule ที่ review แล้วเป็นด่านกั้น และผู้ดูแลต้องอนุมัติ probe ก่อนใช้ |
 | Blinding | roles อยู่ใน service แยกคนละ process, ไม่ mount โฟลเดอร์ roles ให้ engine และ engine ไม่มี credential เรียก service นั้น | test ล้ม |
 
@@ -302,11 +312,11 @@ Evaluation มีสี่ชุด ทุกชุดใช้ ground truth ท
 
 | ชุด | คำถาม | ข้อมูล | Ground truth | Metric |
 | --- | --- | --- | --- | --- |
-| E1a Strip-and-restore | AI ระบุและกู้คืน instrumentation ที่เคยมีอยู่ได้ไหม | repo open source 2–3 ตัว ปัก commit SHA | ตาม Tao et al. (2026): ลบ analytics calls ออก แล้วใช้ตำแหน่งเดิมเป็นเฉลย denominator ของ recall = calls ที่ลบออก repo ต้องมี wallet analytics อยู่จริง และต้องตรวจว่าชื่อ event ไม่หลุดผ่าน type, test หรือ helper (leakage check) | ref validity rate, gap precision, gap recall |
-| E1b Semantic evidence gap | AI เจอคำถามวินิจฉัยที่ log ที่มีอยู่ตอบไม่ได้ และเชื่อมกับสมมติฐานได้ไหม | 1–2 กรณีจาก repo เดียวกัน | คนตรวจที่ไม่เห็นผล AI ก่อน ตัดสินว่า gap มีเหตุผลจากโค้ดและ diagnostic question หรือไม่ (event ที่คนไม่เคยเขียนไม่มีอยู่ในเฉลยของ E1a) | จำนวน gap ที่ผ่านการตรวจ, จำนวนที่ linter หาไม่ได้ |
-| E2 Ablation | การอ่านโค้ดทำให้สมมติฐานดีขึ้นไหม | cohort data ชุดเดียวกัน รันสองแบบ: logs-only และ logs + code | ผู้ตรวจ blind ให้คะแนน specificity และตรวจว่าโค้ดที่อ้าง**สนับสนุน**สมมติฐานจริงไหม | สัดส่วน non-generic, supported-link rate |
-| E3 Live loop | report v2 สอดคล้องกับสิ่งที่เกิดจริงแค่ไหน | sessions จากคนในห้อง | role ที่สุ่ม (Funding Applicant / Explorer) ซึ่ง engine มองไม่เห็น | ตารางพรรณนา role × การกระทำ × คำตอบ แบบ k of n ไม่ใช่ diagnostic accuracy |
-| E4 Interruption | ระบบรบกวนผู้ใช้เท่าไรต่อหลักฐานที่ได้ | sessions เดียวกับ E3 | นับจาก `probe_exposures` และ reviewer ตรวจ report | shown / answered / skipped / shown\_no\_response, คำตอบที่ใช้ได้ต่อ probe, จำนวน unsupported conclusions |
+| E1a Strip-and-restore (เลื่อนไปหลังงาน) | AI ระบุและกู้คืน instrumentation ที่เคยมีอยู่ได้ไหม | repo open source 2–3 ตัว ปัก commit SHA | ตาม Tao et al. (2026): ลบ analytics calls ออก แล้วใช้ตำแหน่งเดิมเป็นเฉลย denominator ของ recall = calls ที่ลบออก repo ต้องมี wallet analytics อยู่จริง และต้องตรวจว่าชื่อ event ไม่หลุดผ่าน type, test หรือ helper (leakage check) | ref validity rate, gap precision, gap recall |
+| E1b Semantic evidence gap | AI เจอคำถามวินิจฉัยที่ log ที่มีอยู่ตอบไม่ได้ และเชื่อมกับสมมติฐานได้ไหม | 1–2 กรณีจาก ens-app-v3 @ 3c10925f ทำถ้ามีเวลาหลัง G2 | คนตรวจที่ไม่เห็นผล AI ก่อน ตัดสินว่า gap มีเหตุผลจากโค้ดและ diagnostic question หรือไม่ (event ที่คนไม่เคยเขียนไม่มีอยู่ในเฉลยของ E1a) | จำนวน gap ที่ผ่านการตรวจ, จำนวนที่ linter หาไม่ได้ |
+| E2 Ablation (ตัดในงาน) | การอ่านโค้ดทำให้สมมติฐานดีขึ้นไหม | cohort data ชุดเดียวกัน รันสองแบบ: logs-only และ logs + code | ผู้ตรวจ blind ให้คะแนน specificity และตรวจว่าโค้ดที่อ้าง**สนับสนุน**สมมติฐานจริงไหม | สัดส่วน non-generic, supported-link rate |
+| E3 Live loop (เฉพาะถ้าเข้ารอบ 20:00) | report v2 สอดคล้องกับสิ่งที่เกิดจริงแค่ไหน | sessions จากคนในห้องตอนนำเสนอรอบ finalist | role ที่สุ่ม (Funding Applicant / Explorer) ซึ่ง engine มองไม่เห็น | ตารางพรรณนา role × การกระทำ × คำตอบ แบบ k of n ไม่ใช่ diagnostic accuracy |
+| E4 Interruption | ระบบรบกวนผู้ใช้เท่าไรต่อหลักฐานที่ได้ | judging run (ผู้เยี่ยมชมเว็บเดโม) และ live run ถ้ามี | นับจาก `probe_exposures` และ reviewer ตรวจ report | shown / answered / skipped / shown\_no\_response, คำตอบที่ใช้ได้ต่อ probe, จำนวน unsupported conclusions |
 
 **เกณฑ์ยอมรับของ E1b** (ผู้ตรวจให้ผ่านหรือไม่ผ่านทีละข้อ gap หนึ่งจุดต้องผ่านทั้งสี่ข้อจึงนับ)
 
@@ -321,17 +331,23 @@ Evaluation มีสี่ชุด ทุกชุดใช้ ground truth ท
 
 - **ก่อน:** สถานะของทุกสมมติฐานใน v1 ที่ล็อกไว้ ซึ่งส่วนใหญ่ควรเป็น Unresolved
 - **หลัง:** สถานะใน v2 แยกตาม sub-cohort พร้อม coverage
-- **เปิดเผยการสุ่ม:** เทียบว่า session ที่ได้ role browse ส่วนใหญ่ไปตกที่ `never_attempted_no_apply` หรือตอบ "Just browsing" หรือไม่ ถ้าไม่ตรง ให้รายงานตามจริงว่า Inconclusive
+- **เปิดเผยการสุ่ม:** เทียบว่า session ที่ได้ role Explorer ส่วนใหญ่ไปตกที่ `no_gate_event` หรือตอบ "Just browsing" หรือไม่ ถ้าไม่ตรง ให้รายงานตามจริงว่า Inconclusive
 
-**สิ่งที่ต้องล็อกก่อนวันงาน (pre-register)**
+**สิ่งที่ล็อกแล้ว (pre-register, 15 ต.ค.)**
 
-- [ ] รายชื่อ repo และ commit SHA สำหรับ E1
-- [ ] annotation ของ E1 ทำเสร็จก่อนรัน analyzer
-- [ ] เกณฑ์ใน 4.8 และ probe budget
-- [ ] ข้อความบน role card ทั้งสองแบบ และอัตราสุ่ม 50/50
-- [ ] อัตรา simulated RPC error
+- [x] Repo สำหรับ Part B และ E1b: ensdomains/ens-app-v3 @ 3c10925fa042568d4affd6897d34e42159abd7a3 (MIT) ส่วน aave/interface ตัดเพราะ license เป็น All Rights Reserved
+- [x] Annotation: E1a เลื่อนไปหลังงานจึงไม่ต้องทำ ถ้าทำ E1b ให้คนที่ไม่ได้จูน prompt เขียน diagnostic question และ gap ของตัวเองก่อนรัน analyzer
+- [x] เกณฑ์ใน 4.8 คงเดิม และแผนการถาม: target\_n 10, budget 30, pending 60 วินาที, judging run ปิดศุกร์ 17:00, live run ปิดหลัง lock 12 นาที
+- [x] Role card สองแบบเป็นภาษาอังกฤษ (ด้านล่าง) สุ่ม 50/50 แบบ permuted block ขนาด 4 และบันทึก seed hash ไว้ก่อนเปิดเก็บ
+- [x] Simulated RPC error 0.10 เฉพาะครั้งแรกของ session ลองใหม่ผ่านเสมอ และข้อความบอกว่าเป็นการจำลอง
 
-E1 กับ E2 รันได้ในงานวันพฤหัสหลังจาก analyzer เสร็จ ส่วน E3 กับ E4 เกิดขึ้นระหว่างเดโมวันศุกร์
+**Role card A (Funding Applicant):** "Role: A team looking for funding. Your team just built a project at this hackathon and wants a small grant from the DAO community to keep going after the event. A friend sent you this app and said applications are open. Find a funding program that fits your team, and decide for yourself whether to apply now. Do what you'd really do. There's no right or wrong answer. About 2 minutes."
+
+**Role card B (Explorer):** "Role: Someone curious about the community. You've heard this DAO community funds finance projects, and you want to see what projects are out there. You don't have a project of your own to fund right now. Look at whatever interests you, and decide for yourself what to do next in the app. Do what you'd really do. There's no right or wrong answer. About 2 minutes."
+
+สองการ์ดยาวเท่ากัน ใช้โครงเดียวกัน และไม่พูดถึง wallet, connect หรือแบบสอบถาม
+
+สถานะในงาน: E1a เลื่อนไปหลังงานและ E2 ตัด เพราะเกณฑ์ตัดสินไม่ได้ให้คะแนนสองชุดนี้ E1b ทำถ้ามีเวลาหลัง G2 E4 นับจาก judging run ส่วน E3 ทำเฉพาะถ้าเข้ารอบนำเสนอ 20:00
 
 **ขอบเขตของสิ่งที่อ้างได้:** ไม่มีชุดใดใน E1–E4 ตอบว่า policy ดีกว่า exit survey แบบตายตัวหรือไม่ การทดสอบนั้น (E5: fixed probe เทียบกับ policy ภายใต้ budget เดียวกัน) ต้องใช้ผู้ตอบมากกว่าที่จะมีในห้อง จึงเป็น future work ในงานนี้ GhostReport อ้างได้แค่ **pipeline ทำงานได้ตั้งแต่ต้นจนจบ และทุกการตัดสินใจตรวจย้อนได้** E4 ไม่มีกลุ่ม holdout จึงอ้างไม่ได้ว่าถามน้อยลงโดยคุณภาพเท่าเดิม และระบบบันทึก options\_shown ตามลำดับไว้ เพื่อดูว่าตัวเลือกหรือลำดับชี้นำคำตอบหรือไม่
 
@@ -340,7 +356,9 @@ E1 กับ E2 รันได้ในงานวันพฤหัสหล�
 ใช้ **DeepSeek API** เพราะต้นทุนต่ำพอสำหรับ prototype ทุก LLM stage ใช้รุ่นเดียวกัน แบ่งเป็นสองโหมด
 
 - **Dev (จูน prompt, debug):** `deepseek-flash` แบบปิด thinking เพราะต้องรันซ้ำหลายสิบรอบ
-- **Evaluation และเดโม:** ล็อกรุ่นเดียว (`deepseek-flash` หรือ `deepseek-v4-pro`) และโหมด thinking ก่อนรัน E1 แล้วใช้รุ่นนั้นจนจบงาน ผลของ E1 และ E2 อ้างได้เฉพาะรุ่นที่ใช้ในเดโมเท่านั้น
+- **Evaluation และเดโม:** ล็อกแล้วเป็น `deepseek-flash` แบบปิด thinking ตัวเดียวกับตอน dev และใช้รุ่นนี้จนจบงาน ผลทุกชุดอ้างได้เฉพาะรุ่นนี้เท่านั้น
+
+**ใน DEMO mode:** Stage A/B รันครั้งเดียวบน seed run แล้ว lock ผลไว้ การเข้าชมแต่ละครั้งไม่เรียก LLM ปุ่ม Re-run investigation สำหรับผู้เยี่ยมชมเป็นงานเสริมที่ทำถ้าทัน และต้องจำกัดจำนวนครั้ง ตอนนี้มีแค่ operator ที่เรียก /api/analyze ได้
 
 **งบประมาณ:** ยอดเงินตอนนี้ $4.89 ประมาณการต่อหนึ่ง investigation (ContextPack ราว 30k token, ราคาช่วง peak) คือ Flash ≈ $0.03–0.04 และ Pro ≈ $0.12–0.15 ช่วง peak ของ DeepSeek ตรงกับ 08:00–11:00 และ 13:00–17:00 เวลาไทย ซึ่งทับกับช่วงงานเกือบทั้งหมด thinking token คิดราคาเป็น output จึงแพงที่สุด ให้ตั้งการแจ้งเตือนยอดเงินและเติมสำรองก่อนวันศุกร์ เพื่อไม่ให้ API ปฏิเสธ request กลางเดโม
 
@@ -371,38 +389,46 @@ E1 กับ E2 รันได้ในงานวันพฤหัสหล�
 | --- | --- |
 | Backend + API | FastAPI, Pydantic, SQLite (`sqlite3` หรือ SQLModel) |
 | Frontend (wallet flow + console) | React + Vite, TypeScript |
-| Live update บน console | Server-Sent Events จาก FastAPI |
+| Live update บน console | Polling ทุก 3 วินาทีจาก FastAPI |
 | ค้นโค้ด | ripgrep (`rg`) เรียกผ่าน subprocess |
 | เรียก LLM | OpenAI Python SDK ชี้ base URL ไปที่ api.deepseek.com ผ่าน harness ใน 8 |
 | Test | pytest สำหรับ policy, guards และ blinding |
 | Eval runner | สคริปต์ Python ที่อ่าน fixtures แล้วเขียน CSV |
-| เดโม | QR code generator, สคริปต์ seed pilot, สคริปต์ replay, ปุ่ม reset |
+| เดโม | หน้าแรก (landing) ที่รับ consent และแจก role card, สคริปต์ seed, โหมด replay, ปุ่ม reset สำหรับ operator |
 | เขียนโค้ด | Claude / Cursor ตามที่กติกาอนุญาต |
 
 ```text
 ghostreport/
 ├─ app/                    # Micro Wallet Flow (React) — target ของการสืบสวน
 ├─ console/                # GhostReport Console (React)
+├─ landing/                # หน้าแรก: consent, role card, 3 ขั้น, วิธีติดตั้ง
 ├─ engine/
-│  ├─ ingest.py            # POST /events + whitelist
+│  ├─ api.py               # FastAPI routes
 │  ├─ context_builder.py   # rg + import graph → ContextPack
 │  ├─ llm.py               # harness: schema, retry, cache, replay
 │  ├─ stages.py            # Stage A, Stage B, Narrative
+│  ├─ analyze.py           # /api/analyze (operator เท่านั้น)
+│  ├─ investigation.py
+│  ├─ records.py
 │  ├─ guards.py            # ทุก guard ใน 6
 │  ├─ cohorts.py           # SQL cohort + exit type
 │  ├─ policy.py            # select() + decision trace
 │  ├─ probe.py             # eligibility + delivery
 │  ├─ reconcile.py         # กฎ 4.8 → v2
+│  ├─ report.py            # report v1 / v2
+│  ├─ demo.py              # DEMO mode + seed
 │  └─ models.py            # Pydantic schemas
 ├─ prompts/                # stage_a.v1.md, stage_b.v1.md, narrative.v1.md
-├─ evals/
-│  ├─ repos.yaml           # repo + commit SHA (E1)
-│  ├─ annotations/         # ground truth ของ E1 ทำก่อนรัน
-│  └─ run_e1.py, run_e2.py
-├─ roles/                  # roles.db + role card (แยกจาก engine)
+├─ roles/                  # role service แยก process ไม่ mount ให้ engine
 ├─ tests/
-└─ ghostreport.yaml        # config ของ target app (ดู 10)
+└─ ghostreport.yaml        # config ของ target app (ดู 10) reader แบบย่อ
 ```
+
+**เพิ่มในงาน (15 ต.ค.):**
+
+- **Hosting:** URL สาธารณะสำหรับ frontend และ backend เก็บ key ใน env ฝั่ง server
+- **U-Bot (5% ของคะแนน):** ใช้โหมด U-Code ร่างหน้าแรกของเว็บ และโหมด Professional ร่าง write-up กับ README เก็บ screenshot ไว้ และใส่ "U-Bot" ใน tech stack ตอนส่งงาน คู่มือ U-Bot ไม่มี API จึงไม่เชื่อมเข้า runtime
+- **ส่งงาน:** hub.team1.network หัวหน้าทีมต้องลงทะเบียนและรอผู้จัดอนุมัติก่อนจึง submit ได้
 
 ## 10. Integrate เข้ากับ Repository อื่น
 
@@ -412,9 +438,8 @@ Engine ไม่รู้จักแอปใดเป็นการเฉพ�
 | --- | --- | --- | --- |
 | L0 Read-only | git URL + commit SHA | WorkflowMap, Evidence Gaps, hypotheses ที่อ้างโค้ด | ใช่ (Part B) |
 | L1 Event adapter | export หรือ SQL query ของ analytics ที่มีอยู่ + mapping ชื่อ event | cohorts และ funnel จากพฤติกรรมจริง | ใช่ (แอปของเราเอง) |
-| L2 Probe delivery | ฝัง component `<GhostProbe/>` หรือยิงผ่าน survey API ที่ทีมใช้อยู่ | คำตอบจากผู้ใช้จริงเข้าสู่ investigation | ใช่ (แอปของเราเอง) |
+| L2 Probe delivery | ฝัง component `<ProbeCard/>` หรือยิงผ่าน survey API ที่ทีมใช้อยู่ | คำตอบจากผู้ใช้จริงเข้าสู่ investigation | ใช่ (แอปของเราเอง) |
 | L3 Instrumentation | สิทธิ์เปิด pull request | diff ที่เพิ่ม event ที่ขาด ให้ dev review | ไม่ (roadmap) |
-|  |  |  |  |
 
 **ไฟล์ config ของ repo เป้าหมาย**
 
@@ -446,17 +471,23 @@ probe:
 
 ถ้า mapping ไม่มี event ที่ catalog ต้องใช้ action นั้นจะไม่ถูกเสนอ และ report บอกว่าตรวจอะไรไม่ได้ เช่น ไม่มี `wallet_gate_shown` แปลว่า rule R2 ใช้ไม่ได้ ส่วน L0 (Part B ของเดโม) รันใน `code_only` mode: ได้ WorkflowMap, evidence gaps และ hypotheses แต่**ห้ามสร้าง behavioral findings** ไม่ต้อง deploy หรือแก้โค้ดของ repo คนอื่น และต้องเคารพ license ของ repo นั้น
 
+**หน้า "ติดตั้งใน 3 ขั้น" บนเว็บเดโม:** (1) คัดลอก track.ts แล้วเรียก `track()` (2) เขียน ghostreport.yaml ไฟล์เดียวตามตัวอย่างข้างบน (reader ตอนนี้อ่านแค่ repo, include, keywords และ event mapping ฟิลด์อื่นในตัวอย่างยังเป็นแผน) (3) วาง \<ProbeCard/> ที่ทางออก หน้านี้คือหลักฐานด้าน Practicality ว่าทีม product นำไปใช้ได้จริง
+
+**Part B:** รันแบบ `code_only` บน ensdomains/ens-app-v3 ที่ commit `3c10925fa042568d4affd6897d34e42159abd7a3` (MIT) ซึ่งมี event ของ PostHog เกี่ยวกับ wallet และ registration ส่วน aave/interface ไม่ใช้ เพราะ license เป็น All Rights Reserved
+
 ## 11. Team Split และ Timeline วันงาน
 
-เป้าหมายสำคัญที่สุดคือ G2 ตอน 18:00 วันพฤหัส เมื่อ loop ต้องรันได้ครบตั้งแต่ event จนถึง report v2 ด้วยข้อมูล seed แม้หน้าตาจะยังไม่สวย เพราะวันศุกร์มีเวลาก่อนเดโมแค่ประมาณครึ่งวัน
+เป้าหมายสำคัญที่สุดคือ G2 ตอน 17:45 วันพฤหัส (ห้องปิด 18:00) เมื่อ loop ต้องรันได้ครบตั้งแต่ event จนถึง report v2 ด้วยข้อมูล seed แม้หน้าตาจะยังไม่สวย เพราะวันศุกร์ build ได้แค่ 10:00–14:00 และต้อง submit repo, demo website, deck และ write-up ภายใน 14:00 (ทีมตั้งเป้า 13:30)
 
 &#91;embedded content: แผนวันงาน · 4 lanes, 4 ช่วง, 3 gates\]
 
-ใส่ชื่อเจ้าของแต่ละ lane ได้โดยแก้ชื่อ lane ในภาพ เวลา pitch จริงให้ถามผู้จัดแล้วปรับช่วงสุดท้าย ถ้าไม่ผ่าน G3 ให้ตัดงานตามลำดับในข้อ 12 และบอกบนเวทีว่าเป็น partial prototype
+ใส่ชื่อเจ้าของแต่ละ lane ได้โดยแก้ชื่อ lane ในภาพ หลังส่งงาน: ประกาศ finalist 17:05–17:15 และ top 3 ของแต่ละ track นำเสนอสด 20:00–21:00 G3 คือ freeze ตอน 12:00 วันศุกร์ หลังจากนั้นแก้แค่ bug แล้ว submit 13:30 ถ้าไม่ผ่าน G3 ให้ตัดงานตามลำดับในข้อ 12 และเขียนใน write-up ว่าเป็น partial prototype
 
 ## 12. Judge Notes: ความเสี่ยงที่ยังเหลือ
 
 การออกแบบนี้ปิดจุดอ่อนหลักจากรอบก่อนได้แล้ว ที่เหลือคือความเสี่ยงด้าน execution ซึ่งแต่ละข้อมีทางสำรองที่เตรียมได้ก่อน
+
+**เกณฑ์ตัดสินจริงจากผู้จัด:** App execution 40%, Practicality 40%, Usability & Design 10%, Innovation & Ecosystem 5% และ U-Bot integration 5% กรรมการเปิด repo, demo website และ deck เอง ความเสี่ยงที่หนักที่สุดจึงเป็นเว็บที่กรรมการเปิดแล้วใช้ไม่ได้
 
 | ความเสี่ยง | สัญญาณเตือน | ทางสำรอง |
 | --- | --- | --- |
@@ -466,13 +497,19 @@ probe:
 | คนในห้องตอบ probe น้อย | sub-cohort มีคำตอบน้อยกว่า 3 | แสดงสถานะ Unresolved ตามจริง แล้วเปิด pilot replay ที่ติดป้าย |
 | Wi-Fi หรือ API ล่ม | latency พุ่ง หรือ error | สลับเป็น `REPLAY=1` และติดป้ายบนจอ |
 | Role card ทำให้คนมีเจตนาที่ไม่เป็นธรรมชาติ | กรรมการถามเรื่อง validity | ยอมรับว่าเป็น simulated work task ตาม Borlund (2003) ใช้เพื่อมี ground truth ไม่ได้อ้างว่าเป็นพฤติกรรมจริงในตลาด |
-| เวลาไม่พอ | Integration ยังไม่ผ่านตอนเที่ยงวันศุกร์ | ตัดตามลำดับ: narrative LLM → E2 → probe options จาก LLM (ใช้ตัวเลือกเขียนมือ) อย่าตัด Part B |
+| เวลาไม่พอ | วงหลักยังไม่ผ่าน G2 ตอน 17:45 วันพฤหัส | ตัดตามลำดับ: narrative LLM → probe options จาก LLM (ใช้ตัวเลือกเขียนมือ) → Part B ห้ามตัดวงหลัก event → probe → report และเว็บที่ deploy แล้ว |
+| เว็บเดโมล่มหรือช้าตอนกรรมการเปิด | เปิดจาก private window หรือมือถือแล้ว error | deploy ตั้งแต่วันพฤหัส ใช้ judging run ที่ lock ผลไว้ ไม่เรียก LLM ต่อการเข้าชม และมี REPLAY=1 สำรอง |
+| กรรมการเจอ error จำลองแล้วนึกว่าแอปพัง | กด Connect ครั้งแรกแล้วเจอ error | ข้อความ error บอกว่าเป็นการจำลอง อัตรา 0.10 เฉพาะครั้งแรก และลองใหม่ผ่านเสมอ |
+| ลิงก์ที่ส่งเปิดไม่ได้ | deck หรือ repo ขอสิทธิ์เข้าถึง | repo เป็น public, deck ตั้ง Anyone with the link can view และทดสอบทุกลิงก์ใน private window ก่อน submit |
 
 **คำถามที่ต้องตอบได้ภายใน 15 วินาที**
 
 - "ใครเขียน `connectWallet()`?" → ทีมเขียนเอง จึงมี Part B ที่รันกับ repo ที่ทีมไม่ได้เขียน
 - "Linter ทำได้ไหม?" → linter บอกว่าบรรทัดไหนไม่มี event แต่ไม่บอกว่าช่องว่างนั้นทำให้แยกสมมติฐานคู่ไหนไม่ได้ ดูว่า rule ไหนต้องใช้ event นั้น
 - "ต่างจาก LogRocket Galileo ตรงไหน?" → Galileo อธิบาย session ที่ถูกเก็บไว้แล้ว GhostReport ตัดสินว่าหลักฐานอะไรยังไม่มี และควรเก็บจาก cohort ไหน
+- "ต่างจาก in-app survey อย่าง Sprig หรือ Pendo ตรงไหน?" → เครื่องมือพวกนั้นถามทุกคนที่เข้าเงื่อนไข GhostReport ตรวจ log ก่อน ถ้า log ตอบได้ก็ไม่ถาม อ่านโค้ดว่าเก็บอะไรและขาดอะไร ล็อกสมมติฐานก่อนถาม และทุกประโยคใน report ย้อนไปหาหลักฐานได้
+
+**ช่อง pre-existing idea ในหน้าส่งงาน:** ติ๊กตามจริง เพราะไอเดียและ design ทำก่อนงาน ซึ่ง FAQ อนุญาต แล้วเขียนใน description ว่าออกแบบและค้นคว้าก่อนงาน ส่วนโค้ดทั้งหมดเขียนในงาน ดูได้จาก commit history ตั้งแต่ 15 ต.ค. จากนี้ commit หลังทำงานเสร็จแต่ละชิ้น history จะได้เห็นความคืบหน้า
 
 ## 13. Quality Scenarios และ Architecture Decisions
 
@@ -490,6 +527,9 @@ probe:
 | ผู้ใช้กด Skip | ไม่ถามซ้ำ และไม่เปลี่ยนป้ายของสมมติฐานใด |
 | เปิด replay | โหลด run file ที่บันทึกไว้ทั้งชุด จอแสดงป้าย replay และไม่ปนกับ live run |
 | Repo มีข้อความสั่ง LLM ฝังอยู่ | action ที่เสนอยังต้องอยู่ใน catalog, rule ต้องเป็นของที่ review แล้ว และไม่มีอะไรถูก execute |
+| ผู้เยี่ยมชมหลายคนเปิดเว็บเดโมพร้อมกัน | แต่ละ session ต่อท้าย judging run ได้ report v2 คำนวณใหม่แบบตายตัว และไม่มีการเรียก LLM ต่อการเข้าชม |
+| ผู้เยี่ยมชมกด Connect แล้วเจอ error จำลอง | ข้อความบอกว่าเป็นการจำลอง และลองใหม่แล้วผ่าน |
+| ตรวจ repo public และ bundle ฝั่ง client | ไม่พบ DeepSeek key หรือ secret ใด ๆ |
 
 **เกณฑ์ผ่านของวงจร probe → report** (ต้องผ่านก่อน G2)
 
