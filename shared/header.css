@@ -1,14 +1,17 @@
 @import "./tokens.css";
 
 div.gr-site-header-surface {
-  width: calc(100% - 96px);
-  max-width: 1320px;
-  margin: 16px auto 0;
-  border: 1px solid #ffffffd9;
-  border-radius: 12px;
-  background: #fcfdffda;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border: 1px solid #dfe5ef;
+  border-radius: 18px;
+  background: #f9fbfff0;
   backdrop-filter: blur(20px);
-  box-shadow: 0 6px 30px #2e3e5710;
+  box-shadow: 0 10px 32px #2e3e5714;
   color: var(--gr-ink);
 }
 .gr-site-header-surface .gr-header.gr-shared-header {
@@ -16,12 +19,12 @@ div.gr-site-header-surface {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
   max-width: none;
-  min-height: 54px;
+  min-height: 88px;
   margin: 0 auto;
-  padding: 8px 24px;
+  padding: 14px 32px;
   font-family: var(--gr-font);
   line-height: 1.4;
 }
@@ -29,7 +32,10 @@ div.gr-site-header-surface {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+  min-height: 44px;
+  padding-right: 26px;
+  border-right: 1px solid #dce3ef;
   color: var(--gr-ink);
   font-family: var(--gr-font);
   font-size: 25px;
@@ -40,8 +46,8 @@ div.gr-site-header-surface {
 }
 .gr-site-header-surface .gr-shared-header .gr-brand-logo {
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -56,9 +62,13 @@ div.gr-site-header-surface {
   margin: 0;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a {
-  padding: 8px 12px;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--gr-muted);
   font-size: 14px;
@@ -68,21 +78,23 @@ div.gr-site-header-surface {
   white-space: nowrap;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a:hover {
-  background: transparent;
+  background: #edf2fa;
   color: var(--gr-accent-ink);
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a[aria-current="page"] {
-  background: transparent;
-  border-bottom-color: #2055ff;
+  background: linear-gradient(180deg, #e7edffb3, #e9eefb);
   color: #2055ff;
-  font-weight: 500;
+  font-weight: 600;
 }
 .gr-site-header-surface .gr-shared-header .gr-github {
   justify-self: end;
   display: inline-flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  color: var(--gr-muted);
+  min-height: 44px;
+  padding-left: 22px;
+  border-left: 1px solid #dce3ef;
+  color: #4e5b70;
   font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
@@ -90,22 +102,26 @@ div.gr-site-header-surface {
 .gr-site-header-surface .gr-header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 22px;
 }
 .gr-site-header-surface .gr-site-switch {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px;
+  padding: 5px;
   border: 1px solid #dbe3f2;
   border-radius: 999px;
   background: #edf2fa;
+  box-shadow: inset 0 1px 3px #243c5d08;
 }
 .gr-site-header-surface .gr-site-switch a {
-  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px;
   border-radius: 999px;
   color: var(--gr-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
   text-decoration: none;
@@ -115,8 +131,8 @@ div.gr-site-header-surface {
   color: var(--gr-accent-ink);
 }
 .gr-site-header-surface .gr-site-switch a[aria-current="true"] {
-  background: #2055ff;
-  box-shadow: 0 2px 5px #2055ff24;
+  background: linear-gradient(180deg, #2c5cff, #194aff);
+  box-shadow: 0 3px 8px #2055ff26;
   color: #fff;
 }
 .gr-site-header-surface .gr-shared-header a:focus-visible {
@@ -125,6 +141,81 @@ div.gr-site-header-surface {
 }
 
 .gr-site-header-surface .gr-github svg {
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
+  color: #162235;
+}
+
+.gr-site-header-surface::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background-image:
+    linear-gradient(90deg, transparent, #f9fbff 27%, #f9fbff 92%, transparent),
+    url("./assets/ink-mountains.png"), url("./assets/ink-mountains.png");
+  background-position:
+    center,
+    left bottom,
+    right bottom;
+  background-size:
+    cover,
+    510px auto,
+    280px auto;
+  background-repeat: no-repeat;
+  opacity: 0.3;
+  pointer-events: none;
+}
+.gr-site-header-surface::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 12px;
+  left: 236px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ee8189a6, #f6bdc021);
+  pointer-events: none;
+}
+.gr-site-header-surface .gr-brand-copy {
+  display: grid;
+  gap: 1px;
+  line-height: 1.1;
+}
+.gr-site-header-surface .gr-brand-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #99a5b5;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.gr-site-header-surface .gr-brand-kicker::before {
+  content: "";
+  width: 10px;
+  height: 1px;
+  background: #e69b9e;
+}
+.gr-site-header-surface
+  .gr-shared-header
+  .gr-nav
+  a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2055ff;
+  transform: translateX(-50%);
+}
+
+div.gr-site-header-surface.console-header-surface {
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }

@@ -2,8 +2,16 @@
 
 `SiteHeader.tsx` is the single header implementation used by landing, the grant
 app and the report console. `navigation.ts` owns menu order, labels, links,
-brand artwork and the GitHub URL. `header.css` owns the shared header styling: a floating glass surface, sans-serif
-wordmark with the supplied ghost logo, centered navigation and an active underline.
+brand artwork and the GitHub URL. `header.css` owns the shared header styling:
+a full-width glass surface, the supplied ghost logo and a sans-serif wordmark,
+soft mountain artwork, a pale red sun, pill navigation with an active blue dot,
+and the GhostReport / DAO Mock switch beside GitHub. The header is 100% wide,
+has no maximum width or horizontal gutter, and remains sticky in the console.
+
+`assets/ink-mountains.png` reuses the existing Home artwork unchanged. Vite
+bundles it under each frontend's base path so the header works independently
+in development. Home references that same shared asset to avoid downloading a
+second copy of the background on its first load.
 
 All frontend UI uses `--gr-font`, the DAO Mock font stack:
 `"DM Sans", "Segoe UI", Arial, sans-serif`. Headings use the same family with
