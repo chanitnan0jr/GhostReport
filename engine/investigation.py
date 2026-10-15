@@ -11,6 +11,7 @@ from engine.models import (
     ClassMapping,
     DecisionPoint,
     HypothesisSet,
+    InvestigationState,
     ProbePlan,
     ProbeQuestion,
     WorkflowMap,
@@ -35,6 +36,15 @@ class Investigation:
 
     def plan(self, plan_id: str) -> ProbePlan | None:
         return next((p for p in self.plans if p.plan_id == plan_id), None)
+
+    @classmethod
+    def from_locked(cls, state: InvestigationState) -> "Investigation":
+        """Once v1 exists, what it locked is what gets served."""
+        return cls(
+            investigation_id=state.investigation_id, workflow=state.workflow,
+            hypotheses=state.hypothesis_set, class_mappings=state.class_mappings,
+            questions=state.probe_questions, plans=state.probe_plans,
+        )
 
     def dump(self) -> dict[str, Any]:
         """The same JSON shape `load_investigation` reads."""

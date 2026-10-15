@@ -25,7 +25,15 @@ from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
 from engine.llm import LLM, LLMError
-from engine.models import DecisionPoint, Event, Exposure, ProbeResponse, Run, Verification
+from engine.models import (
+    DecisionPoint,
+    Event,
+    Exposure,
+    InvestigationState,
+    ProbeResponse,
+    Run,
+    Verification,
+)
 from engine.probe import plan_probe
 from engine.records import ProbeRecords
 from engine.report import (
@@ -70,6 +78,9 @@ class Settings:
         os.getenv("GHOST_ENDS_AT", "2026-10-16T18:00:00+07:00")))
     dp0_seconds: float = 30.0
     autolock: bool = False
+    # Live run: every plan closes this many minutes after the lock (None = plan's own ends_at).
+    collection_minutes: float | None = field(default_factory=lambda: (
+        float(m) if (m := os.getenv("GHOST_COLLECTION_MINUTES")) else None))
     llm: Callable[[], LLM] = LLM
     cors_origins: tuple[str, ...] = field(default_factory=lambda: tuple(
         os.getenv("GHOST_CORS", "http://localhost:5173,http://localhost:5174").split(",")))
@@ -182,6 +193,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def records() -> ProbeRecords:
         return state["records"]  # type: ignore[no-any-return]
 
+    def serve_locked(v1: InvestigationState) -> None:
+        """After the lock, serve what v1 locked; a later edit of the approved file is ignored."""
+        locked = Investigation.from_locked(v1)
+        if (locked.questions, locked.plans) != (inv().questions, inv().plans):
+            log.warning("approved investigation differs from locked v1; serving v1")
+        state["investigation"] = locked
+
+    def do_lock() -> tuple[InvestigationState, str]:
+        snapshot, digest = lock_v1(store(), records(), inv(), now=settings.clock(),
+                                   collection_minutes=settings.collection_minutes)
+        serve_locked(snapshot)
+        log.warning("v1 LOCKED  digest=%s  cutoff=%s", digest, snapshot.data_cutoff.isoformat())
+        return snapshot, digest
+
     async def dp0_loop() -> None:
         while True:
             await asyncio.sleep(settings.dp0_seconds)
@@ -196,10 +221,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         state["store"] = Store(settings.db_dir / f"{settings.run_id}.sqlite", settings.run())
         state["records"] = ProbeRecords(state["store"].connection)
         if settings.autolock:
-            snapshot, digest = lock_v1(state["store"], state["records"], inv(),
-                                       now=settings.clock())
-            log.warning("v1 LOCKED  digest=%s  cutoff=%s", digest,
-                        snapshot.data_cutoff.isoformat())
+            do_lock()
+        chain = snapshots(state["store"], inv().investigation_id)
+        if chain:
+            serve_locked(chain[0][0])
         task = asyncio.create_task(dp0_loop()) if settings.dp0_seconds > 0 else None
         try:
             yield
@@ -311,8 +336,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/lock")
     async def lock() -> dict[str, Any]:
         """Show this digest outside the system (mentor/judge) before the first probe."""
-        snapshot, digest = lock_v1(store(), records(), inv(), now=settings.clock())
-        log.warning("v1 LOCKED  digest=%s  cutoff=%s", digest, snapshot.data_cutoff.isoformat())
+        snapshot, digest = do_lock()
         return {"version": 1, "digest": digest, "data_cutoff": snapshot.data_cutoff}
 
     @app.post("/api/snapshot")

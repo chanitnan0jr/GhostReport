@@ -226,3 +226,36 @@ def test_repo_config_loads() -> None:
     assert config.canonical_event("Wallet Gate Shown") == "wallet_gate_shown"
     assert config.canonical_event("wallet_gate_shown") == "wallet_gate_shown"
     assert config.canonical_event("nope") is None
+
+
+def test_locked_probes_are_served_from_v1_not_the_file(tmp_path: Path, clock: Clock) -> None:
+    import json
+    import shutil
+
+    from engine.investigation import DEFAULT_FIXTURE
+
+    fixture = tmp_path / "investigation.json"
+    shutil.copy(DEFAULT_FIXTURE, fixture)
+    settings = Settings(run_id="t", mode="seed", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                        fixture=fixture, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        client.post("/api/lock")
+        stem = client.get("/api/probe-plan", params={"session_id": "s1"}).json()["stem"]
+    raw = json.loads(fixture.read_text())
+    raw["questions"][0]["options"][0]["label"] = "Edited after the lock"
+    fixture.write_text(json.dumps(raw))
+    with TestClient(create_app(settings)) as client:
+        plan = client.get("/api/probe-plan", params={"session_id": "s1"}).json()
+        assert plan["stem"] == stem
+        assert "Edited after the lock" not in [o["label"] for o in plan["options"]]
+
+
+def test_live_run_closes_collection_after_lock(tmp_path: Path, clock: Clock) -> None:
+    settings = Settings(run_id="live", mode="live", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                        collection_minutes=12, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        client.post("/api/lock")
+        plan = client.get("/api/probe-plan", params={"session_id": "s1"}).json()
+        assert plan["ends_at"] == (T0 + timedelta(minutes=12)).isoformat()
+        clock.now = T0 + timedelta(minutes=13)
+        assert client.get("/api/probe-plan", params={"session_id": "s1"}).json() is None

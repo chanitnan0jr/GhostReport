@@ -2,7 +2,7 @@
 
 import hashlib
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from engine.catalog import ACTION_ID
@@ -68,16 +68,25 @@ def snapshots(store: Store, investigation_id: str) -> list[tuple[InvestigationSt
 
 def lock_v1(
     store: Store, records: ProbeRecords, investigation: Investigation, *, now: datetime,
+    collection_minutes: float | None = None,
 ) -> tuple[InvestigationState, str]:
-    """Lock hypotheses before the first probe; idempotent once v1 exists."""
+    """Lock hypotheses and probes before the first probe; idempotent once v1 exists.
+
+    `collection_minutes` (live run) closes every plan that long after the lock.
+    """
     existing = snapshots(store, investigation.investigation_id)
     if existing:
         return existing[0]
+    plans = investigation.plans
+    if collection_minutes is not None:
+        closes = now + timedelta(minutes=collection_minutes)
+        plans = tuple(p.model_copy(update={"ends_at": min(p.ends_at, closes)}) for p in plans)
     run_dp0(store, records, investigation, now=now)
     state = InvestigationState(
         investigation_id=investigation.investigation_id, run_id=store.run.run_id, version=1,
         data_cutoff=now, workflow=investigation.workflow, hypothesis_set=investigation.hypotheses,
         class_mappings=investigation.class_mappings,
+        probe_questions=investigation.questions, probe_plans=plans,
         sessions=build_cohorts(store.events(), now, build_verified=store.run.build_verified),
         decisions=latest_decisions(records),
     )
@@ -225,6 +234,7 @@ def append_successor(
         investigation_id=investigation.investigation_id, run_id=store.run.run_id,
         version=len(chain) + 1, data_cutoff=now, workflow=investigation.workflow,
         hypothesis_set=investigation.hypotheses, class_mappings=investigation.class_mappings,
+        probe_questions=chain[0][0].probe_questions, probe_plans=chain[0][0].probe_plans,
         sessions=current["sessions"], decisions=current["decisions"],
         findings=tuple(Finding.model_validate({k: v for k, v in f.items() if k != "text"})
                        for f in current["findings"]),

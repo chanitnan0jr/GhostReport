@@ -135,8 +135,11 @@ class Store:
                     raise ValueError("external v1 digest is missing or does not match")
                 first = InvestigationState.model_validate_json(rows[0][0])
                 if (state.workflow != first.workflow or state.hypothesis_set != first.hypothesis_set
-                        or state.class_mappings != first.class_mappings):
-                    raise ValueError("locked hypotheses, workflow and class mappings cannot change")
+                        or state.class_mappings != first.class_mappings
+                        or state.probe_questions != first.probe_questions
+                        or state.probe_plans != first.probe_plans):
+                    raise ValueError(
+                        "locked hypotheses, workflow, class mappings and probes cannot change")
                 if previous_state is not None and state.data_cutoff < previous_state.data_cutoff:
                     raise ValueError("data cutoff cannot go backwards")
             elif state.findings:

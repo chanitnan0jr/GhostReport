@@ -302,6 +302,9 @@ class InvestigationState(Model):
     workflow: WorkflowMap
     hypothesis_set: HypothesisSet
     class_mappings: tuple[ClassMapping, ...] = ()
+    # Approved probes are part of what v1 locks; served from here once locked.
+    probe_questions: tuple[ProbeQuestion, ...] = ()
+    probe_plans: tuple[ProbePlan, ...] = ()
     sessions: tuple[SessionStats, ...] = ()
     decisions: tuple[Decision, ...] = ()
     findings: tuple[Finding, ...] = ()

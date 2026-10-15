@@ -92,6 +92,7 @@ def serve(args: argparse.Namespace) -> None:
     settings = Settings(
         run_id=args.run_id, mode=args.mode, db_dir=args.db_dir, fixture=investigation_path,
         target_repo=args.repo, verifications=verifications, autolock=True,
+        collection_minutes=args.collection_minutes,
     )
     run = settings.run()
     print(f"run={run.run_id} mode={run.mode} commit={run.code_commit} "
@@ -125,6 +126,8 @@ def main() -> None:
     s.add_argument("--repo", type=Path, default=APP)
     s.add_argument("--investigation", type=Path, default=INVESTIGATION)
     s.add_argument("--verification", type=Path, default=VERIFICATION)
+    s.add_argument("--collection-minutes", type=float,
+                   help="live run: close every plan this long after the lock (e.g. 12)")
     args = parser.parse_args()
     if args.command == "verify":
         verify(args.app, args.out)
