@@ -46,6 +46,7 @@ from engine.report import (
     evaluate,
     lock_v1,
     run_dp0,
+    seed_session,
     snapshots,
 )
 from engine.seed import seed_run
@@ -443,6 +444,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return jsonable_encoder(build_report(
             store(), records(), inv(), now=settings.clock(),
         ))
+
+    @app.get("/api/seed-sessions/{session_id}")
+    async def seed_session_view(session_id: str) -> Any:
+        """A simulated (seed-*) session's server-received events, cohort and probe result."""
+        body = seed_session(store(), records(), inv(), session_id, now=settings.clock())
+        if body is None:
+            raise HTTPException(404, "only existing seed sessions are served")
+        return jsonable_encoder(body)
 
     @app.get("/api/partb")
     async def partb() -> Any:

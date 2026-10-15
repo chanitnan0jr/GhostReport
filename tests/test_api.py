@@ -367,3 +367,18 @@ def test_session_source_never_counts_simulated_sessions_as_visitors() -> None:
         "seed", "test", "visitor"]
     assert population({"seed": 20, "test": 0, "visitor": 3}) == "seed 20 + visitors 3"
     assert population({"seed": 20, "test": 2, "visitor": 3}) == "seed 20 + test 2 + visitors 3"
+
+
+def test_seed_session_view_serves_only_simulated_sessions(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        body = client.get("/api/seed-sessions/seed-07").json()
+        assert body["source"] == "seed" and body["cohort"] == "gate_event_no_attempt"
+        assert [e["seq"] for e in body["events"]] == [1, 2, 3, 4]
+        assert body["probe"]["decision_point"] == "DP1"
+        assert body["probe"]["status"] == "answered" and body["probe"]["selected"]
+        assert client.get("/api/seed-sessions/a-visitor").status_code == 404
+        assert client.get("/api/seed-sessions/seed-99").status_code == 404

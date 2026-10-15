@@ -207,6 +207,51 @@ def _split_text(by_source: dict[Source, dict[str, int]]) -> str:
     return f" ({' · '.join(parts)})" if parts else ""
 
 
+def seed_session(
+    store: Store, records: ProbeRecords, investigation: Investigation, session_id: str, *,
+    now: datetime,
+) -> dict[str, Any] | None:
+    """One simulated session as the server received it (for the recorded /demo clips).
+
+    Only seed sessions are exposed; visitor sessions are never served one by one.
+    """
+    if session_source(session_id) != "seed":
+        return None
+    events = [e for e in store.events() if e.session_id == session_id]
+    if not events:
+        return None
+    stats = build_cohorts(store.events(), now, build_verified=store.run.build_verified)
+    session = next(s for s in stats if s.session_id == session_id)
+    exposure = next((e for e in records.exposures() if e.session_id == session_id), None)
+    probe: dict[str, Any] | None = None
+    if exposure is not None:
+        response = next((r for r in records.responses()
+                         if r.exposure_id == exposure.exposure_id), None)
+        plan = investigation.plan(exposure.plan_id)
+        labels = ({o.id: o.label for o in investigation.question(plan).options}
+                  if plan else {})
+        probe = {
+            "decision_point": exposure.decision_point,
+            "status": ("shown_no_response" if response is None
+                       else "skipped" if response.skipped else "answered"),
+            "selected": [labels.get(i, i) for i in response.option_ids] if response else [],
+            "shown_at": exposure.shown_at,
+            "responded_at": response.responded_at if response else None,
+        }
+    return {
+        "session_id": session_id,
+        "source": "seed",
+        "events": [{"seq": e.seq, "event": e.event, "page": e.page,
+                    "occurred_at": e.occurred_at, "received_at": e.received_at}
+                   for e in sorted(events, key=lambda e: e.seq)],
+        "cohort": session.cohort,
+        "exit_type": session.exit_type,
+        "coverage": session.coverage,
+        "after_retry": session.after_retry,
+        "probe": probe,
+    }
+
+
 def funnel(sessions: Sequence[SessionStats], events: Sequence[Event]) -> dict[str, int]:
     names: dict[str, set[str]] = {}
     for event in events:

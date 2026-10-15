@@ -1,5 +1,5 @@
-import { mkdirSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
 // 20 simulated users (session IDs seed-NN-*, reported as "seed", never as visitors).
 // The four role-card personas are recorded to videos/ for the /demo page.
@@ -157,9 +157,46 @@ async function run(page: Page, visit: Visit, sid: string, project: number): Prom
   await pause(page, 1000);
 }
 
+const ms = (iso: string) => new Date(iso).getTime();
+
+/** The session as the server received it, timed against the clip.
+
+The offset to the first server-received event is measured on this machine (clip start →
+first /api/events acknowledgement); later offsets use server receive times only, so clock
+skew between this machine and the server never enters the timeline.
+*/
+async function clipLog(
+  request: APIRequestContext, sid: string, persona: string, firstAckMs: number,
+): Promise<object> {
+  const response = await request.get(`/api/seed-sessions/${sid}`);
+  expect(response.ok(), `the server must hold ${sid}`).toBe(true);
+  const body = await response.json();
+  const base = ms(body.events[0].received_at);
+  const at = (iso: string | null) => (iso ? firstAckMs + ms(iso) - base : null);
+  return {
+    session_id: sid,
+    persona,
+    label: "Simulated users (Playwright) — seed",
+    video_url: `${persona}.webm`,
+    events: body.events.map((e: { seq: number; event: string; received_at: string }) => ({
+      t_ms: at(e.received_at), event: e.event, seq: e.seq,
+    })),
+    cohort: body.cohort,
+    exit_type: body.exit_type,
+    after_retry: body.after_retry,
+    probe: body.probe && {
+      decision_point: body.probe.decision_point,
+      status: body.probe.status,
+      selected: body.probe.selected,
+      shown_t_ms: at(body.probe.shown_at),
+      responded_t_ms: at(body.probe.responded_at),
+    },
+  };
+}
+
 VISITS.forEach((visit, index) => {
   const sid = `seed-${String(index + 1).padStart(2, "0")}-${visit.path}`;
-  test(sid, async ({ browser, baseURL }) => {
+  test(sid, async ({ browser, baseURL, request }) => {
     test.skip(skipReason !== "", skipReason);
     const size = { width: 390, height: 780 };
     const context = await browser.newContext({
@@ -168,12 +205,20 @@ VISITS.forEach((visit, index) => {
       recordVideo: visit.video ? { dir: test.info().outputPath("video"), size } : undefined,
     });
     const page = await context.newPage();
+    const clipStart = Date.now();
+    let firstAckMs = -1;
+    page.on("response", (r) => {
+      if (firstAckMs < 0 && r.url().includes("/api/events") && r.ok())
+        firstAckMs = Date.now() - clipStart;
+    });
     await run(page, visit, sid, index);
     const video = page.video();
     await context.close();
     if (video && visit.video) {
       mkdirSync(VIDEO_DIR, { recursive: true });
       await video.saveAs(`${VIDEO_DIR}${visit.video}.webm`);
+      const log = await clipLog(request, sid, visit.video, Math.max(firstAckMs, 0));
+      writeFileSync(`${VIDEO_DIR}${visit.video}.json`, JSON.stringify(log, null, 2) + "\n");
     }
   });
 });
