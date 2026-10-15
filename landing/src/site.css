@@ -42,6 +42,11 @@
   background: var(--gr-surface);
   border-bottom: 1px solid var(--gr-line);
 }
+.home-site > .gr-site-header-surface {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 .gr-page {
   max-width: var(--gr-page);
   margin: 0 auto;
