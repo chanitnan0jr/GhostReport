@@ -1,5 +1,6 @@
 """Walking skeleton: events → lock → plan → exposure → response → report (k of n)."""
 
+import json
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -486,3 +487,29 @@ def test_evidence_map_links_each_hypothesis_to_its_own_evidence(tmp_path: Path) 
         assert all(n.endswith(f":{hid[2:]}") for n in linked if n.startswith("f:"))
     r2 = [h for h, linked in graph["highlight"].items() if "rule:R2" in linked]
     assert r2 and all(nodes[h]["approved_class"] == "HC-gate-permission" for h in r2)
+
+
+def test_narrative_retries_after_an_llm_outage(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+    from engine.llm import LLM
+
+    replies: list[Any] = [RuntimeError("Connection error."),
+                          {"paragraph": "Population: seed 20 + visitors 0 sessions, all "
+                                        "simulated users (seed). Nothing else is claimed."}]
+
+    def complete(messages: Any, model: str, thinking: bool) -> tuple[str, dict[str, int]]:
+        reply = replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return json.dumps(reply), {"prompt_tokens": 1, "completion_tokens": 1}
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, narrative="llm",
+                        narrative_interval=0, **VERIFIED,
+                        llm=lambda: LLM(cache_path=tmp_path / "llm.sqlite", complete=complete))
+    with TestClient(create_app(settings)) as client:
+        for _ in range(100):
+            narrative = client.get("/api/report").json()["narrative"]
+            if narrative["source"] == "llm":
+                break
+        assert narrative["source"] == "llm" and replies == []

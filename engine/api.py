@@ -256,6 +256,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         async def run() -> None:
             # The LLM's sqlite cache is thread-bound: create it in the worker thread.
             result = await asyncio.to_thread(lambda: generate(settings.llm(), value))
+            if any(reason.startswith("llm:") for reason in result["rejected"]):
+                # Transport or API failure: keep serving the template, retry next interval.
+                log.warning("narrative LLM unavailable for facts %s: %s", digest[:12],
+                            result["rejected"][0])
+                return
             narratives[digest] = result
             log.warning("narrative %s for facts %s (%d rejected)", result["source"],
                         digest[:12], len(result["rejected"]))
