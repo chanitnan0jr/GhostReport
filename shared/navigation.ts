@@ -33,7 +33,10 @@ export function projectHref(project: Project, current: URL): string {
       destination.hash = "#workflow";
       destination.searchParams.delete("sid");
     }
-  } else destination.searchParams.delete("project");
+  } else {
+    destination.searchParams.delete("project");
+    destination.searchParams.delete("simulation");
+  }
   return destination.pathname + destination.search + destination.hash;
 }
 
