@@ -15,9 +15,14 @@ export function SiteHeader() {
   return (
     <header className="gr-header">
       <a href="/" className="gr-brand">
-        <span className="gr-brand-mark" aria-hidden="true">
-          G
-        </span>
+        <img
+          className="gr-brand-mark gr-brand-logo"
+          src="/images/ghostreport-mark.png"
+          width="30"
+          height="30"
+          alt=""
+          aria-hidden="true"
+        />
         GhostReport
       </a>
       <nav className="gr-nav" aria-label="Main navigation">
