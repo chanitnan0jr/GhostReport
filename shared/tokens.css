@@ -1,0 +1,130 @@
+/* GhostReport design tokens: one light theme for landing/ and console/ (laptop, ≥1280px).
+   Import first: @import "../../shared/tokens.css"; then use the variables only. */
+:root {
+  --gr-font: Inter, "Segoe UI", Arial, sans-serif;
+  --gr-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --gr-bg: #f6f8fb;
+  --gr-surface: #ffffff;
+  --gr-surface-2: #f1f5f9;
+  --gr-ink: #0f172a;
+  --gr-muted: #64748b;
+  --gr-line: #e2e8f0;
+  --gr-accent: #2563eb;
+  --gr-accent-ink: #1d4ed8;
+  --gr-accent-soft: #eff4ff;
+
+  /* Instrumentation (Workflow Map, ENS) */
+  --gr-found: #16a34a;
+  --gr-found-soft: #ecfdf3;
+  --gr-gap: #dc2626;
+  --gr-gap-soft: #fef2f2;
+  --gr-unknown: #94a3b8;
+  --gr-unknown-soft: #f1f5f9;
+
+  /* Segments (Segments page, Demo results, Report) */
+  --gr-seg-browsers: #7c3aed;
+  --gr-seg-browsers-soft: #f5f3ff;
+  --gr-seg-stalled: #ea580c;
+  --gr-seg-stalled-soft: #fff7ed;
+  --gr-seg-connected: #16a34a;
+  --gr-seg-connected-soft: #ecfdf3;
+
+  /* Provenance labels: Simulated (seed) / Visitors / AI-written */
+  --gr-seed: #7c3aed;
+  --gr-visitor: #2563eb;
+  --gr-ai: #0891b2;
+
+  --gr-radius: 12px;
+  --gr-radius-sm: 8px;
+  --gr-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.06);
+  --gr-page: 1280px; /* content width; side padding 40px */
+}
+
+/* Shared header markup (same in landing/ and console/):
+   <header class="gr-header">
+     <a class="gr-brand" href="/"><span class="gr-brand-mark">G</span>GhostReport</a>
+     <nav class="gr-nav" aria-label="Main navigation">…9 links, aria-current="page"…</nav>
+     <a class="gr-github" href="https://github.com/chanitnan0jr/GhostReport">GitHub ↗</a>
+   </header> */
+.gr-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  max-width: var(--gr-page);
+  margin: 0 auto;
+  padding: 16px 40px;
+  font-family: var(--gr-font);
+}
+.gr-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--gr-ink);
+  font-weight: 700;
+  font-size: 17px;
+  text-decoration: none;
+}
+.gr-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--gr-accent);
+  color: #fff;
+  font-size: 15px;
+}
+.gr-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.gr-nav a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--gr-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+.gr-nav a:hover {
+  color: var(--gr-ink);
+  background: var(--gr-surface-2);
+}
+.gr-nav a[aria-current="page"] {
+  color: var(--gr-accent-ink);
+  background: var(--gr-accent-soft);
+  font-weight: 600;
+}
+.gr-github {
+  color: var(--gr-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+/* Small shared pieces */
+.gr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--gr-surface-2);
+  color: var(--gr-muted);
+}
+.gr-chip-seed {
+  background: var(--gr-seg-browsers-soft);
+  color: var(--gr-seed);
+}
+.gr-chip-ai {
+  background: #ecfeff;
+  color: var(--gr-ai);
+}
+.gr-card {
+  background: var(--gr-surface);
+  border: 1px solid var(--gr-line);
+  border-radius: var(--gr-radius);
+  box-shadow: var(--gr-shadow);
+}

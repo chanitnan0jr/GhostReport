@@ -11,6 +11,7 @@ COPY console/package.json console/package-lock.json console/
 COPY landing/package.json landing/package-lock.json landing/
 RUN npm ci --prefix app && npm ci --prefix console && npm ci --prefix landing
 COPY fixtures fixtures
+COPY shared shared
 COPY app app
 COPY console console
 COPY landing landing
