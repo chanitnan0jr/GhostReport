@@ -125,30 +125,6 @@ function Mountains() {
   );
 }
 
-function Landscape() {
-  return (
-    <svg
-      className="home-target-art"
-      viewBox="0 0 160 140"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="home-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#bfd8f8" />
-          <stop offset="1" stopColor="#e8f1fb" />
-        </linearGradient>
-      </defs>
-      <rect width="160" height="140" fill="url(#home-sky)" />
-      <circle cx="122" cy="40" r="14" fill="#fbe7a1" />
-      <path d="M0 98l34-34 22 18 30-30 40 38 34-20v70H0z" fill="#93b4cf" />
-      <path d="M0 108l40-24 34 20 36-26 50 32v30H0z" fill="#6ba596" />
-      <path d="M0 118l52-14 50 10 58-12v38H0z" fill="#5d9a7a" />
-      <rect y="124" width="160" height="16" fill="#a9dc9a" />
-    </svg>
-  );
-}
-
 export function HomePage() {
   const { population, unavailable } = useHomePopulation();
   const facts: [IconName, React.ReactNode][] = [
@@ -277,7 +253,11 @@ export function HomePage() {
 
         <div className="gr-page home-page">
           <section className="gr-card home-target">
-            <Landscape />
+            <img
+              className="home-target-art"
+              src="/images/common-ground-dao.jpg"
+              alt="DAO — decentralized autonomous organization"
+            />
             <div className="home-target-body">
               <ul className="home-tags home-tags-plain">
                 <li>Simulated wallet</li>

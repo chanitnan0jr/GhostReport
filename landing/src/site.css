@@ -962,3 +962,20 @@ body {
 .home-clips {
   align-items: start;
 }
+
+/* Full-size recorded demo on Home, matching the detailed seed player. */
+.home-demo .clips {
+  margin: 20px 0 0;
+}
+.home-demo .clip-card video {
+  aspect-ratio: 1 / 2;
+  max-height: 460px;
+  object-fit: contain;
+}
+.home-demo .clip-card header {
+  min-height: 72px;
+}
+.home-target img.home-target-art {
+  object-fit: contain;
+  background: #fff;
+}

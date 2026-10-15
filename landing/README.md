@@ -30,14 +30,16 @@ is missing. Mock mode uses the existing sample population, which may differ from
 recordings. Counts describe the current run; clips are saved seed run artifacts.
 
 The four `.webm` recordings and matching `.json` logs are static files in
-`public/demo/`. Each card plays independently with native controls after starting;
-its optional **Recorded events** disclosure shows actual recorded event names and
-separate question records. Portrait recordings use `object-fit: contain`; there
-are no people illustrations or invented reject events. Posters were extracted
-from those recordings with ffmpeg, without changing the videos.
+`public/demo/`. Home reuses the full-size `DemoClips` player from `/seed/`:
+four portrait videos up to 460px tall, **Play all four**, visible timed event logs,
+and segment results. Each log follows its own video's playback time. Portrait
+recordings use `object-fit: contain`; there are no people illustrations or
+invented reject events. Posters were extracted from those recordings with
+ffmpeg, without changing the videos.
 
 `public/images/hero-mountains.png` is decorative AI-generated artwork. The loop,
-brand and landscape illustration use native SVG. No generated text or data appears
+brand use native SVG. The Common Ground DAO illustration is the user-supplied
+`public/images/common-ground-dao.jpg`, displayed uncropped on white. No generated text or data appears
 inside the UI. Desktop visual review used local mock mode at 1240 and 1280 px;
 this redesign did not run unit or E2E suites or validate a live API.
 

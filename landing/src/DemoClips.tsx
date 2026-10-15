@@ -34,15 +34,14 @@ const EVENT_LABELS: Record<string, string> = {
   wallet_attempted: "Started connecting",
   wallet_connected: "Wallet connected",
   wallet_errored: "Network error (simulated)",
-  wallet_rejected: "Rejected",
   not_now_clicked: "Chose Not now",
   back_nav: "Back to projects",
 };
 const COHORTS: Record<string, string> = {
   connected: "Connected",
-  attempted_no_success: "Tried, no success",
-  gate_event_no_attempt: "Saw the gate, never tried",
-  no_gate_event: "Never saw the gate",
+  attempted_no_success: "Stopped at the wallet",
+  gate_event_no_attempt: "Stopped at the wallet",
+  no_gate_event: "Browsers",
 };
 const PROBE_STATUS: Record<string, string> = {
   answered: "answered",
@@ -112,6 +111,8 @@ function ClipCard({
       <video
         ref={register}
         src={`/demo/${clip.video_url}`}
+        poster={`/demo/${clip.persona}-poster.jpg`}
+        aria-label={`${title}: recorded app screen`}
         muted
         playsInline
         preload="auto"
@@ -149,6 +150,7 @@ export function DemoClips() {
   const [error, setError] = useState("");
   const [now, setNow] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [playbackError, setPlaybackError] = useState("");
   const videos = useRef<Record<string, HTMLVideoElement | null>>({});
   const frame = useRef(0);
 
@@ -196,7 +198,12 @@ export function DemoClips() {
     for (const video of all) video.currentTime = 0;
     setNow(0);
     setPlaying(true);
-    void Promise.all(all.map((v) => v.play())).then(() => {
+    setPlaybackError("");
+    void Promise.allSettled(all.map((v) => v.play())).then((results) => {
+      if (results.some((result) => result.status === "rejected"))
+        setPlaybackError(
+          "Some recordings could not start. Please try Play all four again.",
+        );
       frame.current = requestAnimationFrame(tick);
     });
   }
@@ -225,13 +232,18 @@ export function DemoClips() {
           moment they arrived.
         </span>
       </div>
+      {playbackError && (
+        <p className="seed-error" role="alert">
+          {playbackError}
+        </p>
+      )}
       <div className="clips-grid">
         {PERSONAS.map(([persona, title]) => (
           <ClipCard
             key={persona}
             title={title}
             clip={clips[persona]}
-            now={(videos.current[persona]?.currentTime ?? 0) * 1000 || now}
+            now={(videos.current[persona]?.currentTime ?? 0) * 1000}
             register={(video) => {
               videos.current[persona] = video;
             }}
