@@ -51,6 +51,7 @@ def test_template_passes_its_own_checker() -> None:
     ("Population seed 20 + visitors 3. 24 people saw the gate.", "number not in facts: 24"),
     ("Population seed 20 + visitors 3. H1 was chosen by 4 of 7 respondents.", "not in facts"),
     ("Population seed 20 + visitors 3. 9 of 14 sessions reached the gate.", "sessions"),
+    ("Population seed 20 + visitors 3. 5 of 9 gate_event_no_attempt sessions left.", "sessions"),
     ("Population seed 20 + visitors 3. H9 was chosen by 4 of 6 respondents.", "unknown"),
     ("Population seed 20 + visitors 3. Most respondents chose H1.", "vague quantity"),
     ("Population seed 20 + visitors 3. Almost half of the users left.", "vague quantity"),
@@ -64,7 +65,8 @@ def test_checker_rejects_ungrounded_claims(text: str, problem: str) -> None:
 
 def test_checker_accepts_grounded_claims_and_quoted_statements() -> None:
     text = ('Population: seed 20 + visitors 3 (seed sessions are simulated users). '
-            'At DP1, 6 of 9 sessions answered. H2 ("Just looking, because I was curious") '
+            'At DP1, 6 of 9 sessions answered and 9 of 9 gate_event_no_attempt sessions '
+            'saw it. H2 ("Just looking, because I was curious") '
             'was selected by 2 of 6 respondents, and H1 by 4 of 6 respondents (seed 3 of 4).')
     assert check(text, FACTS) == []
 

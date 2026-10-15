@@ -26,11 +26,14 @@ FORBIDDEN = re.compile(
     r"significan\w*)\b|%",
     re.IGNORECASE,
 )
-K_OF_N = re.compile(r"\b(\d+) of (\d+) (respondents?|sessions?)\b", re.IGNORECASE)
+# "7 of 7 sessions" or "7 of 7 gate_event_no_attempt sessions" (a cohort name may sit between).
+K_OF_N = re.compile(r"\b(\d+) of (\d+) (?:the )?(?:[a-z_]+ )?(respondents?|sessions?)\b",
+                    re.IGNORECASE)
 # "seed 3 of 4 · visitors 1 of 2": a respondents split, checked like respondents.
 SPLIT = re.compile(r"\b(?:seed|visitors|test) (\d+) of (\d+)\b")
 BARE_K_OF_N = re.compile(
-    r"(?<!seed )(?<!visitors )(?<!test )\b\d+ of \d+\b(?! (?:respondents?|sessions?)\b)",
+    r"(?<!seed )(?<!visitors )(?<!test )\b\d+ of \d+\b"
+    r"(?! (?:the )?(?:[a-z_]+ )?(?:respondents?|sessions?)\b)",
     re.IGNORECASE,
 )
 NUMBER = re.compile(r"(?<![\w.])\d+(?![\w.])")
