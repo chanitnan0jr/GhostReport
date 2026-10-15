@@ -7,6 +7,7 @@ import { PartBPage } from "./PartBPage";
 import { SeedPage } from "./SeedPage";
 import "./styles.css";
 import "./site.css";
+import "./explore-cards.css";
 
 const PAGES: Record<string, () => React.ReactElement> = {
   "": () => <HomePage />,
