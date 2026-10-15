@@ -151,7 +151,7 @@ export function HomePage() {
         </section>
         <section className="ink-feature" aria-labelledby="featured-app-title">
           <a
-            href="/try/"
+            href="/app/"
             className="ink-app-preview"
             aria-label="Try Common Ground DAO"
           >
@@ -215,7 +215,7 @@ export function HomePage() {
               <a className="ink-button" href="#demo">
                 Watch simulated users <span aria-hidden="true">→</span>
               </a>
-              <a className="ink-button ink-button-secondary" href="/try/">
+              <a className="ink-button ink-button-secondary" href="/app/">
                 Try it yourself <span aria-hidden="true">↗</span>
               </a>
             </div>

@@ -12,7 +12,7 @@ npx playwright install chromium --no-shell
 npm run test:browser
 ```
 
-The GhostReport guide at `/about/` has three steps: try the grant app, view the investigation, and inspect the four integration levels plus the System Design §10 config example. L3 is explicitly a roadmap item. Role card copy is exactly the approved English text in System Design §7.
+The GhostReport guide is at `/about/`; integration levels and the System Design §10 config example are at `/install/`. L3 is explicitly a roadmap item.
 
 ## Home + demo
 
@@ -21,8 +21,10 @@ header, four horizontal process cards, the featured Common Ground DAO app,
 real Playwright recordings, and ENS/installation links. Home styling lives in `src/home.css`;
 other landing routes keep the light page shell.
 **Watch the demo** and **Watch simulated users** scroll to `/#demo` on the same page.
-`/seed/` remains the detailed recording/session explorer; `/try/` assigns a role.
-The landing header uses Home, Try the App, Segments, Workflow Map, Report, Install.
+`/seed/` remains the detailed recording/session explorer. `/try/` is a compatibility
+redirect to `/app/`, preserving the query and hash. Home and the DAO Mock pill link
+directly to `/app/`. The shared header uses Home, Segments, Workflow Map, Report,
+Install, with a GhostReport / DAO Mock switch beside GitHub.
 ENS and About remain accessible from Home.
 
 `useHomePopulation` reads `/api/report` every three seconds and derives source counts
@@ -54,11 +56,18 @@ synthetic visitor counts are introduced by the redesign.
 Desktop visual review uses 1448×1086 (reference size) and 1280×960. Unit/E2E suites
 and mobile checks were not run for this redesign.
 
-## Roles and session boundary
+## Direct app entry and session boundary
 
-Clicking **Try the app as a user** creates a UUID and sends only `{session_id}` to `POST /roles/assign`. A valid `{role:"A"|"B"}` response displays the card and one **Start** button. Start navigates to `/app/?sid=…`. Assignment failures offer a retry using the same pending session ID; the frontend never invents a role on failure.
+Public entry opens the DAO app's “A small start. A shared future.” consent screen.
+There is no introductory Try page or role card in this route, and entry does not
+call `/roles/assign`. Existing role-card components/tests describe the earlier
+experiment and are no longer imported by the public landing entry point.
 
-Only the session ID is stored as `localStorage['ghost:judge_sid']`. The role remains in component memory, never in a URL or web storage, and is never sent to `/api/*`. The service owns randomization and assignment persistence. In mock mode only, a local interceptor alternates A/B to preview both cards.
+The app owns the session ID: it uses `?sid=` when present, otherwise a tab session
+or a new UUID, and saves the same ID as `localStorage['ghost:judge_sid']` so the
+report can highlight it. No role is sent to `/api/*`. Optional questions require
+consent and a session that has never clicked Connect, in addition to the loaded
+plan and exit eligibility. A rejection or network error does not restore eligibility.
 
 ## Single-origin development
 
@@ -77,7 +86,7 @@ In production the engine serves `landing/dist/` at `/`, `app/dist/` at `/app/`, 
 
 ## Verification
 
-Unit tests check exact A/B copy, session-only requests/storage, retry identity, invalid responses and integration links. Playwright checks desktop and 375 px width, the card, no role transmission to the engine, and the `/app/?sid=` destination. It uses a routed mock of the roles endpoint; real roles-service verification uses the separate process described below.
+The earlier role-card unit and browser tests describe the retired entry flow. They were not updated or run for the direct-entry change. Build checks cover TypeScript and production bundles; manual browser review checks the current public route.
 
 For a complete single-origin check against built or deployed frontends:
 
@@ -85,7 +94,7 @@ For a complete single-origin check against built or deployed frontends:
 BASE_URL=https://your-demo.example npm run test:browser
 ```
 
-`e2e/site.spec.ts` follows landing → assigned role → app → Not now → answer → public report, verifies the shared session highlight and all nine panels, and checks that no role field reaches `/api/*`. It requires a locked test run with open plans and creates synthetic sessions. Use a dedicated test deployment. `GHOST_MOCK_ROLES=1` explicitly mocks only role assignment when the separate service is unavailable; the app/report API stays real.
+`e2e/site.spec.ts` still describes the earlier assigned-role entry and needs alignment before it can validate the new direct entry. App-local full-loop checks enter `/app/` directly. All synthetic sessions must use the `e2e-` prefix and a dedicated test run.
 
 ## Separate roles service
 
@@ -95,7 +104,7 @@ Start it in a separate terminal from the repository root, with `ROLES_SEED` supp
 uv run uvicorn roles.service:app --port 18100
 ```
 
-The service owns its own SQLite database and assignment randomization. `GET /roles/health` exposes only health, a seed hash and assignment count. The landing sends valid UUIDs; repeated assignment requests for the same session return the same role. Never place the seed or operator token in a `VITE_` environment variable or client bundle.
+The service owns its own SQLite database and assignment randomization. `GET /roles/health` exposes only health, a seed hash and assignment count. The public direct-entry flow no longer calls this service. Historical assignment requests used UUIDs; repeated requests for the same session return the same role. Never place the seed or operator token in a `VITE_` environment variable or client bundle.
 
 ## Reviewed ENS investigation
 
@@ -120,17 +129,12 @@ browser automation or video replay has been added by this change.
 
 ## Public navigation
 
-The shared Header links **DAO** (`/`), **Demo User Seed** (`/seed/`) and
-**Report** (`/report/`). App and console headers have the same links. Start
-all three dev servers and enter through port 5175 for one origin; direct
-app/console ports do not host the landing routes.
-
-The DAO homepage reuses `app/src/data/projects.json`. Choosing a grant or
-Try the app requests a role assignment, shows the unchanged role card, and
-passes only the session ID (plus a project hash when selected) to `/app/`.
-The GhostReport introduction and integration instructions moved to `/about/`.
-The ENS page remains at `/ens/`. Each landing route is a separate built HTML
-entry, compatible with the existing static-file server.
+Home is GhostReport at `/`. The shared header's DAO Mock pill and the featured
+app link open `/app/` directly. Legacy `/try/` bookmarks redirect there without
+showing an introduction or role card. Start all three dev servers and enter
+through port 5175 for one origin; direct app/console ports do not host the
+landing routes. Each landing route is a separate built HTML entry compatible
+with the existing static-file server.
 
 `/seed/` reads `/api/report`, selects only sessions explicitly labeled seed
 in `current.session_sources`, then reads `/api/seed-sessions/{session_id}`.
