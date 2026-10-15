@@ -4,11 +4,12 @@ import {
   activeSite,
   navigationHref,
   siteBrand,
-  siteDestinations,
+  projectHref,
+  type Project,
   siteNavigation,
 } from "./navigation";
 import "./header.css";
-import "./site-switch.css";
+import "./project-select.css";
 
 function subscribe(onChange: () => void) {
   window.addEventListener("hashchange", onChange);
@@ -36,7 +37,7 @@ export function SiteHeader({
   return (
     <div className={`gr-site-header-surface ${surfaceClassName}`.trim()}>
       <header className="gr-header gr-shared-header">
-        <a href={siteBrand.href} className="gr-brand">
+        <a href={navigationHref(siteBrand.href, current)} className="gr-brand">
           <img
             className="gr-brand-mark gr-brand-logo"
             src={siteBrand.logo}
@@ -53,52 +54,34 @@ export function SiteHeader({
           </span>
         </a>
         <nav className="gr-nav" aria-label="Main navigation">
-          {siteNavigation.map((item) => (
-            <a
-              key={item.id}
-              href={navigationHref(item.href, current)}
-              aria-current={active === item.id ? "page" : undefined}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-        <div className="gr-header-actions">
-          <nav className="gr-site-switch" aria-label="Website switch">
-            {siteDestinations.map((item) => (
+          {siteNavigation
+            .filter((item) => destination !== "ens" || item.id !== "sandbox")
+            .map((item) => (
               <a
                 key={item.id}
-                href={item.href}
-                aria-current={destination === item.id ? "true" : undefined}
+                href={navigationHref(item.href, current)}
+                aria-current={active === item.id ? "page" : undefined}
               >
-                {item.id === "ghostreport" ? (
-                  <img
-                    src={siteBrand.logo}
-                    width="16"
-                    height="18"
-                    alt=""
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-                    <path d="M12 12v9M4 7.5 12 12l8-4.5M8 5.25l8 4.5" />
-                  </svg>
-                )}
                 {item.label}
               </a>
             ))}
-          </nav>
+        </nav>
+        <div className="gr-header-actions">
+          <label className="gr-project-select">
+            <span className="gr-project-label">Project</span>
+            <select
+              aria-label="Project data"
+              value={destination}
+              onChange={(event) =>
+                window.location.assign(
+                  projectHref(event.target.value as Project, current),
+                )
+              }
+            >
+              <option value="app">Mock data</option>
+              <option value="ens">ENS data</option>
+            </select>
+          </label>
           <a
             className="gr-github"
             href={siteBrand.repository}

@@ -9,20 +9,33 @@ export const siteBrand = {
 
 export const siteNavigation = [
   { id: "home", label: "Home", href: "/" },
-  { id: "segments", label: "Segments", href: "/report/#segments" },
   { id: "workflow", label: "Workflow Map", href: "/report/#workflow" },
+  { id: "segments", label: "Segments", href: "/report/#segments" },
   { id: "report", label: "Report", href: "/report/" },
   { id: "sandbox", label: "Sandbox", href: "/sandbox/" },
   { id: "install", label: "Install", href: "/install/" },
-] as const;
-
-export const siteDestinations = [
-  { id: "ghostreport", label: "GhostReport", href: "/" },
   { id: "dao", label: "DAO Mock", href: "/app/" },
 ] as const;
 
-export function activeSite(url: URL): string {
-  return /^\/(?:try|app)(?:\/|$)/.test(url.pathname) ? "dao" : "ghostreport";
+export type Project = "app" | "ens";
+
+export function activeSite(url: URL): Project {
+  return url.searchParams.get("project") === "ens" ? "ens" : "app";
+}
+
+export function projectHref(project: Project, current: URL): string {
+  const destination = new URL(current);
+  if (project === "ens") {
+    destination.searchParams.set("project", "ens");
+    destination.searchParams.delete("sandbox");
+    destination.searchParams.delete("operator");
+    if (/^\/(app|try|sandbox)(\/|$)/.test(destination.pathname)) {
+      destination.pathname = "/report/";
+      destination.hash = "#workflow";
+      destination.searchParams.delete("sid");
+    }
+  } else destination.searchParams.delete("project");
+  return destination.pathname + destination.search + destination.hash;
 }
 
 export function activeNavigation(url: URL): string | null {
@@ -41,9 +54,14 @@ export function activeNavigation(url: URL): string | null {
 }
 
 export function navigationHref(href: string, current: URL): string {
-  if (!href.startsWith("/report/") || !/^\/report\/?$/.test(current.pathname))
-    return href;
   const destination = new URL(href, current.origin);
-  destination.search = current.search;
+  if (href.startsWith("/app/")) return href;
+  if (href.startsWith("/report/") && /^\/report\/?$/.test(current.pathname))
+    destination.search = current.search;
+  if (activeSite(current) === "ens") {
+    destination.searchParams.set("project", "ens");
+    destination.searchParams.delete("sandbox");
+    destination.searchParams.delete("operator");
+  }
   return destination.pathname + destination.search + destination.hash;
 }
