@@ -4,14 +4,12 @@ import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";
 import { InstallPage } from "./InstallPage";
 import { PartBPage } from "./PartBPage";
-import { SeedPage } from "./SeedPage";
 import "./styles.css";
 import "./site.css";
 import "./explore-cards.css";
 
 const PAGES: Record<string, () => React.ReactElement> = {
   "": () => <HomePage />,
-  "/seed": () => <SeedPage />,
   "/ens": () => <PartBPage />,
   "/install": () => <InstallPage />,
   "/about": () => <AboutPage />,

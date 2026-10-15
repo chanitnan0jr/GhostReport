@@ -15,9 +15,6 @@ export function HomeDemo() {
             Simulated users (Playwright) — seed
           </p>
         </div>
-        <a href="/seed/">
-          Watch all sessions <span aria-hidden="true">→</span>
-        </a>
       </header>
       <DemoClips variant="featured" />
     </section>

@@ -21,20 +21,14 @@ header, four horizontal process cards, the featured Common Ground DAO app,
 real Playwright recordings, and ENS/installation links. Home styling lives in `src/home.css`;
 other landing routes keep the light page shell.
 **Watch the demo** and **Watch simulated users** scroll to `/#demo` on the same page.
-`/seed/` remains the detailed recording/session explorer. `/try/` is a compatibility
-redirect to `/app/`, preserving the query and hash. Home and the DAO Mock pill link
-directly to `/app/`. The shared header uses Home, Segments, Workflow Map, Report,
+`/try/` is a compatibility redirect to `/app/`, preserving the query and hash.
+Home and the DAO Mock pill link directly to `/app/`. The shared header uses
+Home, Segments, Workflow Map, Report,
 Install, with a GhostReport / DAO Mock switch beside GitHub.
 ENS and About remain accessible from Home.
 
-`useHomePopulation` reads `/api/report` every three seconds and derives source counts
-from `current.sessions` plus `current.session_sources`. It never assumes 20 sessions,
-never treats seed/test sessions as visitors, and withholds counts if source metadata
-is missing. Mock mode uses the existing sample population, which may differ from
-recordings. Counts describe the current run; clips are saved seed run artifacts.
-
 The four `.webm` recordings and matching `.json` logs are static files in
-`public/demo/`. Home reuses the full-size `DemoClips` player from `/seed/`:
+`public/demo/`. Home uses the full-size `DemoClips` player:
 four portrait videos up to 460px tall, **Play all four**, visible timed event logs,
 and segment results. Each log follows its own video's playback time. Portrait
 recordings use `object-fit: contain`; there are no people illustrations or
@@ -43,7 +37,7 @@ ffmpeg, without changing the videos.
 
 Home's featured player adds numbered headings, descriptions and individual play
 buttons; the full recordings remain 460px tall as requested. Native video controls
-appear after starting a clip. The original `/seed/` player remains available.
+appear after starting a clip. Session summaries are available in the Report's Segments page.
 
 `public/images/ink-mountains.png` is decorative artwork generated from the approved
 reference with all UI/text removed. The ghost logo remains in the shared header.
@@ -136,13 +130,14 @@ through port 5175 for one origin; direct app/console ports do not host the
 landing routes. Each landing route is a separate built HTML entry compatible
 with the existing static-file server.
 
-`/seed/` reads `/api/report`, selects only sessions explicitly labeled seed
-in `current.session_sources`, then reads `/api/seed-sessions/{session_id}`.
+The Report's Session Explorer reads `/api/report`, selects only sessions
+explicitly labeled seed in `current.session_sources`, then reads
+`/api/seed-sessions/{session_id}`.
 It displays the recorded cohort, coverage, event sequence, server timestamps
 and optional response. Refresh is read only: it never launches browsers,
 creates sessions or submits answers. Missing data and failed requests have
 visible empty/error states. No visitor or test session detail is requested.
 
-`VITE_MOCK=1` supplies clearly labeled local preview data for this page;
+`VITE_MOCK=1` supplies clearly labeled local preview data for the report;
 it is not represented as a recorded Playwright run. The video-based `/demo`
 remains deferred until Friday after G2.
