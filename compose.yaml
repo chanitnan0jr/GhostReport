@@ -1,0 +1,50 @@
+# Local demo of the deployed stack: http://localhost:8080
+#   GIT_SHA=$(git rev-parse HEAD) docker compose up --build
+# Without GIT_SHA the build records no instrumentation verification (honest default).
+# Reset the demo run:  docker compose down -v
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        RAILWAY_GIT_COMMIT_SHA: ${GIT_SHA:-}
+    environment:
+      GHOST_RUN_ID: ${GHOST_RUN_ID:-demo}
+      GHOST_OPERATOR_TOKEN: ${GHOST_OPERATOR_TOKEN:-local-operator}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}  # only needed for operator /api/analyze
+    volumes:
+      - api-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  roles:
+    build:
+      context: .
+      dockerfile: roles/Dockerfile
+    environment:
+      ROLES_SEED: ${ROLES_SEED:-local-demo-seed}
+      REVEAL_TOKEN: ${REVEAL_TOKEN:-local-reveal}
+    volumes:
+      - roles-data:/data
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2.10.0-alpine
+    ports:
+      - "${DEMO_PORT:-8080}:8080"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro,Z
+    depends_on:
+      api:
+        condition: service_healthy
+      roles:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  api-data:
+  roles-data:
