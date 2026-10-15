@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Background,
   Controls,
+  Handle,
   MarkerType,
   Position,
   ReactFlow,
   type Edge,
   type Node,
+  type NodeProps,
+  type ReactFlowInstance,
 } from "@xyflow/react";
-import dagre from "@dagrejs/dagre";
 import { Panel } from "./components";
 import { safeText } from "./format";
 import {
@@ -23,30 +25,33 @@ import {
 import "@xyflow/react/dist/style.css";
 import "./WorkflowMap.css";
 
-const width = 246;
-const height = 124;
+const width = 236;
+const height = 112;
+const colGap = 56;
+const rowGap = 28;
+const perRow = 3; // facts beside a state wrap after this many
 type MapNode = Node<{ label: ReactNode }>;
 
+// States run top to bottom in their recorded order; each state's outcomes and UI facts
+// (attached by file and nearest line) sit in rows to its right. The map reads down the
+// page at a legible zoom instead of shrinking one long horizontal chain.
 function layout(view: WorkflowView) {
-  if (!view.nodes.length)
-    return {
-      nodes: [] as MapNode[],
-      edges: [] as Edge[],
-      unattached: new Set<string>(),
-    };
   const states = view.nodes
     .filter((node) => node.kind === "state")
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   const edges: Edge[] = states.slice(1).map((node, index) => ({
     id: `state:${states[index].id}:${node.id}`,
     source: states[index].id,
+    sourceHandle: "bottom",
     target: node.id,
-    label: "State order",
+    targetHandle: "top",
     type: "smoothstep",
     markerEnd: { type: MarkerType.ArrowClosed },
     style: { stroke: "var(--gr-muted)" },
   }));
   const unattached = new Set<string>();
+  const attached = new Map<string, WorkflowFact[]>();
+  const loose: WorkflowFact[] = [];
   for (const node of view.nodes.filter((item) => item.kind !== "state")) {
     const parent = states
       .filter((state) => state.file === node.file)
@@ -57,57 +62,85 @@ function layout(view: WorkflowView) {
       )[0];
     if (!parent) {
       unattached.add(node.id);
+      loose.push(node);
       continue;
     }
+    attached.set(parent.id, [...(attached.get(parent.id) ?? []), node]);
     edges.push({
       id: `file:${parent.id}:${node.id}`,
       source: parent.id,
+      sourceHandle: "right",
       target: node.id,
+      targetHandle: "left",
       type: "smoothstep",
-      label: "Same file",
       markerEnd: { type: MarkerType.ArrowClosed },
       style: { stroke: "var(--gr-unknown)", strokeDasharray: "5 5" },
     });
   }
-  const graph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  graph.setGraph({
-    rankdir: "LR",
-    ranksep: 100,
-    nodesep: 42,
-    marginx: 32,
-    marginy: 32,
-  });
-  view.nodes.forEach((node) => graph.setNode(node.id, { width, height }));
-  edges.forEach((edge) => graph.setEdge(edge.source, edge.target));
-  dagre.layout(graph);
-  const nodes: MapNode[] = view.nodes.map((fact) => {
-    const position = graph.node(fact.id);
-    return {
-      id: fact.id,
-      position: { x: position.x - width / 2, y: position.y - height / 2 },
-      targetPosition: Position.Left,
-      sourcePosition: Position.Right,
-      width,
-      height,
-      className: `workflow-graph-node ${fact.instrumentation}`,
-      ariaLabel: `${fact.kind.replaceAll("_", " ")}: ${fact.id}. Open code evidence.`,
-      data: {
-        label: (
-          <div className="workflow-node-label">
-            <span>{fact.kind.replaceAll("_", " ")}</span>
-            <strong>{safeText(fact.id)}</strong>
-            <span>{instrumentationLabels[fact.instrumentation]}</span>
-            {fact.ref_check && (
-              <small className="workflow-ref-badge">{fact.ref_check}</small>
-            )}
-          </div>
-        ),
-      },
-      style: { borderColor: instrumentationColors[fact.instrumentation] },
-    };
-  });
-  return { nodes, edges, unattached };
+  const place = new Map<string, { x: number; y: number }>();
+  let y = 0;
+  const lane = (head: WorkflowFact | null, facts: WorkflowFact[]) => {
+    if (head) place.set(head.id, { x: 0, y });
+    const rows = Math.max(1, Math.ceil(facts.length / perRow));
+    facts.forEach((fact, i) =>
+      place.set(fact.id, {
+        x: (width + colGap) * (1 + (i % perRow)),
+        y: y + Math.floor(i / perRow) * (height + rowGap),
+      }),
+    );
+    y += rows * (height + rowGap) + rowGap;
+  };
+  states.forEach((state) => lane(state, attached.get(state.id) ?? []));
+  if (loose.length) lane(null, loose);
+  const columns =
+    1 +
+    Math.min(
+      perRow,
+      Math.max(0, ...[...attached.values()].map((f) => f.length), loose.length),
+    );
+  const nodes: MapNode[] = view.nodes.map((fact) => ({
+    id: fact.id,
+    type: "fact",
+    position: place.get(fact.id) ?? { x: 0, y: 0 },
+    width,
+    height,
+    className: `workflow-graph-node ${fact.instrumentation}`,
+    ariaLabel: `${fact.kind.replaceAll("_", " ")}: ${fact.id}. Open code evidence.`,
+    data: {
+      label: (
+        <div className="workflow-node-label">
+          <span>{fact.kind.replaceAll("_", " ")}</span>
+          <strong>{safeText(fact.id)}</strong>
+          <span>{instrumentationLabels[fact.instrumentation]}</span>
+          {fact.ref_check && (
+            <small className="workflow-ref-badge">{fact.ref_check}</small>
+          )}
+        </div>
+      ),
+    },
+    style: { borderColor: instrumentationColors[fact.instrumentation] },
+  }));
+  return {
+    nodes,
+    edges,
+    unattached,
+    width: columns * width + (columns - 1) * colGap,
+  };
 }
+
+// One handle on each side, so state order runs down and file links run right.
+function FactNode({ data }: NodeProps<MapNode>) {
+  return (
+    <>
+      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="target" position={Position.Left} id="left" />
+      {data.label}
+      <Handle type="source" position={Position.Bottom} id="bottom" />
+      <Handle type="source" position={Position.Right} id="right" />
+    </>
+  );
+}
+const nodeTypes = { fact: FactNode };
 
 function CodeDetails({
   view,
@@ -178,6 +211,26 @@ function WorkflowGraph({
   initialFact: string | null;
 }) {
   const arranged = useMemo(() => layout(view), [view]);
+  const canvas = useRef<HTMLDivElement>(null);
+  // Open at a legible zoom: the map's full width, from the top (or on a linked fact).
+  function openView(instance: ReactFlowInstance<MapNode>) {
+    const box = canvas.current?.getBoundingClientRect();
+    const w = box?.width || 800;
+    const zoom = Math.min(1, Math.max(0.45, (w - 48) / arranged.width));
+    const linked = initialFact && instance.getNode(initialFact);
+    if (linked)
+      void instance.setCenter(
+        linked.position.x + width / 2,
+        linked.position.y + height / 2,
+        { zoom },
+      );
+    else
+      void instance.setViewport({
+        x: Math.max(24, (w - arranged.width * zoom) / 2),
+        y: 24,
+        zoom,
+      });
+  }
   const [chosen, setChosen] = useState<string | null>(initialFact);
   useEffect(() => {
     if (initialFact) setChosen(initialFact);
@@ -193,7 +246,7 @@ function WorkflowGraph({
   );
   return (
     <div className="workflow-map-body">
-      <div className="workflow-canvas" aria-label="Workflow graph">
+      <div className="workflow-canvas" aria-label="Workflow graph" ref={canvas}>
         <ReactFlow<MapNode>
           key={`${view.target}:${view.commit}`}
           nodes={nodes}
@@ -208,8 +261,9 @@ function WorkflowGraph({
             );
             if (selection?.type === "select") setChosen(selection.id);
           }}
-          fitView
-          fitViewOptions={{ padding: 0.18 }}
+          nodeTypes={nodeTypes}
+          onInit={openView}
+          fitViewOptions={{ padding: 0.12 }}
           minZoom={0.08}
           maxZoom={2}
           colorMode="dark"
