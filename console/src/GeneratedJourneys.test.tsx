@@ -2,6 +2,16 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { GeneratedJourneys } from "./GeneratedJourneys";
 import { saveSandboxToken } from "../../shared/sandbox";
+import ensDraft from "../../fixtures/partb/journeys.ens.draft.json";
+
+vi.mock("./GeneratedJourneyGraph", () => ({
+  default: ({ value }: { value: { code_only: boolean } }) => (
+    <div
+      role="img"
+      aria-label={value.code_only ? "Code-only graph" : "Session graph"}
+    />
+  ),
+}));
 const record = {
   digest: "a".repeat(64),
   spec: {
@@ -60,6 +70,50 @@ it("shows validated draft evidence but hides generate and approval from visitors
   expect(
     screen.queryByRole("button", { name: "Approve reviewed definitions" }),
   ).not.toBeInTheDocument();
+});
+it("shows the generated ENS draft and graph as pending approval without counts or controls", async () => {
+  history.replaceState(null, "", "/report/?project=ens&operator=1#segments");
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        ...view,
+        project: "ens",
+        draft: ensDraft,
+        comparison: {
+          code_only: true,
+          nodes: [],
+          edges: [],
+          segments: ensDraft.spec.segments,
+        },
+      }),
+    ),
+  );
+  vi.stubGlobal("fetch", fetch);
+  render(<GeneratedJourneys project="ens" />);
+  await screen.findByText("LLM-generated draft · awaiting operator approval");
+  expect(
+    await screen.findByRole("img", { name: "Code-only graph" }),
+  ).toBeVisible();
+  expect(screen.getByText(ensDraft.digest)).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      /This draft passed the definition and code-reference checks/,
+    ),
+  ).toBeVisible();
+  expect(screen.queryByText("Approved definitions")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/\d+ of \d+ (sessions|respondents)/),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Operator token")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Generate user journeys" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Approve reviewed definitions" }),
+  ).not.toBeInTheDocument();
+  expect(
+    fetch.mock.calls.every(([url]) => url === "/api/journeys/spec?project=ens"),
+  ).toBe(true);
 });
 it("requires an operator token and submits the reviewed digest with the reviewer", async () => {
   history.replaceState(null, "", "/report/?operator=1#segments");

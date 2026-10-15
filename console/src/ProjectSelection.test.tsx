@@ -70,7 +70,7 @@ describe("project-scoped navigation", () => {
     );
     vi.stubGlobal("fetch", fetch);
     render(<App />);
-    await screen.findByText(/No approved ENS journey definitions yet/);
+    await screen.findByText(/No validated ENS journey draft is available/);
     expect(
       fetch.mock.calls.every(([url]) =>
         String(url).includes("/api/journeys/spec?project=ens"),

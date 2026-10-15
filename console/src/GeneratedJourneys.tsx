@@ -153,7 +153,7 @@ export function GeneratedJourneys({
         </h2>
         <p>
           {project === "ens"
-            ? "Read-only structure from the pinned ENS code. No recorded sessions or behavioural counts."
+            ? "LLM-generated structure from the pinned ENS Workflow Map. No recorded ENS sessions or behavioural counts."
             : "The same sessions, grouped by approved rules. The original template continues to drive the report and locked v1."}
         </p>
       </header>
@@ -177,7 +177,7 @@ export function GeneratedJourneys({
       {view && !record && (
         <p className="journey-empty">
           {project === "ens"
-            ? "No approved ENS journey definitions yet. No recorded sessions for this project. Journeys can be prepared from its Workflow Map and published after operator review."
+            ? "No validated ENS journey draft is available. An operator can generate one offline from its Workflow Map; visitors cannot generate or change it."
             : "No validated generated definitions yet. Review a draft before comparing it with the template."}
         </p>
       )}
@@ -186,8 +186,17 @@ export function GeneratedJourneys({
           <p className="journey-state">
             {view?.approved
               ? "Approved definitions"
-              : "Validated draft · review required"}
+              : project === "ens"
+                ? "LLM-generated draft · awaiting operator approval"
+                : "Validated draft · review required"}
           </p>
+          {project === "ens" && !view?.approved && (
+            <p className="journey-note">
+              This draft passed the definition and code-reference checks. Review
+              the graph, rules and cited code below before approving its digest.
+              The paths are proposals from code, not observed user journeys.
+            </p>
+          )}
           <details>
             <summary>Definition digest</summary>
             <code>{record.digest}</code>
