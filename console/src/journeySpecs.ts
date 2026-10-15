@@ -33,6 +33,8 @@ export interface JourneyComparison {
     id: string;
     column: number;
     label: string;
+    ref_check?: "correct" | "wrong" | "partial" | null;
+    ref_note?: string | null;
     sessions?: number;
     total_sessions?: number;
   }[];

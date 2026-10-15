@@ -29,6 +29,16 @@ export default function GeneratedJourneyGraph({
               <strong title={safeText(node.label)}>
                 {safeText(node.label)}
               </strong>
+              {node.ref_check === "wrong" && (
+                <span title={node.ref_note ?? undefined}>
+                  Code reference needs review
+                </span>
+              )}
+              {node.ref_check === "partial" && (
+                <span title={node.ref_note ?? undefined}>
+                  Partially checked reference
+                </span>
+              )}
               {!value.code_only &&
                 node.sessions !== undefined &&
                 node.total_sessions !== undefined && (
