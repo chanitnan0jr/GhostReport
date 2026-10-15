@@ -1,0 +1,149 @@
+{
+  "target": {
+    "repo": "https://github.com/ensdomains/ens-app-v3",
+    "commit": "3c10925fa042568d4affd6897d34e42159abd7a3",
+    "license": "MIT"
+  },
+  "finding": {
+    "title": "The Connect button on the Pricing step is never recorded",
+    "text": "A visitor without a wallet sees <ConnectButton large /> instead of Next. No event records that it was shown or clicked; wallet:connect fires only after a successful connection. Someone who reaches the button and leaves looks the same as someone who never reached Pricing.",
+    "refs": [
+      {
+        "file": "src/components/pages/profile/[name]/registration/steps/Pricing/Pricing.tsx",
+        "lines": [
+          185,
+          185
+        ],
+        "label": "Connect button replaces Next when there is no address"
+      },
+      {
+        "file": "src/utils/analytics/posthog.tsx",
+        "lines": [
+          67,
+          67
+        ],
+        "label": "wallet:connect, sent only after connecting (outside the searched files, checked by hand)"
+      }
+    ]
+  },
+  "ref_check": {
+    "method": "Each code ref read by hand against the source at the pinned commit",
+    "checks": [
+      {
+        "id": "pricing_step_gate",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "commit_start_pending",
+        "verdict": "partial",
+        "note": "The cited lines create the commit flow; the 60-second wait is real but at Transactions.tsx:265, outside the ref."
+      },
+      {
+        "id": "commit_ready_wait",
+        "verdict": "wrong",
+        "note": "The cited lines are the commitComplete branch, not commitReady."
+      },
+      {
+        "id": "registration_ready_finish",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "registration_terminal_stop",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "commit_sent",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "commit_failed",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "commit_complete",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "register_sent",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "register_failed",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "register_complete",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "registration_override",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "transactions_reset",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "pricing_advanced",
+        "verdict": "wrong",
+        "note": "No availability condition: the event sends estimatedTotal ?? 0n and ethPrice ?? 0n."
+      },
+      {
+        "id": "profile_advanced",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "info_advanced",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "registration_finished",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "wait_button_disabled_with_spinner",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "start_timer_button",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "cancel_registration_dialog",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "connect_button_when_no_address",
+        "verdict": "correct",
+        "note": ""
+      },
+      {
+        "id": "name_too_long_error",
+        "verdict": "correct",
+        "note": ""
+      }
+    ]
+  },
+  "limits": [
+    "Only the first 16 files were checked: the ContextPack is capped at 30k tokens (truncated).",
+    "Absence is claimed only within the searched files.",
+    "Code-only (L0): no users were asked and no behavioral findings exist for this repo."
+  ]
+}

@@ -340,3 +340,15 @@ def test_redeploy_on_a_new_commit_keeps_the_run(tmp_path: Path, clock: Clock) ->
     other = Settings(run_id="judging", mode="live", db_dir=tmp_path, dp0_seconds=0, **VERIFIED)
     with pytest.raises(ValueError, match="another run"), TestClient(create_app(other)):
         pass
+
+
+def test_partb_serves_the_reviewed_code_only_run(client: TestClient) -> None:
+    body = client.get("/api/partb").json()
+    assert body["mode"] == "code_only" and "hypotheses" not in body
+    assert body["ref_check"] == {**body["ref_check"], "checked": 22, "correct": 19,
+                                 "wrong": 2, "partial": 1}
+    assert [g["rule_id"] for g in body["cannot_check"]] == ["R2"]
+    gate = body["finding"]["refs"][0]["permalink"]
+    assert gate.startswith("https://github.com/ensdomains/ens-app-v3/blob/3c10925f")
+    assert gate.endswith("Pricing/Pricing.tsx#L185") and "%5Bname%5D" in gate
+    assert len(body["flow_map"]) == 22 and body["scope"]["searched_files"] == 16

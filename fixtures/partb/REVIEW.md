@@ -40,12 +40,15 @@ uv run python -m engine.analyze ../targets/ens-app-v3 fixtures/partb/draft.ens.j
 
 ## Human check of the code refs
 
-| Claim | Verdict |
+All 22 refs were read by hand against the source at the pinned commit
+([review.json](review.json) has one verdict per fact): **19 correct, 2 wrong, 1 partial**.
+
+| Fact | Verdict |
 | --- | --- |
-| `pricing_step_gate` / `connect_button_when_no_address` at `Pricing.tsx:184-185` | Correct |
-| `commit_*` and `register_*` outcomes at `Transactions.tsx:296-343` | Correct, each is a `sendEvent` |
-| `start_timer_button` at `Transactions.tsx:608-611` | Correct (`commitReady` branch) |
-| `commit_ready_wait` at `Transactions.tsx:581-592` | Ref correct, **state name wrong**: those lines are the `commitComplete` branch |
+| `commit_ready_wait` at `Transactions.tsx:581-592` | **Wrong**: those lines are the `commitComplete` branch, not `commitReady` |
+| `pricing_advanced` at `Registration.tsx:106-117` | **Wrong**: no availability condition; it sends `estimatedTotal ?? 0n` |
+| `commit_start_pending` at `Transactions.tsx:386-390` | **Partial**: the 60-second wait is real but at line 265, outside the ref |
+| the other 19, incl. the Connect gate at `Pricing.tsx:184-185` and all 12 outcomes | Correct |
 
 ## Limits
 

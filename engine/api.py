@@ -37,6 +37,7 @@ from engine.models import (
     Run,
     Verification,
 )
+from engine.partb import load_partb
 from engine.probe import plan_probe
 from engine.records import ProbeRecords
 from engine.report import (
@@ -442,6 +443,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return jsonable_encoder(build_report(
             store(), records(), inv(), now=settings.clock(),
         ))
+
+    @app.get("/api/partb")
+    async def partb() -> Any:
+        """The committed code-only run on ens-app-v3; static, no LLM call."""
+        return load_partb()
 
     if settings.static_dir is not None:
         # One origin for judges: landing at /, the target app at /app/, the report at /report/.
