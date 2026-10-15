@@ -269,3 +269,62 @@ def test_limits_and_expiry(client: TestClient, clock: Clock) -> None:
     assert client.post(url, json={"n": 1}, headers=owner).status_code == 429
     clock.now += timedelta(hours=4)
     assert client.get(f"/api/sandbox/{sid}/state").status_code == 404
+
+
+def test_reset_empties_the_sandbox_and_keeps_its_limits(
+    client: TestClient, calls: list[int],
+) -> None:
+    sid, owner = start(client)
+    other, other_owner = start(client)
+    traffic(client, other, other_owner, n=10, seed=2)
+    traffic(client, sid, owner, n=20, seed=9)
+    client.post(f"/api/sandbox/{sid}/investigate", headers=owner)
+    assert wait_for_investigation(client, sid)["investigate"]["runs_used"] == 1
+    client.post(f"/api/sandbox/{sid}/lock", json={"source": "prepared"}, headers=owner)
+    traffic(client, sid, owner, n=10, seed=3)
+    assert client.get(f"/api/sandbox/{sid}/reveal").json()["available"] is True
+
+    assert client.post(f"/api/sandbox/{sid}/reset").status_code == 401
+    assert client.post(f"/api/sandbox/{sid}/reset", headers=other_owner).status_code == 401
+    reset = client.post(f"/api/sandbox/{sid}/reset", headers=owner)
+    assert reset.status_code == 200 and reset.json()["resets"] == 1
+    state = client.get(f"/api/sandbox/{sid}/state").json()
+    assert state["phase"] == "pre_lock" and state["sessions_total"] == 0
+    assert state["batches"] == [] and state["draft"] is None and state["locked"] is None
+    # Removed sessions and used AI runs still count: a reset refills no budget.
+    assert state["sessions_used"] == 30 and state["investigate"]["runs_used"] == 1
+    report = client.get(f"/api/sandbox/{sid}/report").json()
+    assert report["locked"] is False and report["current"]["sessions"] == []
+    assert client.get(f"/api/sandbox/{sid}/reveal").json()["available"] is False
+    # The same owner keeps control, and the other sandbox is untouched.
+    assert traffic(client, sid, owner, n=10, seed=4)["sessions_total"] == 10
+    assert client.get(f"/api/sandbox/{other}/state").json()["sessions_total"] == 10
+    assert len(client.get(f"/api/sandbox/{other}/report").json()["current"]["sessions"]) == 10
+
+
+def test_reset_waits_for_a_running_investigation(tmp_path: Path, clock: Clock) -> None:
+    import threading
+
+    release = threading.Event()
+
+    def slow() -> LLM:
+        script = Script([HYPOTHESES])
+
+        def complete(messages: Any, model: str, thinking: bool) -> Any:
+            release.wait(5)
+            return script(messages, model, thinking)
+        return LLM(cache_path=tmp_path / "cache.sqlite", model="fake", thinking=False,
+                   replay=False, complete=complete)
+
+    settings = Settings(run_id="judging", mode="demo", db_dir=tmp_path / "runs",
+                        sandbox_root=tmp_path / "runs" / "sandboxes", dp0_seconds=0,
+                        clock=clock, operator_token=None, code_commit="c1",
+                        verifications=GATE_VERIFIED, target_repo=APP, llm=slow)
+    with TestClient(create_app(settings)) as client:
+        sid, owner = start(client)
+        traffic(client, sid, owner, n=20, seed=9)
+        assert client.post(f"/api/sandbox/{sid}/investigate", headers=owner).status_code == 202
+        assert client.post(f"/api/sandbox/{sid}/reset", headers=owner).status_code == 409
+        release.set()
+        assert wait_for_investigation(client, sid)["investigate"]["status"] == "done"
+        assert client.post(f"/api/sandbox/{sid}/reset", headers=owner).status_code == 200

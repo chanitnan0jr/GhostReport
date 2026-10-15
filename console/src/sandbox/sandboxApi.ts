@@ -3,6 +3,7 @@ import type {
   InvestigateStarted,
   LockRequest,
   LockResult,
+  ResetResult,
   Reveal,
   SandboxState,
   TrafficRequest,
@@ -71,6 +72,10 @@ export const sendTraffic = (id: string, body: TrafficRequest) =>
 
 export const startInvestigation = (id: string) =>
   call<InvestigateStarted>(id, "investigate", { method: "POST", owner: true });
+
+// Empties the sandbox and returns it to step 1; the id, owner and expiry stay.
+export const resetSandbox = (id: string) =>
+  call<ResetResult>(id, "reset", { method: "POST", owner: true });
 
 export const lockSandbox = (id: string, body: LockRequest) =>
   call<LockResult>(id, "lock", {

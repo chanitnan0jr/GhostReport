@@ -116,6 +116,18 @@ function server(initial: SandboxState) {
         current = { ...current, sessions_total: 20, batches: [batch] };
         return json(batch);
       }
+      if (url.endsWith("/reset")) {
+        current = {
+          ...current,
+          phase: "pre_lock",
+          sessions_total: 0,
+          sessions_used: 20,
+          batches: [],
+          locked: null,
+          draft: null,
+        };
+        return json({ sandbox_id: ID, sessions_used: 20, resets: 1 });
+      }
       if (url.endsWith("/lock")) {
         current = {
           ...current,
@@ -314,4 +326,37 @@ it("reveals the mix that was set beside what the report counted", () => {
     "5 of 8 respondents",
   );
   expect(document.body.textContent).not.toMatch(FORBIDDEN);
+});
+
+it("resets the sandbox after a second click and keeps the session limit", async () => {
+  saveSandboxToken(ID, "owner-token");
+  const calls = server(state({ sessions_total: 20, batches: [batch] }));
+  const reload = refresh();
+  render(<SandboxPanel sandboxId={ID} report={null} refresh={reload} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+  expect(screen.getByText("Remove all 20 sessions?")).toBeVisible();
+  // The first click only asks; nothing is sent until the confirm.
+  expect(calls.some((c) => c.url.endsWith("/reset"))).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Reset sandbox" }));
+  expect(await screen.findByText(/^Sandbox reset\./)).toBeVisible();
+  const post = calls.find((c) => c.url.endsWith("/reset"));
+  expect(post).toMatchObject({ method: "POST", auth: "Bearer owner-token" });
+  expect(reload).toHaveBeenCalled();
+  expect(screen.getByText(/280 more sessions allowed/)).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(FORBIDDEN);
+});
+
+it("offers Reset only to the browser that started the sandbox", async () => {
+  server(state({ sessions_total: 20, batches: [batch] }));
+  render(
+    <SandboxPanel
+      sandboxId="sbx-ffffffffffffffff"
+      report={null}
+      refresh={refresh()}
+    />,
+  );
+  await screen.findByText(/20 simulated sessions/);
+  expect(
+    screen.queryByRole("button", { name: "Reset" }),
+  ).not.toBeInTheDocument();
 });

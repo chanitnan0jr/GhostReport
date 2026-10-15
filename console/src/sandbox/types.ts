@@ -99,6 +99,13 @@ export interface SandboxHypothesis {
 export type SandboxPhase =
   "pre_lock" | "investigating" | "draft_ready" | "locked";
 
+/** POST /api/sandbox/{id}/reset (owner). */
+export interface ResetResult {
+  sandbox_id: string;
+  sessions_used: number;
+  resets: number;
+}
+
 /** GET /api/sandbox/{id}/state (public). Poll it every 2–3 s while investigating. */
 export interface SandboxState {
   sandbox_id: string;
@@ -108,6 +115,8 @@ export interface SandboxState {
   expires_at: string;
   limits: SandboxLimits;
   sessions_total: number;
+  sessions_used?: number; // sessions_total plus those removed by resets; the limit counts these
+  resets?: number;
   batches: TrafficResult[];
   rpc_error_rate: number; // 0.1: first connect attempt of a session only
   banner: string; // SANDBOX_BANNER

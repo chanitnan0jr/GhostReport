@@ -242,6 +242,10 @@ class Sandbox:
     def sessions_total(self) -> int:
         return sum(b["generated"] for b in self.meta["batches"])
 
+    def sessions_used(self) -> int:
+        """Sessions counted against the limit, including those removed by a reset."""
+        return self.sessions_total() + int(self.meta.get("discarded_sessions", 0))
+
     def truth(self) -> list[dict[str, Any]]:
         path = self.root / "truth.jsonl"
         if not path.exists():
@@ -465,6 +469,7 @@ class Sandbox:
             "sandbox_id": self.sandbox_id, "mode": "sandbox", "phase": phase,
             "created_at": self.meta["created_at"], "expires_at": self.meta["expires_at"],
             "limits": LIMITS, "sessions_total": self.sessions_total(),
+            "sessions_used": self.sessions_used(), "resets": self.meta.get("resets", 0),
             "batches": self.meta["batches"], "rpc_error_rate": RPC_ERROR_RATE,
             "banner": BANNER,
             "investigate": {**info, "runs_left": max(0, RUNS_PER_SANDBOX - info["runs_used"]),
@@ -701,6 +706,32 @@ class SandboxHub:
             if expired:
                 shutil.rmtree(path, ignore_errors=True)
 
+    def reset(self, sandbox: Sandbox) -> Sandbox:
+        """Back to step 1: every session, draft, lock and report document is removed.
+
+        The id, owner token and expiry stay. Removed sessions still count against the
+        session limit and used AI runs stay used, so a reset never refills a budget.
+        """
+        if sandbox.ghost is not None:
+            sandbox.ghost.shutdown()
+        for path in sandbox.root.iterdir():
+            if path.name == "meta.json":
+                continue
+            if path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink(missing_ok=True)
+        meta = sandbox.meta
+        used = sandbox.sessions_used()  # read before the batches are cleared
+        meta.update(batches=[], lock=None, discarded_sessions=used,
+                    resets=int(meta.get("resets", 0)) + 1)
+        meta["investigate"].update(status="idle", error=None, started_at=None,
+                                   finished_at=None, snapshot_sessions=None, cached=None)
+        sandbox.save()
+        sandbox.task = None
+        log.warning("sandbox %s reset (%d sessions used so far)", sandbox.sandbox_id, used)
+        return self._open(sandbox)
+
     def remove(self, sandbox_id: str) -> None:
         sandbox = self.sandboxes.pop(sandbox_id)
         if sandbox.task is not None:
@@ -739,6 +770,23 @@ def add_hub_routes(app: FastAPI, hub: SandboxHub) -> None:
         return {"sandbox_id": sandbox.sandbox_id, "token": token,
                 "expires_at": sandbox.meta["expires_at"], "limits": LIMITS}
 
+    @app.post("/api/sandbox/{sandbox_id}/reset")
+    async def reset_sandbox(
+        sandbox_id: str, authorization: Annotated[str | None, Header()] = None,
+    ) -> dict[str, Any]:
+        """The owner empties the sandbox and starts again at step 1 (same id and expiry)."""
+        sandbox = hub.get(sandbox_id)
+        if sandbox is None:
+            raise HTTPException(404, "This sandbox does not exist or has expired.")
+        owner_only(sandbox, authorization)
+        async with sandbox.lock:
+            if sandbox.running():
+                raise HTTPException(409, "Wait for the investigation to finish before "
+                                         "resetting.")
+            hub.reset(sandbox)
+        return {"sandbox_id": sandbox_id, "sessions_used": sandbox.sessions_used(),
+                "resets": sandbox.meta["resets"]}
+
     @app.api_route("/api/sandbox/{sandbox_id}/{rest:path}", methods=["GET", "POST"],
                    include_in_schema=False)
     async def forward(sandbox_id: str, rest: str, request: Request) -> Response:
@@ -757,16 +805,20 @@ def add_hub_routes(app: FastAPI, hub: SandboxHub) -> None:
         return Forward(sandbox.app, child)
 
 
+def owner_only(sandbox: Sandbox, authorization: str | None) -> None:
+    token = (authorization or "").partition("Bearer ")[2].strip()
+    if not token or not hmac.compare_digest(_sha256(token), sandbox.meta["token_sha256"]):
+        raise HTTPException(401, "Only the browser that started this sandbox can change "
+                                 "it. Start your own sandbox to try it.")
+
+
 def add_sandbox_routes(app: FastAPI, ghost: Ghost) -> None:
     """Controls of one sandbox run, reached through the hub at /api/sandbox/{id}/…."""
     sandbox: Sandbox = ghost.settings.sandbox
     hub = sandbox.hub
 
     def owner(authorization: Annotated[str | None, Header()] = None) -> None:
-        token = (authorization or "").partition("Bearer ")[2].strip()
-        if not token or not hmac.compare_digest(_sha256(token), sandbox.meta["token_sha256"]):
-            raise HTTPException(401, "Only the browser that started this sandbox can change "
-                                     "it. Start your own sandbox to try it.")
+        owner_only(sandbox, authorization)
 
     @app.get("/api/sandbox/state")
     async def state() -> Any:
@@ -782,10 +834,11 @@ def add_sandbox_routes(app: FastAPI, ghost: Ghost) -> None:
             if sandbox.running():
                 raise HTTPException(409, "Wait for the investigation to finish before adding "
                                          "traffic.")
-            total = sandbox.sessions_total()
+            total = sandbox.sessions_used()
             if total + body.n > PER_SANDBOX:
-                raise HTTPException(429, f"This sandbox has {total} simulated sessions; the "
-                                         f"limit is {PER_SANDBOX}. Start a new sandbox for more.")
+                raise HTTPException(429, f"This sandbox has used {total} simulated sessions "
+                                         f"(resets included); the limit is {PER_SANDBOX}. "
+                                         "Start a new sandbox for more.")
             try:
                 result = sandbox.generate(body)
             except ValueError as error:

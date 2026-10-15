@@ -40,6 +40,26 @@
   font-size: 13px;
   font-weight: 600;
 }
+.sbx-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.sbx-reset-confirm {
+  padding: 6px 12px;
+  border: 1px solid var(--gr-gap);
+  border-radius: var(--gr-radius-sm);
+  background: var(--gr-gap);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sbx-reset-confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 .sbx-steps {
   display: flex;

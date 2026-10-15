@@ -7,6 +7,7 @@ import {
   fetchReveal,
   fetchState,
   lockSandbox,
+  resetSandbox,
   SandboxError,
   sendTraffic,
   startInvestigation,
@@ -148,6 +149,7 @@ export function SandboxPanel({
   );
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(true);
+  const [confirmReset, setConfirmReset] = useState(false);
   const owner = canControl(sandboxId);
   const phase = useRef<string | null>(null);
 
@@ -225,6 +227,13 @@ export function SandboxPanel({
       await startInvestigation(sandboxId);
       return "";
     });
+  const reset = () =>
+    act("reset", async () => {
+      setConfirmReset(false);
+      await resetSandbox(sandboxId);
+      setReveal(null);
+      return "Sandbox reset. Every simulated session, the draft and the lock were removed; start again at step 1.";
+    });
   const lock = (body: LockRequest) =>
     act("lock", async () => {
       await lockSandbox(sandboxId, body);
@@ -252,7 +261,9 @@ export function SandboxPanel({
   const step = view && available(view, state) ? view : suggested(state);
   const investigateInfo = state.investigate;
   const lastBatch = state.batches.at(-1);
-  const remaining = state.limits.sessions_total - state.sessions_total;
+  // Sessions removed by a reset still count against the limit.
+  const remaining =
+    state.limits.sessions_total - (state.sessions_used ?? state.sessions_total);
   const locked = state.locked;
   const aiBlocked =
     !owner ||
@@ -276,6 +287,44 @@ export function SandboxPanel({
           {state.sessions_total} simulated sessions · deleted at{" "}
           {time(state.expires_at)}
         </p>
+        {owner &&
+          (confirmReset ? (
+            <span className="sbx-reset" role="group" aria-label="Confirm reset">
+              <span>
+                Remove all {state.sessions_total} sessions
+                {state.locked ? " and the lock" : ""}?
+              </span>
+              <button
+                type="button"
+                className="sbx-reset-confirm"
+                disabled={busy !== null || state.phase === "investigating"}
+                onClick={() => void reset()}
+              >
+                {busy === "reset" ? "Resetting…" : "Reset sandbox"}
+              </button>
+              <button
+                type="button"
+                className="quiet"
+                onClick={() => setConfirmReset(false)}
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="quiet"
+              disabled={busy !== null || state.phase === "investigating"}
+              title={
+                state.phase === "investigating"
+                  ? "Wait for the investigation to finish"
+                  : "Remove every simulated session and start again at step 1"
+              }
+              onClick={() => setConfirmReset(true)}
+            >
+              Reset
+            </button>
+          ))}
         <a className="sbx-new" href={SANDBOX_START}>
           New sandbox
         </a>
