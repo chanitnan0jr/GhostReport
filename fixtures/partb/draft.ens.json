@@ -1,0 +1,481 @@
+{
+  "investigation_id": "inv-never-attempted",
+  "repo_root": "https://github.com/ensdomains/ens-app-v3",
+  "workflow": {
+    "version": "wf-d41fe58603b0",
+    "scope": {
+      "commit_sha": "3c10925fa042568d4affd6897d34e42159abd7a3",
+      "searched_files": [
+        "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+        "src/hooks/registration/useExistingCommitment.ts",
+        "src/components/pages/profile/[name]/registration/Registration.tsx",
+        "src/hooks/useRegistrationReducer.ts",
+        "src/components/pages/profile/[name]/registration/steps/Complete.tsx",
+        "src/hooks/pages/profile/useRenew/useRenew.ts",
+        "src/hooks/useRegistrationData.ts",
+        "src/components/pages/profile/[name]/registration/steps/Pricing/Pricing.tsx",
+        "src/hooks/gasEstimation/useEstimateRegistration.ts",
+        "src/hooks/useRegistrationParams.ts",
+        "src/hooks/registration/useSimulateRegistration.ts",
+        "src/components/pages/profile/[name]/registration/types.ts",
+        "src/hooks/gasEstimation/calculateTransactions.ts",
+        "src/pages/register.tsx",
+        "src/components/@molecules/SearchInput/SearchResult.tsx",
+        "src/components/pages/profile/[name]/registration/steps/Profile/Profile.tsx"
+      ],
+      "unresolved_imports": [
+        "@app/utils/analytics",
+        "@app/utils/analytics/events",
+        "posthog-js",
+        "posthog-js/react"
+      ],
+      "truncated": true
+    },
+    "states": [
+      {
+        "id": "pricing_step_gate",
+        "desc": "On the pricing step, if no wallet address is present the action button renders the connect button instead of a next button.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Pricing/Pricing.tsx",
+          "lines": [
+            184,
+            185
+          ],
+          "quote": "return match(props)\n    .with({ address: P.nullish }, () => <ConnectButton large />)"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "commit_start_pending",
+        "desc": "The commit transaction is created on mount when no commit transaction exists yet, and the flow starts a one-minute countdown circle before registration can continue.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            386,
+            390
+          ],
+          "quote": "useEffect(() => {\n    if (!commitTx) {\n      makeCommitNameFlow()\n    }\n  }, [commitTx, makeCommitNameFlow])"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "commit_ready_wait",
+        "desc": "In the commitReady state the user must wait out the countdown; the wait button is disabled and shows a spinner.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            581,
+            592
+          ],
+          "quote": "<Button\n                  data-testid=\"wait-button\"\n                  disabled\n                  suffix={() => <Spinner color=\"greyPrimary\" />}"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "registration_ready_finish",
+        "desc": "Once the commitment is ready (or overridden) the user clicks the finish button, which either creates the register flow or resumes the existing one.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            559,
+            568
+          ],
+          "quote": ".with('registrationReady', 'registrationOverriden', () => (\n            <>\n              {ResetBackButton}\n              <MobileFullWidth>\n                <Button\n                  data-testid=\"finish-button\"\n                  onClick={!registerTx ? makeRegisterNameFlow : showRegisterTransaction}\n                >\n                  {t('steps.transactions.completeRegistration')}"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "registration_terminal_stop",
+        "desc": "When the register transaction is complete or a registration is detected, the flow is stopped and the callback advances without going back.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            392,
+            398
+          ],
+          "quote": "useEffect(() => {\n    if (registerTx?.stage === 'complete' || checkRegistered) {\n      stopCurrentFlow()\n      callback({ back: false })\n    }"
+        },
+        "instrumentation": "unknown"
+      }
+    ],
+    "outcomes": [
+      {
+        "id": "commit_sent",
+        "desc": "The commit transaction reaches the sent stage.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            296,
+            303
+          ],
+          "quote": ".with('commitSent', () => {\n        sendEvent('transaction:commit:send', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "commit_failed",
+        "desc": "The commit transaction reaches the failed stage.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            304,
+            311
+          ],
+          "quote": ".with('commitFailed', () => {\n        sendEvent('transaction:commit:fail', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "commit_complete",
+        "desc": "The commit stage is complete and the commitment is confirmed.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            312,
+            319
+          ],
+          "quote": ".with('commitComplete', () => {\n        sendEvent('transaction:commit:complete', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "register_sent",
+        "desc": "The register transaction reaches the sent stage.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            320,
+            327
+          ],
+          "quote": ".with('registrationSent', () => {\n        sendEvent('transaction:register:send', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: registerTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "register_failed",
+        "desc": "The register transaction reaches the failed stage.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            328,
+            335
+          ],
+          "quote": ".with('registrationFailed', () => {\n        sendEvent('transaction:register:fail', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: registerTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "register_complete",
+        "desc": "The register transaction reaches the complete stage.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            336,
+            343
+          ],
+          "quote": ".with('registrationComplete', () => {\n        sendEvent('transaction:register:complete', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: registerTx?.hash,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "registration_override",
+        "desc": "The registration simulation succeeds while the commit transaction has not completed, overriding the wait requirement.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            248,
+            254
+          ],
+          "quote": "useEffect(() => {\n    if (canRegisterOverride) {\n      sendEvent('transaction:register:override', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: name,\n      })\n      if (getSelectedKey() === commitKey) stopCurrentFlow()"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "transactions_reset",
+        "desc": "The user confirms the cancel-registration dialog, which cleans up both flows, resets the secret and returns to the previous step.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            375,
+            384
+          ],
+          "quote": "const resetTransactions = () => {\n    cleanupFlow(commitKey)\n    cleanupFlow(registerKey)\n    callback({ back: true, resetSecret: true })\n    sendEvent('register:transaction_reset', {\n      // eslint-disable-next-line @typescript-eslint/naming-convention\n      ens_name: name,\n    })\n    setResetOpen(false)\n  }"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "pricing_advanced",
+        "desc": "The user moves forward from the pricing step after the estimated total and eth price are available.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+          "lines": [
+            106,
+            117
+          ],
+          "quote": "}: RegistrationStepData['pricing']) => {\n    sendEvent('register:pricing', {\n      // eslint-disable-next-line @typescript-eslint/naming-convention\n      ens_name: normalisedName,\n      duration: seconds,\n      // eslint-disable-next-line @typescript-eslint/naming-convention\n      estimated_total: estimatedTotal ?? 0n,\n      // eslint-disable-next-line @typescript-eslint/naming-convention\n      eth_price: ethPrice ?? 0n,"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "profile_advanced",
+        "desc": "The user submits the profile step moving forward rather than back.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+          "lines": [
+            168,
+            177
+          ],
+          "quote": "if (!back) {\n      sendEvent('register:profile', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: normalisedName,\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        profile_records: records,\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        resolver_address: resolverAddress,\n      })\n    }"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "info_advanced",
+        "desc": "The user moves forward from the info step.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+          "lines": [
+            187,
+            193
+          ],
+          "quote": "const infoCallback = ({ back }: BackObj) => {\n    if (!back) {\n      sendEvent('register:info', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: normalisedName,\n      })\n    }"
+        },
+        "instrumentation": "found_in_code"
+      },
+      {
+        "id": "registration_finished",
+        "desc": "The registration queue advances past the last step to complete.",
+        "code_ref": {
+          "file": "src/hooks/useRegistrationReducer.ts",
+          "lines": [
+            122,
+            128
+          ],
+          "quote": "case 'increaseStep': {\n      if (item.queue[item.stepIndex + 1] === 'complete') {\n        sendEvent('register:complete', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: item.name,\n        })\n      }"
+        },
+        "instrumentation": "found_in_code"
+      }
+    ],
+    "ui_facts": [
+      {
+        "id": "wait_button_disabled_with_spinner",
+        "desc": "During the commit wait the primary button is disabled and labelled as waiting, with a spinner suffix, so the user cannot proceed early.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            585,
+            590
+          ],
+          "quote": "<Button\n                  data-testid=\"wait-button\"\n                  disabled\n                  suffix={() => <Spinner color=\"greyPrimary\" />}\n                >\n                  {t('steps.transactions.wait')}"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "start_timer_button",
+        "desc": "In the commitReady state the user sees a start timer button as the action that begins the commit countdown.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            608,
+            611
+          ],
+          "quote": "<Button data-testid=\"start-timer-button\" onClick={makeCommitNameFlow}>\n                  {t('steps.transactions.startTimer')}\n                </Button>"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "cancel_registration_dialog",
+        "desc": "A dialog titled as cancelling registration warns the user and offers a red button that resets the transactions.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+          "lines": [
+            430,
+            444
+          ],
+          "quote": "<Dialog.Heading\n          title={t('steps.cancelRegistration.heading')}\n          fontVariant=\"headingThree\"\n          alert=\"warning\"\n        />"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "connect_button_when_no_address",
+        "desc": "On the pricing step with no connected address the action is the connect button, which is the entry point to wallet onboarding.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/steps/Pricing/Pricing.tsx",
+          "lines": [
+            184,
+            185
+          ],
+          "quote": "return match(props)\n    .with({ address: P.nullish }, () => <ConnectButton large />)"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "name_too_long_error",
+        "desc": "If the normalised name is too long the page shows an error helper instead of any step content.",
+        "code_ref": {
+          "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+          "lines": [
+            280,
+            282
+          ],
+          "quote": "trailing: match([labelTooLong, isRegistrationDisabled, step])\n            .with([true, P._, P._], () => <Helper alert=\"error\">{t('error.nameTooLong')}</Helper>)\n            .with([false, true, P._], () => <RegistrationDisabledBanner name={normalisedName} />)"
+        },
+        "instrumentation": "unknown"
+      }
+    ]
+  },
+  "hypotheses": {
+    "workflow_version": "wf-d41fe58603b0",
+    "hypotheses": [
+      {
+        "id": "H1",
+        "statement": "I only wanted to look at the name and its price, and I did not intend to apply yet, so I never opened a wallet.",
+        "class_id": "HC-browsing",
+        "code_evidence": [
+          "pricing_step_gate"
+        ],
+        "generic": false
+      },
+      {
+        "id": "H2",
+        "statement": "I did not realise that continuing this name registration required connecting a wallet at all.",
+        "class_id": "HC-unaware-requirement",
+        "code_evidence": [
+          "connect_button_when_no_address",
+          "pricing_step_gate"
+        ],
+        "generic": false
+      },
+      {
+        "id": "H3",
+        "statement": "I stopped because I was unsure whether it was this site, my wallet app, or my browser that was asking me to connect.",
+        "class_id": "HC-unclear-requester",
+        "code_evidence": [
+          "connect_button_when_no_address"
+        ],
+        "generic": false
+      },
+      {
+        "id": "H4",
+        "statement": "I did not want to grant the permissions the connection prompt displayed, so I chose not to connect.",
+        "class_id": "HC-gate-permission",
+        "code_evidence": [
+          "connect_button_when_no_address",
+          "pricing_step_gate"
+        ],
+        "generic": false
+      },
+      {
+        "id": "H_other",
+        "statement": "A reason not yet proposed",
+        "class_id": null,
+        "code_evidence": [],
+        "generic": true
+      }
+    ]
+  },
+  "actions": [],
+  "recommendations": [
+    {
+      "action_type": "recommend_instrument",
+      "params": {
+        "outcome": "commit_sent"
+      },
+      "rule_ids": [],
+      "note": "commit_sent is recorded via sendEvent, but the equivalent 'started connecting' step is not instrumented in the searched files, so the difference between sessions that saw the connect button and those that did not cannot be measured; instrumenting this would help separate H1 (browsing, likely never reaching the button) from H2 and H3, which require the user to have reached the wallet entry point."
+    }
+  ],
+  "probe_options": {
+    "DP1": [
+      {
+        "id": "o1",
+        "label": "I only wanted to look at the name and price for now",
+        "hypothesis_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "o2",
+        "label": "I did not know I would need a wallet for this",
+        "hypothesis_ids": [
+          "H2"
+        ]
+      },
+      {
+        "id": "o3",
+        "label": "I did not like the permissions it was asking for",
+        "hypothesis_ids": [
+          "H4"
+        ]
+      },
+      {
+        "id": "requester",
+        "label": "Not sure who is asking",
+        "hypothesis_ids": [
+          "H3"
+        ]
+      },
+      {
+        "id": "other",
+        "label": "Something else",
+        "hypothesis_ids": [
+          "H_other"
+        ]
+      }
+    ],
+    "DP2": [
+      {
+        "id": "o1",
+        "label": "I was just checking whether the name was available",
+        "hypothesis_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "o2",
+        "label": "I wanted to see what the name would cost",
+        "hypothesis_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "o3",
+        "label": "I was reading the information about registering a name",
+        "hypothesis_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "other",
+        "label": "Something else",
+        "hypothesis_ids": [
+          "H_other"
+        ]
+      }
+    ]
+  },
+  "rejected": {
+    "class_id": [],
+    "action": [
+      "check_event:unmapped wallet_gate_shown"
+    ],
+    "option": [],
+    "hypothesis": []
+  },
+  "llm": {
+    "model": "deepseek-flash",
+    "thinking": false,
+    "prompts": [
+      "stage_a.v1",
+      "stage_b.v1"
+    ]
+  },
+  "mode": "code_only",
+  "cannot_check": [
+    {
+      "rule_id": "R2",
+      "needs_event": "wallet_gate_shown",
+      "rule": "HC-gate-permission requires that the gate was shown in that session"
+    }
+  ]
+}

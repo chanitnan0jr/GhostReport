@@ -1,0 +1,16 @@
+# Part B (design §10, L0 read-only): GhostReport reads a dApp the team did not write.
+# Checkout: git clone https://github.com/ensdomains/ens-app-v3 && git checkout <commit>
+#   uv run python -m engine.analyze <checkout> fixtures/partb/draft.ens.json \
+#     --config fixtures/partb/ghostreport.ens.yaml
+repo:
+  url: https://github.com/ensdomains/ens-app-v3
+  commit: 3c10925fa042568d4affd6897d34e42159abd7a3   # MIT; nothing deployed or modified
+  include: ["src/**/*.ts", "src/**/*.tsx"]
+  exclude: ["**/*.test.*", "**/*.spec.*", "**/__tests__/**", "**/__mocks__/**",
+            "**/*.stories.*", "**/node_modules/**", "**/*.d.ts"]
+workflow:
+  name: name_registration
+  keywords: [registration, openConnectModal, useAccount, isConnected, sendEvent, commit]
+mode: code_only                 # L0: workflow map, evidence gaps, hypotheses; no behavioral findings
+analytics:
+  calls: [sendEvent, trackEvent, capture]
