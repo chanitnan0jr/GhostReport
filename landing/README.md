@@ -56,3 +56,24 @@ uv run uvicorn roles.service:app --port 18100
 ```
 
 The service owns its own SQLite database and assignment randomization. `GET /roles/health` exposes only health, a seed hash and assignment count. The landing sends valid UUIDs; repeated assignment requests for the same session return the same role. Never place the seed or operator token in a `VITE_` environment variable or client bundle.
+
+## Reviewed ENS investigation
+
+**Tested on a real repo: ENS** links to `/ens/`. This is a second static
+Vite entry (`ens/index.html`), so the engine can serve the built directory
+without a new backend route or SPA fallback. It fetches only `GET /api/partb`;
+loading this page never starts an analysis or calls an LLM. `VITE_MOCK=1`
+uses the committed Part B draft and human review fixtures.
+
+The page displays the API finding, pinned GitHub references, all flow-map
+rows, reviewer verdicts/notes, unavailable rule checks and verbatim limits.
+Hypotheses and recommendations are deliberately omitted from this page.
+The existing wording guard redacts restricted report terms in source descriptions; the pinned code link and human verdict remain visible.
+
+Browser checks cover direct loading and the landing link at desktop and
+375 px widths. The complete `BASE_URL` suite also follows the public report
+link to ENS. Its synthetic UUIDs carry the `e2e-` prefix and must be labeled
+`test` by the backend, never `visitor`.
+
+The recorded `/demo` page is deferred until Friday after G2. No production
+browser automation or video replay has been added by this change.

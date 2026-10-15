@@ -14,6 +14,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: "/",
     plugins: [react()],
+    build: {
+      rollupOptions: { input: { main: "index.html", ens: "ens/index.html" } },
+    },
     server: {
       port: 5175,
       strictPort: true,

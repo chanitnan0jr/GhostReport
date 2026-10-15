@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { PartBPage } from "./PartBPage";
 import "./styles.css";
 
 async function main() {
@@ -8,7 +9,11 @@ async function main() {
     (await import("./mocks")).installMockRoles();
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      <App />
+      {location.pathname.replace(/\/$/, "") === "/ens" ? (
+        <PartBPage />
+      ) : (
+        <App />
+      )}
     </StrictMode>,
   );
 }

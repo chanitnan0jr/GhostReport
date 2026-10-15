@@ -180,6 +180,9 @@ export default function App({
                 <code>{CONFIG_EXAMPLE}</code>
               </pre>
             </details>
+            <a className="text-link ens-link" href="/ens/">
+              Tested on a real repo: ENS <span aria-hidden="true">↗</span>
+            </a>
             <a
               className="text-link"
               href={REPO_URL}

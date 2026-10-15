@@ -1,3 +1,4 @@
+import { mockPartB } from "./mockPartB";
 export function installMockRoles() {
   const original = window.fetch.bind(window);
   window.fetch = async (input, init) => {
@@ -5,6 +6,10 @@ export function installMockRoles() {
       input instanceof Request ? input.url : input.toString(),
       location.origin,
     );
+    if (url.origin === location.origin && url.pathname === "/api/partb")
+      return new Response(JSON.stringify(mockPartB()), {
+        headers: { "Content-Type": "application/json" },
+      });
     if (url.origin !== location.origin || url.pathname !== "/roles/assign")
       return original(input, init);
     const count = Number(

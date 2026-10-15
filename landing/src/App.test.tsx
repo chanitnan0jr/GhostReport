@@ -23,6 +23,9 @@ it("shows the three steps, integration levels, example config and real repo link
   );
   expect(screen.getByText("L0")).toBeInTheDocument();
   expect(screen.getByText("L3")).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /Tested on a real repo: ENS/ }),
+  ).toHaveAttribute("href", "/ens/");
   expect(screen.getByText(/The wallet is simulated/)).toHaveTextContent(
     "A network error may be simulated once.",
   );

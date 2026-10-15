@@ -1,10 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { ROLE_CARDS } from "../src/content";
 
-test("landing, grant app and public report share the visitor session", async ({
+test("landing, grant app and public report share an automated test session", async ({
   page,
   request,
 }) => {
+  await page.addInitScript(() => {
+    const generate = crypto.randomUUID.bind(crypto);
+    Object.defineProperty(crypto, "randomUUID", {
+      value: () => `e2e-${generate()}`,
+    });
+  });
   const apiPayloads: unknown[] = [];
   page.on("request", (r) => {
     if (new URL(r.url()).pathname.startsWith("/api/") && r.postData())
@@ -57,6 +63,7 @@ test("landing, grant app and public report share the visitor session", async ({
   expect(response.ok()).toBe(true);
   const report = await response.json();
   expect(report.current.errors).toEqual([]);
+  expect(report.current.session_sources[body.session_id]).toBe("test");
   expect(
     report.current.sessions.find(
       (s: { session_id: string }) => s.session_id === body.session_id,
@@ -68,6 +75,18 @@ test("landing, grant app and public report share the visitor session", async ({
     typeof value === "object" &&
     (Object.hasOwn(value, "role") || Object.values(value).some(hasRole));
   expect(apiPayloads.some(hasRole)).toBe(false);
+  await page.getByRole("link", { name: /Tested on ENS/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tested on a real repo: ENS" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("19 correct · 2 wrong · 1 partial (checked by hand)"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Cannot check R2: needs wallet_gate_shown",
+    }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
