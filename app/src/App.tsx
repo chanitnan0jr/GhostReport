@@ -4,6 +4,7 @@ import { MockWalletPopup } from "./MockWalletPopup";
 import { ProbeCard, type ProbeInvitation } from "./ProbeCard";
 import { ProjectList } from "./ProjectList";
 import { ProjectPage } from "./ProjectPage";
+import { SessionFinishBar } from "./SessionFinishBar";
 import projectData from "./data/projects.json";
 import { askedKey, at_exit, loadProbePlan } from "./probe";
 import { sessionKey, uuid } from "./session";
@@ -54,6 +55,7 @@ export default function App() {
   );
   const [error, setError] = useState("");
   const [invitation, setInvitation] = useState<ProbeInvitation | null>(null);
+  const [hasExited, setHasExited] = useState(false);
 
   useEffect(() => tracker.start(), [tracker]);
   useEffect(() => {
@@ -106,6 +108,7 @@ export default function App() {
     setAttempt(null);
     setError("");
     offerProbe("DP2", exit.seq);
+    setHasExited(true);
   }
 
   useEffect(() => {
@@ -155,6 +158,7 @@ export default function App() {
     setGateId(null); // Exit UI immediately; offerProbe does no network work.
     setError("");
     offerProbe("DP1", exit.seq);
+    setHasExited(true);
   }
 
   function connect() {
@@ -284,6 +288,10 @@ export default function App() {
         <span>Common Ground</span>
         <span>Built for the commons. Open to possibility.</span>
       </footer>
+      <SessionFinishBar
+        sessionId={tracker.sessionId}
+        visible={(hasExited || wallet !== null) && !invitation && !attempt}
+      />
     </>
   );
 }

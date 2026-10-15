@@ -1,0 +1,42 @@
+@import "../../shared/tokens.css";
+
+.session-finish-space {
+  height: 72px;
+}
+.session-finish-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding: 12px 24px;
+  pointer-events: none;
+}
+.session-finish-bar a {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  background: var(--gr-surface);
+  color: var(--gr-ink);
+  border: 1px solid var(--gr-line);
+  border-radius: var(--gr-radius);
+  box-shadow: var(--gr-shadow);
+  font: 14px/1.5 var(--gr-font);
+  text-decoration: none;
+}
+.session-finish-bar strong {
+  color: var(--gr-accent-ink);
+  font-weight: 600;
+}
+.session-finish-bar a:hover {
+  background: var(--gr-accent-soft);
+}
+.session-finish-bar a:focus-visible {
+  outline: 2px solid var(--gr-accent);
+  outline-offset: 4px;
+}
