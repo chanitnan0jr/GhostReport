@@ -41,11 +41,24 @@ Report เปิดดูได้ระหว่างเก็บข้อม�
 
 หลังทำตาม Quick Start ให้เข้าผ่าน `http://localhost:5175/` เพื่อให้ทุกหน้ามี origin เดียวกัน:
 
-| URL                   | หน้า                               |
-| --------------------- | ---------------------------------- |
-| `/`                   | Landing                            |
-| `/app/`               | แอปขอทุน                           |
-| `/report/`            | Report สาธารณะ                     |
-| `/report/?operator=1` | เครื่องมือ operator ต้องกรอก token |
+| URL                   | หน้า                                |
+| --------------------- | ----------------------------------- |
+| `/`                   | Landing                             |
+| `/app/`               | แอปขอทุน                            |
+| `/report/`            | Report สาธารณะ                      |
+| `/report/?operator=1` | เครื่องมือ operator ต้องกรอก token  |
+| `/sandbox/`           | Sandbox: run จำลองของผู้เยี่ยมชมเอง |
+
+### Sandbox
+
+`/sandbox/` สร้าง run จำลองแยกต่อผู้เยี่ยมชม (mode `sandbox`, SQLite ของตัวเอง ไม่ปนกับ judging run และลบเองหลัง 3 ชั่วโมง) แล้วพาเดินครบวงจรในหน้า Segments และ Report:
+
+1. สร้าง traffic ก่อนล็อก: session จำลองเดินตาม flow ของแอปทีละทางแยก ส่ง event ผ่าน ingest ปกติ
+2. Investigate: AI เขียนสมมติฐานและคำถามจาก snapshot (Stage B ครั้งเดียว ใช้ Workflow Map ที่เตรียมไว้) หรือใช้ investigation ที่เตรียมไว้โดยไม่เรียก AI
+3. Approve and lock v1 และแสดง sha256
+4. สร้าง traffic หลังล็อก พร้อมกำหนดคำตอบที่ซ่อนไว้ ทางออกที่เข้าเกณฑ์จะเจอคำถามผ่านโค้ดตรวจ eligibility และ exposure ชุดเดียวกับแอป
+5. Reveal เทียบสัดส่วนที่ตั้งไว้กับ "k of n respondents" ใน Report
+
+ทุกหน้าที่เปิด sandbox มีป้าย "Simulation — answers come from the mix you set. This shows the pipeline, not real user insight." เพดาน AI คือ 3 ครั้งต่อ sandbox และ 30 ครั้งรวมทุก sandbox (`GHOST_SANDBOX_LLM_RUNS`) ปิด sandbox ได้ด้วย `engine.demo serve --no-sandbox` โค้ดอยู่ที่ [engine/sandbox.py](engine/sandbox.py) และ [console/src/sandbox/](console/src/sandbox/)
 
 ใช้ Python 3.11+, uv, Node.js 22.13+, npm และ ripgrep ดูคำสั่งติดตั้ง dependency และการตั้งค่า server ใน[คู่มือ](docs/PROJECT_GUIDE.th.md#quickstart) การเปิดเดโมที่เตรียมไว้แล้วไม่ต้องมี LLM API key; การกด Analyze หรือวิเคราะห์ repo ใหม่ต้องมี `DEEPSEEK_API_KEY`
