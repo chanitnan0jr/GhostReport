@@ -4,13 +4,13 @@
 
 เอกสารนี้อธิบายทั้งแนวคิดของผลิตภัณฑ์และวิธีใช้ prototype ที่มีอยู่จริง คำสั่งรันจาก root ของ GhostReport บน Bash เว้นแต่ระบุเป็นอย่างอื่น
 
-**เส้นทางอ่าน:** [ภาพรวม](#overview) → [Paper](#research) → [ติดตั้งเดโม](#quickstart) → [วิเคราะห์จริง](#live) → [กำหนดเวลา](#timing) → [อ่าน Report](#report) → [เชื่อม repo](#integration)
+**เส้นทางอ่าน:** [ภาพรวม](#overview) → [Paper](#research) → [ลองเดโมด้วย Docker](#compose) → [รันทีละส่วน](#quickstart) → [วิเคราะห์จริง](#live) → [กำหนดเวลา](#timing) → [อ่าน Report](#report) → [เชื่อม repo](#integration)
 
 <a id="overview"></a>
 
 ## 1. GhostReport คืออะไร
 
-GhostReport คือเครื่องมือสืบสวนพฤติกรรมผู้ใช้สำหรับทีมที่มีทั้ง source code และ event แต่ยังตอบไม่ได้ว่าทำไมผู้ใช้หยุดอยู่ตรงขั้นตอนหนึ่ง
+GhostReport คือเครื่องมือหาสาเหตุที่ผู้ใช้แอปการเงินหลุดตอนเริ่มใช้งาน เช่น เชื่อม wallet ยืนยันตัวตน หรือผูกบัญชี log บอกว่าผู้ใช้หลุดตรงไหน แต่ไม่บอกว่าทำไม GhostReport อ่านทั้ง source code และ event ตรวจหลักฐานที่มีก่อน แล้วถามผู้ใช้เฉพาะตอนที่ log ตอบไม่ได้
 
 ตัวอย่างใน MVP คือแอปสมัครทุน DAO ผู้ใช้เปิดดูโครงการ กด Apply แล้วพบว่าต้องเชื่อม wallet บางคนออกไปโดยไม่ได้เริ่มเชื่อม การเห็น event ว่าไม่ได้กด Connect ยังแยกไม่ได้ว่าคนนั้น:
 
@@ -126,6 +126,7 @@ flowchart TD
 
 | วิธี                                                      | เหมาะกับ                                                                       | ต้องใช้ LLM key ไหม                            |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------- |
+| **Docker Compose (แนะนำ)** — `docker compose up`          | ลองเดโมครบวงในคำสั่งเดียว โครงสร้างเดียวกับตอน deploy                          | ไม่ต้อง                                        |
 | **Frontend mock** — `VITE_MOCK=1`                         | ดูหน้าจอ/ลอง interaction โดยไม่เปิด backend                                    | ไม่ต้อง; ข้อมูลอยู่ใน mock ไม่ใช่ผล engine     |
 | **Prepared demo** — `engine.demo serve`                   | ทดลองวงจรจริงด้วย investigation ที่อนุมัติไว้แล้ว เพิ่ม seed ด้วย `--seed` ได้ | ไม่ต้อง                                        |
 | **New investigation** — Analyze → Review → Approve → Lock | ให้ LLM อ่าน repo ปัจจุบันใหม่ แล้วเก็บหลักฐานของ run ใหม่                     | ต้องมี DeepSeek key                            |
@@ -133,9 +134,35 @@ flowchart TD
 
 หน้าเว็บที่ติดป้าย SEED DATA, DEMO หรือ REPLAY ต้องอ่านตามที่มาของข้อมูล โดยเฉพาะ demo ที่รวม seed กับผู้เยี่ยมชม ห้ามตีความจำนวนรวมเป็นผู้ใช้จริงทั้งหมด
 
+<a id="compose"></a>
+
+## 5. Quick Start แบบเร็วที่สุด: Docker Compose
+
+ต้องมีแค่ Git และ Docker (พร้อม Compose v2) จาก root ของ repo:
+
+```bash
+GIT_SHA=$(git rev-parse HEAD) docker compose up -d --build
+```
+
+เปิด `http://localhost:8080` แล้วเริ่มจาก **Try the app as a user** ส่วน Report อยู่ที่ `/report/` และหน้า operator อยู่ที่ `/report/?operator=1` (token ของเครื่อง local คือ `local-operator` เปลี่ยนได้ด้วย `GHOST_OPERATOR_TOKEN`)
+
+| Service | หน้าที่                                                                                              |
+| ------- | ---------------------------------------------------------------------------------------------------- |
+| `api`   | build จาก [Dockerfile](../Dockerfile) เดียวกับตอน deploy: engine + landing, app และ console บน origin เดียว เก็บ run ใน volume `api-data` |
+| `roles` | แจก role card แยก process และเก็บ DB ใน volume `roles-data` ของตัวเอง                                |
+| `proxy` | Caddy ที่ port 8080 ส่ง `/roles/*` ไป roles และที่เหลือไป api ([Caddyfile](../deploy/Caddyfile))       |
+
+- run ชื่อ `demo` ล็อก v1 ตอนเปิดครั้งแรกและเติม seed 20 sessions ครั้งเดียว digest อยู่ใน `docker compose logs api`
+- ระหว่าง build ระบบรันเทสต์ว่า `wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate บนโค้ดที่กำลัง build ถ้าไม่ใส่ `GIT_SHA` build นั้นจะแสดงเป็น unverified ตามจริง
+- rebuild หลังแก้โค้ดใช้คำสั่งเดิม ข้อมูลและ digest ของ run คงอยู่ และ Report บันทึก build ใหม่ไว้ใน `builds`
+- `docker compose down` หยุดโดยเก็บข้อมูลไว้ ส่วน `docker compose down -v` ลบ volume และเริ่ม run ใหม่ (seed ใหม่ และ lock ใหม่)
+- เดโมนี้ไม่เรียก LLM จึงไม่ต้องใช้ API key ถ้าจะกด Analyze บนหน้า operator ให้ตั้ง `DEEPSEEK_API_KEY` ก่อนรันคำสั่ง
+
+ถ้าต้องการแก้ frontend แบบ hot reload หรือรันทีละส่วน ใช้ขั้นตอนในบทถัดไป
+
 <a id="quickstart"></a>
 
-## 5. Quick Start: ติดตั้งผ่าน Shell แล้วเปิดเดโม
+## 6. Quick Start แบบรันทีละส่วน (สำหรับพัฒนา)
 
 ### ขั้นที่ 1 — เตรียมเครื่องและ dependency
 
@@ -157,7 +184,7 @@ done
 mkdir -p runs
 ```
 
-นี่คือขั้นตอน setup ผ่าน Shell ที่ใช้คำสั่งปัจจุบันของโครงการ **repo ยังไม่มี `scripts/setup.sh` สำหรับติดตั้งทุกอย่างในคำสั่งเดียว** จึงไม่ต้องค้นหรือเรียกไฟล์ชื่อนั้น
+ถ้าแค่อยากลองเดโม ใช้ Docker Compose ในบทที่ 5 แทนได้ ขั้นตอนนี้เหมาะกับการพัฒนาที่ต้องรันแต่ละส่วนแยกกัน
 
 ### ขั้นที่ 2 — เตรียม operator token
 
@@ -264,9 +291,9 @@ curl --fail http://127.0.0.1:18100/roles/health
 
 <a id="live"></a>
 
-## 6. ตั้ง API key แล้วสร้าง investigation ใหม่
+## 7. ตั้ง API key แล้วสร้าง investigation ใหม่
 
-เส้นทางนี้เหมาะกับการทดลองโค้ดปัจจุบันและกำหนดรอบรับคำตอบใหม่ ต้องเปิด roles และ frontend ตาม Quick Start อยู่แล้ว
+เส้นทางนี้เหมาะกับการทดลองโค้ดปัจจุบันและกำหนดรอบรับคำตอบใหม่ ต้องเปิด roles และ frontend ตามบทที่ 6 อยู่แล้ว
 
 ### ขั้นที่ 1 — ตั้ง key ฝั่ง server
 
@@ -341,7 +368,7 @@ uv run python -m engine.demo prepare \
 
 <a id="timing"></a>
 
-## 7. กำหนดเวลาอย่างไร และต้องรอนานเท่าไร
+## 8. กำหนดเวลาอย่างไร และต้องรอนานเท่าไร
 
 | ค่า                           | ความหมาย                                                                       | ตั้งที่ไหน                                                                  |
 | ----------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -374,7 +401,7 @@ Deadline ควบคุมเวลาแสดงคำถามใหม่ �
 
 <a id="report"></a>
 
-## 8. อ่าน Report แล้วจะตัดสินใจอะไรได้
+## 9. อ่าน Report แล้วจะตัดสินใจอะไรได้
 
 | Panel                                      | คำถามที่ช่วยตอบ                                                                    |
 | ------------------------------------------ | ---------------------------------------------------------------------------------- |
@@ -400,7 +427,7 @@ Deadline ควบคุมเวลาแสดงคำถามใหม่ �
 
 <a id="integration"></a>
 
-## 9. นำไปใช้กับ repository ของทีมอย่างไร
+## 10. นำไปใช้กับ repository ของทีมอย่างไร
 
 ### ระดับการเชื่อมต่อ
 
@@ -452,7 +479,7 @@ config reader อ่าน repo/include/exclude, workflow keywords, mode แล�
 
 ### สิ่งที่ยังต้องเขียน integration เอง
 
-- ส่ง `session_id`, `event_id`, `seq`, `attempt_id` และ timestamp ตาม [canonical schema](../app/src/types.ts)
+- ส่ง `session_id`, `event_id`, `seq`, `attempt_id` และ timestamp ตาม canonical schema ใน [engine/models.py](../engine/models.py) (`Event`) ฝั่ง client ดู [app/src/types.ts](../app/src/types.ts)
 - รักษา `event_id` เดิมเมื่อ retry และให้ seq ต่อเนื่องเพื่อประเมิน coverage
 - ต่อเหตุการณ์แสดง gate/การกดออกจริง ไม่ใช้ Apply click แทนการเห็น gate
 - ปรับ tracking/probe พร้อม dependencies จาก `app/src/` ให้เหมาะกับแอป ไม่ใช่แค่เปลี่ยนชื่อ event ใน config แล้วจะได้ exposure metadata ครบเอง
@@ -462,7 +489,7 @@ config reader อ่าน repo/include/exclude, workflow keywords, mode แล�
 
 <a id="privacy"></a>
 
-## 10. ข้อมูล ความเป็นส่วนตัว และการดูแล run
+## 11. ข้อมูล ความเป็นส่วนตัว และการดูแล run
 
 - ใช้ session ID เป็นหน่วยติดตาม ไม่ต้องส่ง wallet address หรือข้อความที่ผู้ใช้กรอกในฟอร์ม
 - `props` ของ event อนุญาตเฉพาะ `project_id` และ `page`; server เป็นคนตั้ง `received_at`
@@ -477,9 +504,16 @@ config reader อ่าน repo/include/exclude, workflow keywords, mode แล�
 
 repo มี [Dockerfile ของ engine/frontends](../Dockerfile) และ [Dockerfile ของ roles](../roles/Dockerfile) แยกกัน Frontends build เป็น static files ส่วน roles ต้องรันอีก process และเก็บ DB ของตัวเอง
 
-การใช้ path `/api` กับ `/roles` บน origin เดียวต้องมี routing ของ hosting/reverse proxy ให้ถูกต้อง **Vite dev proxy ใช้เฉพาะตอน `npm run dev`** การ build frontends ไม่ได้สร้าง reverse proxy ให้ deployment เอง ดูค่าจริงของ deployment แทนการคัดลอก local port ไปใช้โดยตรง
+Frontends ที่ build แล้วถูก engine เสิร์ฟเป็น static files: landing ที่ `/`, app ที่ `/app/` และ console ที่ `/report/` **Vite dev proxy ใช้เฉพาะตอน `npm run dev`** ส่วน `/roles` ต้องมีทางไปถึง roles service แยกต่างหาก
 
-## 11. ความสามารถที่มีแล้ว กับประสบการณ์ที่ยังเป็นแผน
+| สภาพแวดล้อม     | roles อยู่ที่ไหน                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Docker Compose   | origin เดียวกัน เพราะ Caddy ส่ง `/roles/*` ไป roles ([compose.yaml](../compose.yaml))                                  |
+| Railway          | service แยกที่มี domain ของตัวเอง landing ต้อง build ด้วย `VITE_ROLES_URL` และ roles ตั้ง `ROLES_ALLOWED_ORIGINS` เป็น origin ของ api |
+
+แต่ละ service บน Railway ต้องมี volume ที่ `/data` และใช้ replica เดียว เพราะเก็บข้อมูลใน SQLite ค่า `DEEPSEEK_API_KEY` อยู่เฉพาะ service api ส่วน `ROLES_SEED` และ `REVEAL_TOKEN` อยู่เฉพาะ service roles
+
+## 12. ความสามารถที่มีแล้ว กับประสบการณ์ที่ยังเป็นแผน
 
 | เรื่อง                                               | สถานะใน source ที่ตรวจ                                                                                              |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -498,7 +532,7 @@ repo มี [Dockerfile ของ engine/frontends](../Dockerfile) และ [Do
 
 <a id="troubleshooting"></a>
 
-## 12. ถ้าเริ่มใช้งานแล้วไม่เห็นผล
+## 13. ถ้าเริ่มใช้งานแล้วไม่เห็นผล
 
 | อาการ                                               | ตรวจอะไร                                                                                                                       |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -516,8 +550,11 @@ repo มี [Dockerfile ของ engine/frontends](../Dockerfile) และ [Do
 | ไม่มี Your session                                  | เริ่มผ่าน landing และเปิด Report บน origin เดียวกัน; รอให้ engine รับ event แล้ว refresh                                       |
 | Snapshot ได้ 409                                    | ตรวจ digest ที่ถือไว้นอกระบบว่าตรงกับ v1 ของ run นี้                                                                           |
 | ย้าย repo แล้วมี code refs เก่า                     | Analyze + review + approve ใหม่บนโค้ด/commit ที่จะใช้งาน                                                                       |
+| `database already belongs to another run`           | เปิด run ID เดิมด้วย `mode` อื่น ใช้ run ID ใหม่แทน                                                                             |
+| Rebuild/redeploy แล้ว Report ขึ้น unverified        | build นั้นไม่มี commit identity ใส่ `GIT_SHA` (Compose) หรือ deploy จาก GitHub (Railway) ข้อมูลและ digest ของ run ยังคงอยู่     |
+| Compose ขึ้น `api` unhealthy                         | ดู `docker compose logs api` ถ้าต้องการเริ่มใหม่ทั้งหมดใช้ `docker compose down -v`                                              |
 
-## 13. อ่าน source และเอกสารต่อ
+## 14. อ่าน source และเอกสารต่อ
 
 ### Source ของคำสั่งในคู่มือนี้
 
@@ -536,6 +573,6 @@ repo มี [Dockerfile ของ engine/frontends](../Dockerfile) และ [Do
 1. Tao et al. (2026). [Can Large Language Models Generate Observability-Aware Code?](https://arxiv.org/abs/2607.05785v1), arXiv preprint.
 2. Rodler, P. (2018). [On Active Learning Strategies for Sequential Diagnosis](https://easychair.org/publications/paper/zHgj/open), DX'17, Kalpa Publications in Computing 4, 264–283.
 3. Baxter, K. (2014). [ESM Versus Logs: Filling in the Gaps](https://research.google/pubs/esm-versus-logs-filling-in-the-gaps/), American Anthropological Association Annual Conference, presentation abstract.
-4. Harbach, M. & Johnson, J. (2026). [Surface attribution across security and privacy interfaces](https://research.google/pubs/who-am-i-talking-to-a-large-scale-measurement-of-surface-attribution-across-real-world-security-and-privacy-interfaces/), CHI; ใช้ abstract ของผู้วิจัยในการอ้างแนวคิดข้างต้น.
+4. Harbach, M. & Johnson, J. (2026). [Who am I Talking to? A Large Scale Measurement of Surface Attribution Across Real-World Security and Privacy Interfaces](https://research.google/pubs/who-am-i-talking-to-a-large-scale-measurement-of-surface-attribution-across-real-world-security-and-privacy-interfaces/), CHI; ใช้ abstract ของผู้วิจัยในการอ้างแนวคิดข้างต้น.
 5. Bethlehem, J. (2010). [Selection bias in web surveys](https://doi.org/10.1111/j.1751-5823.2010.00112.x), International Statistical Review 78(2), 161–188; [abstract และระเบียนจาก UvA](https://dare.uva.nl/id/73f3f091-40be-41b4-8f0a-debd8c5b4259).
 6. Borlund, P. (2003). [The IIR evaluation model](https://informationr.net/ir/8-3/paper152.html), Information Research 8(3), paper 152.
