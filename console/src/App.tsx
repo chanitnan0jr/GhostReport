@@ -116,7 +116,7 @@ export default function App() {
             </div>
           )}
           {page === "segments" ? (
-            <Segments />
+            <Segments report={report} />
           ) : page === "workflow" ? (
             <Suspense
               fallback={

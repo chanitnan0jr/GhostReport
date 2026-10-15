@@ -1,0 +1,462 @@
+/* Workflow container (Segments page) and the recorded-cohort diagram. */
+.workflow-card {
+  --flow-bg: #f8fafc;
+  --flow-ink: #0f172a;
+  --flow-muted: #64748b;
+  --flow-line: #e2e8f0;
+  --flow-blue: #2563eb;
+  --flow-edge: #8193b8;
+  --flow-amber: #f59e0b;
+  --flow-amber-soft: #fffbeb;
+  --flow-amber-line: #fcd34d;
+  --flow-green: #16a34a;
+  --flow-gray: #94a3b8;
+  color: var(--flow-ink);
+}
+/* The heading, filter and diagram sit on the page itself: the diagram canvas
+   is the only framed surface. */
+.workflow-heading {
+  margin: 10px 0 20px;
+}
+.workflow-heading h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+}
+.workflow-heading p {
+  max-width: 68ch;
+  margin: 6px 0 0;
+  color: var(--flow-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.workflow-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+}
+.source-filter {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--flow-line);
+  border-radius: 9px;
+  background: #fff;
+}
+.source-filter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--flow-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.source-filter button:hover {
+  color: var(--flow-ink);
+}
+.source-filter button:focus-visible {
+  outline: 2px solid var(--flow-blue);
+  outline-offset: 1px;
+}
+.source-filter button[aria-pressed="true"] {
+  background: #e9eef6;
+  color: var(--flow-ink);
+  font-weight: 600;
+}
+.source-filter .source-icon {
+  width: 15px;
+  height: 15px;
+}
+.source-filter button > span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.source-filter button[aria-pressed="true"] > span {
+  color: var(--flow-muted);
+}
+.workflow-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0;
+  color: var(--flow-muted);
+  font-size: 13px;
+}
+.workflow-meta strong {
+  color: var(--flow-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Diagram */
+.flow-stage {
+  position: relative;
+}
+.flow-canvas {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--flow-line);
+  border-radius: 12px;
+  background-color: var(--flow-bg);
+  background-image: radial-gradient(#dbe2ec 1px, transparent 1px);
+  background-size: 18px 18px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.flow-canvas.is-dragging {
+  cursor: grabbing;
+}
+.flow-canvas.is-dragging .flow-node,
+.flow-canvas.is-dragging .flow-group {
+  cursor: grabbing;
+}
+.flow-canvas:focus-visible {
+  outline: 3px solid var(--flow-blue);
+  outline-offset: 2px;
+}
+.flow-canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform-origin: 0 0;
+  font-family: var(--gr-font);
+}
+.flow-zoom {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--flow-line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+.flow-zoom button {
+  min-width: 34px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--flow-ink);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.flow-zoom button + button {
+  border-left: 1px solid var(--flow-line);
+}
+.flow-zoom button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.flow-zoom button:disabled {
+  color: #cbd5e1;
+  cursor: default;
+}
+.flow-zoom .flow-zoom-level {
+  min-width: 56px;
+  color: var(--flow-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.flow-zoom .flow-zoom-level:disabled {
+  color: var(--flow-muted);
+}
+.flow-column-label {
+  fill: #5b6b8c;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+.flow-column-rule {
+  stroke: #dfe5ee;
+  stroke-dasharray: 4 5;
+}
+
+.flow-edge {
+  fill: none;
+  stroke: var(--flow-edge);
+  stroke-linecap: round;
+  transition:
+    opacity 160ms ease,
+    stroke 160ms ease;
+}
+.flow-edge-warn {
+  stroke: var(--flow-amber);
+  stroke-opacity: 0.8;
+}
+.flow-edge-active {
+  stroke: var(--flow-blue);
+}
+.flow-edge.is-empty {
+  stroke: var(--flow-gray);
+  stroke-dasharray: 3 4;
+  stroke-opacity: 0.6;
+}
+.flow-edge.is-near {
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.35));
+}
+.flow-edge.is-dim {
+  opacity: 0.18;
+}
+.flow-arrow-normal {
+  fill: var(--flow-edge);
+}
+.flow-arrow-warn {
+  fill: var(--flow-amber);
+}
+.flow-arrow-active {
+  fill: var(--flow-blue);
+}
+
+.flow-node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 160ms ease;
+}
+.flow-node > rect {
+  fill: #fff;
+  stroke: #cfdcf3;
+  stroke-width: 1.2;
+  transition:
+    stroke 160ms ease,
+    stroke-width 160ms ease;
+}
+.flow-node-success > rect {
+  stroke: #bfe3cb;
+}
+.flow-node-error > rect {
+  fill: var(--flow-amber-soft);
+  stroke: var(--flow-amber-line);
+}
+.flow-node-gap > rect {
+  fill: #fffdf5;
+  stroke: var(--flow-amber);
+  stroke-dasharray: 5 4;
+}
+.flow-node-neutral > rect {
+  fill: #fbfcfd;
+  stroke: #dfe4eb;
+}
+.flow-node-segment > rect {
+  stroke: color-mix(in srgb, var(--segment-color) 45%, #fff);
+}
+.flow-node.is-hover > rect,
+.flow-node:focus-visible > rect {
+  stroke: var(--flow-blue);
+  stroke-width: 1.8;
+}
+.flow-node:focus-visible > rect {
+  stroke-width: 2.5;
+}
+.flow-node.is-selected > rect {
+  stroke: var(--flow-blue);
+  stroke-width: 2.5;
+}
+.flow-node.is-dim,
+.flow-group.is-dim {
+  opacity: 0.4;
+}
+.flow-node-label {
+  fill: var(--flow-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+.flow-node-count {
+  fill: var(--flow-muted);
+  font-size: 12.5px;
+}
+.flow-node-rule {
+  fill: var(--flow-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.flow-node-note {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--flow-green);
+}
+.flow-node-gap .flow-node-note {
+  fill: #b45309;
+}
+
+.flow-mark circle {
+  fill: var(--flow-blue);
+}
+.flow-mark path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.flow-mark-success circle {
+  fill: var(--flow-green);
+}
+.flow-mark-error circle {
+  fill: var(--flow-amber);
+}
+.flow-mark-gap circle {
+  fill: #fff;
+  stroke: var(--flow-amber);
+  stroke-width: 1.8;
+}
+.flow-mark-gap path {
+  stroke: #d97706;
+}
+.flow-mark-neutral circle {
+  fill: #fff;
+  stroke: var(--flow-gray);
+  stroke-width: 1.6;
+}
+.flow-mark-neutral path {
+  stroke: var(--flow-gray);
+}
+.flow-mark-segment circle {
+  fill: var(--segment-color, var(--flow-gray));
+}
+.flow-mark-segment .flow-mark-dot {
+  fill: #fff;
+}
+
+.flow-group {
+  cursor: pointer;
+  outline: none;
+}
+.flow-group > rect {
+  fill: rgba(245, 158, 11, 0.04);
+  stroke: #f3d9a4;
+  stroke-dasharray: 4 4;
+}
+.flow-group.is-selected > rect,
+.flow-group:focus-visible > rect {
+  stroke: var(--flow-blue);
+  stroke-dasharray: none;
+  stroke-width: 2;
+}
+.flow-group-rule {
+  fill: var(--flow-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.flow-group-label {
+  fill: var(--flow-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.flow-tooltip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  width: 280px;
+  padding: 12px 14px;
+  border: 1px solid var(--flow-line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+  color: var(--flow-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  transform: translate(-50%, 8px);
+  pointer-events: none;
+}
+.flow-tooltip.is-above {
+  transform: translate(-50%, calc(-100% - 8px));
+}
+.flow-tooltip strong {
+  color: var(--flow-ink);
+  font-size: 13px;
+}
+.flow-tooltip-count {
+  color: var(--flow-ink);
+  font-weight: 600;
+}
+.flow-tooltip code {
+  justify-self: start;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #334155;
+  font-family: var(--gr-mono);
+  font-size: 11px;
+}
+.flow-tooltip p {
+  margin: 0;
+  color: #334155;
+}
+
+.flow-empty {
+  margin: 10px 0 0;
+  color: var(--flow-muted);
+  font-size: 13px;
+}
+.flow-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: 14px;
+}
+.flow-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--flow-muted);
+  font-size: 12.5px;
+}
+.flow-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-legend svg {
+  width: 20px;
+  height: 20px;
+}
+.flow-status {
+  margin: 0;
+  color: var(--flow-muted);
+  font-size: 12.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-edge,
+  .flow-node,
+  .flow-node > rect {
+    transition: none;
+  }
+}
+.flow-node[data-segment="browsers"] {
+  --segment-color: var(--gr-seg-browsers);
+}
+.flow-node[data-segment="stalled_at_wallet"] {
+  --segment-color: var(--gr-seg-stalled);
+}
+.flow-node[data-segment="connected"] {
+  --segment-color: var(--gr-seg-connected);
+}

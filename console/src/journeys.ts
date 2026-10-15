@@ -1,3 +1,4 @@
+import type { Cohort } from "./types";
 export type JourneySource = "seed" | "test" | "visitor";
 export type SourceCounts = Record<JourneySource, number>;
 
@@ -24,6 +25,20 @@ export interface JourneySegment {
   top_paths: { steps: string[]; sessions: number }[];
 }
 
+// A recorded event name, or a note that an attempt had no recorded result.
+export type JourneyStep =
+  { event: string } | { note: "no_outcome_observed" | "pending" };
+export type ProbeStatusCounts = Record<
+  "answered" | "skipped" | "shown_no_response",
+  number
+>;
+export interface JourneyCohort {
+  cohort: Cohort;
+  sessions: number;
+  probes: Partial<Record<"DP1" | "DP2", ProbeStatusCounts>>;
+  top_paths: { steps: JourneyStep[]; sessions: number }[];
+}
+
 export interface JourneyGraph {
   direction: "LR";
   columns: { index: number; label: string }[];
@@ -35,6 +50,7 @@ export interface JourneyGraph {
     by_source: SourceCounts;
   }[];
   segments: JourneySegment[];
+  cohorts?: JourneyCohort[];
   sessions: number;
   by_source: SourceCounts;
   only: JourneySource | null;
@@ -157,6 +173,56 @@ export function validateJourneys(value: JourneyGraph): void {
     )
   )
     throw new Error("Journey segment counts do not match their cohorts");
+  if (
+    value.cohorts !== undefined &&
+    !validCohorts(value.cohorts, value.sessions)
+  )
+    throw new Error("Journey cohort paths are inconsistent");
+}
+
+const cohortIds: Cohort[] = [
+  "no_gate_event",
+  "gate_event_no_attempt",
+  "attempted_no_success",
+  "connected",
+];
+
+function validCohorts(rows: JourneyCohort[], total: number): boolean {
+  return (
+    Array.isArray(rows) &&
+    rows.length === cohortIds.length &&
+    rows.every((row, index) => row?.cohort === cohortIds[index]) &&
+    rows.reduce((sum, row) => sum + row.sessions, 0) === total &&
+    rows.every(
+      (row) =>
+        count(row.sessions) &&
+        row.probes !== null &&
+        typeof row.probes === "object" &&
+        Object.entries(row.probes).every(
+          ([point, counts]) =>
+            ["DP1", "DP2"].includes(point) &&
+            counts &&
+            (["answered", "skipped", "shown_no_response"] as const).every(
+              (key) => count(counts[key]),
+            ),
+        ) &&
+        Array.isArray(row.top_paths) &&
+        row.top_paths.reduce((sum, path) => sum + path.sessions, 0) <=
+          row.sessions &&
+        row.top_paths.every(
+          (path) =>
+            count(path.sessions) &&
+            Array.isArray(path.steps) &&
+            path.steps.every((step) =>
+              step && "event" in step
+                ? typeof step.event === "string"
+                : step &&
+                  "note" in step &&
+                  ["no_outcome_observed", "pending"].includes(step.note),
+            ),
+        ),
+    )
+  );
 }
 
 export async function fetchJourneys(
