@@ -454,6 +454,10 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
         assert nodes["c8:answered"]["count"] == 10  # 6 at DP1 + 4 at DP2
         assert "seed-" not in str(graph)  # counts only, never session IDs
         assert client.get("/api/journeys?source=visitor").json()["sessions"] == 0
+        own = client.get("/api/journeys/session/seed-14").json()
+        assert own["segment"] == "connected" and own["nodes"][0] == "c0:viewed"
+        assert all(n in nodes for n in own["nodes"])
+        assert client.get("/api/journeys/session/nobody").status_code == 404
         chart = client.get("/api/journeys?format=mermaid").text
         assert chart.startswith("flowchart LR") and "c7_stalled_at_wallet" in chart
 

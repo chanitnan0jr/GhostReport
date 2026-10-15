@@ -30,7 +30,7 @@ from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
 from engine.evidence import evidence_graph
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
-from engine.journeys import journeys, mermaid
+from engine.journeys import journeys, mermaid, session_path
 from engine.llm import LLM, LLMError
 from engine.models import (
     DecisionPoint,
@@ -519,6 +519,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if format == "mermaid":
             return PlainTextResponse(mermaid(graph))
         return graph
+
+    @app.get("/api/journeys/session/{session_id}")
+    async def journey_session(session_id: str) -> Any:
+        """The caller's own path; needs the session's own ID, returns no other session."""
+        events = store().events()
+        sessions = build_cohorts(events, settings.clock(),
+                                 build_verified=store().run.build_verified)
+        body = session_path(session_id, events, sessions, records().exposures(),
+                            records().responses())
+        if body is None:
+            raise HTTPException(404, "no such session in this run")
+        return body
 
     @app.get("/api/evidence")
     async def evidence() -> Any:

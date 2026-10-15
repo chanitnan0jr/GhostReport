@@ -182,3 +182,27 @@ def mermaid(graph: dict[str, Any]) -> str:
     lines += [f'  {e["source"].replace(":", "_")} -->|{e["count"]}| '
               f'{e["target"].replace(":", "_")}' for e in graph["edges"]]
     return "\n".join(lines) + "\n"
+
+
+def session_path(
+    session_id: str, events: Sequence[Event], sessions: Sequence[SessionStats],
+    exposures: Sequence[Exposure] = (), responses: Sequence[ProbeResponse] = (),
+) -> dict[str, Any] | None:
+    """One session's own path through the flowchart ("See where you landed")."""
+    session = next((s for s in sessions if s.session_id == session_id), None)
+    if session is None:
+        return None
+    names = [e.event for e in sorted(events, key=lambda e: e.seq)
+             if e.session_id == session_id]
+    answered = {r.exposure_id: ("skipped" if r.skipped else "answered") for r in responses}
+    probe = next((answered.get(e.exposure_id, "shown_no_response") for e in exposures
+                  if e.session_id == session_id), None)
+    steps = path(session, names, probe)
+    segment = SEGMENT_OF[session.cohort]
+    return {
+        "source": session_source(session_id),
+        "segment": segment, "segment_label": NODES[(7, segment)],
+        "nodes": steps,
+        "edges": [{"source": a, "target": b} for a, b in zip(steps, steps[1:], strict=False)],
+        "probe": probe,
+    }
