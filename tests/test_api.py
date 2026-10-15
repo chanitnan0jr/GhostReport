@@ -158,6 +158,24 @@ def test_dp0_evaluates_once_per_data_version(client: TestClient) -> None:
     assert client.post("/api/dp0").json()["decisions"] == []
 
 
+def test_dp0_runs_again_when_the_build_becomes_verified(tmp_path: Path, clock: Clock) -> None:
+    """A check made while coverage was unknown must not stand once the build verifies."""
+    batch = [event("s9", 1, "project_viewed", "ProjectPage"),
+             event("s9", 2, "back_nav", "ProjectPage")]
+    unverified = Settings(run_id="t", mode="seed", db_dir=tmp_path, code_commit="c1",
+                          verifications=(), dp0_seconds=0, clock=clock)
+    with TestClient(create_app(unverified)) as client:
+        client.post("/api/events", json={"events": batch})
+        first = client.post("/api/dp0").json()["decisions"]
+        assert [d["result"] for d in first] == ["unknown_coverage"]
+    verified = Settings(run_id="t", mode="seed", db_dir=tmp_path, **VERIFIED,
+                        dp0_seconds=0, clock=clock)
+    with TestClient(create_app(verified)) as client:
+        again = client.post("/api/dp0").json()["decisions"]
+        assert [d["result"] for d in again] == ["not_observed"]
+        assert again[0]["contradicted_hypotheses"] == ["H2"]
+
+
 def test_analyze_then_approve_replaces_fixture(tmp_path: Path, clock: Clock) -> None:
     from engine.llm import LLM
     from tests.test_stages import APPLY, HYPOTHESES, WALLET, WORKFLOW, Script

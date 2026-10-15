@@ -27,9 +27,12 @@ NO_ATTEMPT = frozenset({"no_gate_event", "gate_event_no_attempt"})
 
 
 def data_version(sessions: Sequence[SessionStats]) -> str:
-    """Changes only when the no-attempt sub-cohort gains or loses events."""
-    ids = sorted(i for s in sessions if s.cohort in NO_ATTEMPT for i in s.event_ids)
-    return hashlib.sha256("\n".join(ids).encode()).hexdigest()[:16]
+    """Changes when the no-attempt sub-cohort gains or loses events, or when one of its
+    sessions changes coverage (e.g. the build becomes verified): R2 reads both."""
+    rows = sorted([*(i for s in sessions if s.cohort in NO_ATTEMPT for i in s.event_ids),
+                   *(f"coverage:{s.session_id}:{s.coverage}" for s in sessions
+                     if s.cohort in NO_ATTEMPT)])
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()[:16]
 
 
 def run_dp0(
