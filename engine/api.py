@@ -686,6 +686,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from engine.journey_api import add_journey_routes
 
     add_journey_routes(app, app.state.ghost, operator)
+    if settings.mode != "sandbox":
+        from engine.ens_simulation import add_simulation_routes
+
+        add_simulation_routes(app, app.state.journey_specs)
 
     if settings.mode == "sandbox":
         from engine.sandbox import add_sandbox_routes
