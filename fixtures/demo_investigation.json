@@ -1,0 +1,77 @@
+{
+  "_comment": "Stand-in for Stage A/B output until the LLM stages land. Shapes match engine.models; refs are not yet validated against app/.",
+  "investigation_id": "inv-never-attempted",
+  "workflow": {
+    "version": "wf-fixture-1",
+    "scope": {
+      "commit_sha": "fixture",
+      "searched_files": ["src/ApplyModal.tsx", "src/wallet.ts", "src/ProjectPage.tsx"],
+      "unresolved_imports": [],
+      "truncated": false
+    },
+    "states": [
+      {"id": "apply_gated", "desc": "ApplyModal requires a connected wallet before the application form",
+       "code_ref": {"file": "src/ApplyModal.tsx", "lines": [28, 28], "quote": "if (!wallet) return requireWallet();"},
+       "instrumentation": "found_in_code"}
+    ],
+    "outcomes": [
+      {"id": "wallet_rejected", "desc": "User rejects the connection in the wallet popup",
+       "code_ref": {"file": "src/wallet.ts", "lines": [31, 37], "quote": "function onReject(error: Error): void {"},
+       "instrumentation": "not_found_in_scope"},
+      {"id": "wallet_errored", "desc": "Simulated RPC error after approval",
+       "code_ref": {"file": "src/wallet.ts", "lines": [42, 48], "quote": "if (random() < RPC_ERROR_RATE) {"},
+       "instrumentation": "not_found_in_scope"}
+    ],
+    "ui_facts": [
+      {"id": "no_requirement_copy", "desc": "ProjectPage does not say a wallet is required before applying",
+       "code_ref": {"file": "src/ProjectPage.tsx", "lines": [31, 31], "quote": "onClick={onApply}>Apply</button>"},
+       "instrumentation": "unknown"},
+      {"id": "gate_permission_copy", "desc": "The gate shows what connecting allows",
+       "code_ref": {"file": "src/ApplyModal.tsx", "lines": [40, 40], "quote": "What you’re allowing"},
+       "instrumentation": "unknown"}
+    ]
+  },
+  "hypotheses": {
+    "workflow_version": "wf-fixture-1",
+    "hypotheses": [
+      {"id": "H1", "class_id": "HC-unaware-requirement", "statement": "Did not know a wallet was required before applying",
+       "code_evidence": ["no_requirement_copy", "apply_gated"], "generic": false},
+      {"id": "H2", "class_id": "HC-gate-permission", "statement": "Concerned about the permissions shown in the wallet gate",
+       "code_evidence": ["gate_permission_copy"], "generic": false},
+      {"id": "H3", "class_id": "HC-browsing", "statement": "Browsing projects without intending to apply yet",
+       "code_evidence": [], "generic": true},
+      {"id": "H_other", "class_id": null, "statement": "A reason not yet proposed", "code_evidence": [], "generic": true}
+    ]
+  },
+  "class_mappings": [
+    {"hypothesis_id": "H1", "class_id": "HC-unaware-requirement", "approved_by": "operator", "approved_at": "2026-10-15T00:00:00Z"},
+    {"hypothesis_id": "H2", "class_id": "HC-gate-permission", "approved_by": "operator", "approved_at": "2026-10-15T00:00:00Z"},
+    {"hypothesis_id": "H3", "class_id": "HC-browsing", "approved_by": "operator", "approved_at": "2026-10-15T00:00:00Z"}
+  ],
+  "questions": [
+    {"question_version": "dp1.v1", "investigation_id": "inv-never-attempted", "decision_point": "DP1",
+     "stem": "What best describes your decision not to connect right now?",
+     "options": [
+       {"id": "unaware", "label": "Didn't know I needed a wallet", "hypothesis_ids": ["H1"]},
+       {"id": "permission", "label": "Concerned about permissions", "hypothesis_ids": ["H2"]},
+       {"id": "browse", "label": "Just browsing", "hypothesis_ids": ["H3"]},
+       {"id": "requester", "label": "Not sure who is asking", "hypothesis_ids": ["H_other"]},
+       {"id": "other", "label": "Something else", "hypothesis_ids": ["H_other"]}
+     ],
+     "approved_by": "operator", "approved_at": "2026-10-15T00:00:00Z"},
+    {"question_version": "dp2.v1", "investigation_id": "inv-never-attempted", "decision_point": "DP2",
+     "stem": "What were you hoping to do on this page?",
+     "options": [
+       {"id": "browse", "label": "Just looking around", "hypothesis_ids": ["H3"]},
+       {"id": "apply_unclear", "label": "Wanted to apply but wasn't sure what's needed", "hypothesis_ids": ["H1"]},
+       {"id": "other", "label": "Something else", "hypothesis_ids": ["H_other"]}
+     ],
+     "approved_by": "operator", "approved_at": "2026-10-15T00:00:00Z"}
+  ],
+  "plans": [
+    {"plan_id": "plan-dp1", "investigation_id": "inv-never-attempted", "question_version": "dp1.v1",
+     "target_cohorts": ["gate_event_no_attempt"], "target_n": 10, "budget": 30, "ends_at": "2026-10-16T18:00:00+07:00"},
+    {"plan_id": "plan-dp2", "investigation_id": "inv-never-attempted", "question_version": "dp2.v1",
+     "target_cohorts": ["no_gate_event"], "target_n": 10, "budget": 30, "ends_at": "2026-10-16T18:00:00+07:00"}
+  ]
+}
