@@ -228,6 +228,7 @@ def seed_session(
         response = next((r for r in records.responses()
                          if r.exposure_id == exposure.exposure_id), None)
         plan = investigation.plan(exposure.plan_id)
+        shown_received, responded_received = records.received_at(exposure.exposure_id)
         labels = ({o.id: o.label for o in investigation.question(plan).options}
                   if plan else {})
         probe = {
@@ -235,8 +236,9 @@ def seed_session(
             "status": ("shown_no_response" if response is None
                        else "skipped" if response.skipped else "answered"),
             "selected": [labels.get(i, i) for i in response.option_ids] if response else [],
-            "shown_at": exposure.shown_at,
-            "responded_at": response.responded_at if response else None,
+            # Server receive times, the same clock as the events above.
+            "shown_received_at": shown_received,
+            "responded_received_at": responded_received,
         }
     return {
         "session_id": session_id,

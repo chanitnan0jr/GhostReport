@@ -81,6 +81,16 @@ class ProbeRecords:
             )
         return True
 
+    def received_at(self, exposure_id: str) -> tuple[datetime | None, datetime | None]:
+        """Server receive times of an exposure and its response (one clock for timelines)."""
+        found = []
+        for table in ("probe_exposures", "probe_responses"):
+            row = self.connection.execute(
+                f"SELECT received_at FROM {table} WHERE exposure_id = ?", (exposure_id,),
+            ).fetchone()
+            found.append(datetime.fromisoformat(row[0]) if row else None)
+        return found[0], found[1]
+
     def exposures(self) -> tuple[Exposure, ...]:
         rows = self.connection.execute("SELECT payload FROM probe_exposures ORDER BY rowid")
         return tuple(Exposure.model_validate_json(row[0]) for row in rows)

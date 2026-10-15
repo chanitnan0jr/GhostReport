@@ -188,8 +188,8 @@ async function clipLog(
       decision_point: body.probe.decision_point,
       status: body.probe.status,
       selected: body.probe.selected,
-      shown_t_ms: at(body.probe.shown_at),
-      responded_t_ms: at(body.probe.responded_at),
+      shown_t_ms: at(body.probe.shown_received_at),
+      responded_t_ms: at(body.probe.responded_received_at),
     },
   };
 }
