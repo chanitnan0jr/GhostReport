@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { sandboxId } from "./api";
 import { readSandboxToken } from "../../shared/sandbox";
 import { OperatorGate } from "./OperatorGate";
@@ -20,6 +27,7 @@ export function GeneratedJourneys({
 }) {
   const [view, setView] = useState<SpecView | null>(null);
   const [error, setError] = useState("");
+  const heading = useRef<HTMLHeadingElement>(null);
   const [busy, setBusy] = useState(false);
   const [reviewer, setReviewer] = useState("");
   const [message, setMessage] = useState("");
@@ -72,6 +80,11 @@ export function GeneratedJourneys({
           ? "Draft requested. Definitions appear only after validation."
           : "Journey definitions approved. The report still uses the template.",
       );
+      if (action === "approve")
+        requestAnimationFrame(() => {
+          heading.current?.focus({ preventScroll: true });
+          heading.current?.scrollIntoView({ block: "start" });
+        });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Journey request failed.");
     } finally {
@@ -133,7 +146,7 @@ export function GeneratedJourneys({
             ? "Code evidence"
             : "Computed from recorded events"}
         </span>
-        <h2>
+        <h2 ref={heading} tabIndex={-1}>
           {project === "ens"
             ? "Proposed journeys (from code, not observed)"
             : "Generated definitions"}

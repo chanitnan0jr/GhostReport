@@ -17,6 +17,8 @@
   engine-computed counts, source splits and template cohort cross-tabs.
 - Console: original template beside generated definitions, data-driven graph
   with pan/zoom (initial 0.8), rule/evidence review and token-gated approval.
+  Approval returns focus to the generated heading instead of leaving the user
+  below the form that was removed.
 - Sandbox: owner-only Generate journeys step, forwarding whitelist, shared AI
   quota/semaphore, free cache hits, concurrent mutation guards and reset cleanup.
   Reveal compares generator paths with actual event-based segment assignments;
