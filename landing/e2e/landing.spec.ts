@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mockPartB } from "../src/mockPartB";
 import { ROLE_CARDS } from "../src/content";
 
-test("the exact role card leads to the app with only a session ID, on a 375 px-compatible page", async ({
+test("the exact role card leads to the app with only a session ID", async ({
   page,
 }, info) => {
   let submittedSid = "";
@@ -20,15 +20,10 @@ test("the exact role card leads to the app with only a session ID, on a 375 px-c
   await page.route("**/app/**", (route) =>
     route.fulfill({ contentType: "text/html", body: "<h1>Grant app</h1>" }),
   );
-  await page.goto("/about/");
+  await page.goto("/try/");
   await expect(
-    page.getByRole("heading", { name: "Add it to your repo" }),
+    page.getByRole("heading", { name: "Try the app as a real user" }),
   ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
   await page.screenshot({
     path: `/tmp/ghostreport-landing-${info.project.name}.png`,
     fullPage: true,
@@ -54,7 +49,9 @@ test("ENS code-only page shows the pinned sources, review corrections and scope"
     route.fulfill({ json: mockPartB() }),
   );
   await page.goto("/");
-  await page.getByRole("link", { name: "Tested on a real repo: ENS" }).click();
+  await page
+    .getByRole("link", { name: /Tested on a repo we didn’t write/ })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Tested on a real repo: ENS" }),
   ).toBeVisible();

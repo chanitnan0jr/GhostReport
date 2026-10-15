@@ -1,34 +1,38 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import App from "./App";
-import { REPO_URL, ROLE_CARDS } from "./content";
+import { ROLE_CARDS } from "./content";
 
-it("shows the three steps, integration levels, example config and real repo links", () => {
+it("explains the three steps and that the role is assigned, not chosen", () => {
   render(<App />);
   expect(
-    screen.getByRole("heading", { name: "Try the app as a user" }),
+    screen.getByRole("heading", { name: "Try the app as a real user" }),
   ).toBeVisible();
   expect(
-    screen.getByRole("heading", { name: "See the investigation update" }),
+    screen.getByRole("heading", { name: "Get a role card" }),
   ).toBeVisible();
-  expect(
-    screen.getByRole("heading", { name: "Add it to your repo" }),
-  ).toBeVisible();
-  expect(
-    screen.getByRole("link", { name: /Open the investigation/ }),
-  ).toHaveAttribute("href", "/report/");
-  expect(screen.getByRole("link", { name: /View on GitHub/ })).toHaveAttribute(
-    "href",
-    REPO_URL,
-  );
-  expect(screen.getByText("L0")).toBeInTheDocument();
-  expect(screen.getByText("L3")).toBeInTheDocument();
-  expect(
-    screen.getByRole("link", { name: /Tested on a real repo: ENS/ }),
-  ).toHaveAttribute("href", "/ens/");
+  expect(screen.getByText(/at random/)).toHaveTextContent("You don’t pick.");
   expect(screen.getByText(/The wallet is simulated/)).toHaveTextContent(
-    "A network error may be simulated once.",
+    "retrying always works",
   );
+});
+
+it("offers to continue without a role when the roles service is down", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+  render(<App />);
+  fireEvent.click(
+    screen.getByRole("button", { name: "Try the app as a user" }),
+  );
+  const alert = await screen.findByRole("alert");
+  expect(
+    within(alert).getByRole("link", { name: /Continue without a role/ }),
+  ).toHaveAttribute("href", "/app/");
 });
 
 it.each(["A", "B"] as const)(

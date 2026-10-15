@@ -167,7 +167,9 @@ export function DemoClips() {
       .catch((failure: unknown) => {
         if (!controller.signal.aborted)
           setError(
-            failure instanceof Error ? failure.message : "Recordings unavailable.",
+            failure instanceof Error
+              ? failure.message
+              : "Recordings unavailable.",
           );
       });
     return () => controller.abort();
@@ -212,7 +214,11 @@ export function DemoClips() {
     <section className="clips" aria-label="Recorded simulated users">
       <div className="clips-bar">
         <button className="clips-play" onClick={playAll} disabled={playing}>
-          {playing ? "Playing…" : now > 0 ? "Replay all four" : "▶ Play all four"}
+          {playing
+            ? "Playing…"
+            : now > 0
+              ? "Replay all four"
+              : "▶ Play all four"}
         </button>
         <span>
           Each log shows the events the server received for that session, at the

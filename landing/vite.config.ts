@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
           about: "about/index.html",
           seed: "seed/index.html",
           install: "install/index.html",
+          try: "try/index.html",
         },
       },
     },

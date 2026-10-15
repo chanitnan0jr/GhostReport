@@ -74,7 +74,8 @@ test.describe("pages", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   for (const [path, text] of [
-    ["/", "Good ideas."],
+    ["/", "Your users stop at the wallet step."],
+    ["/try/", "Try the app as a real user"],
     ["/report/", "seed"],
     ["/ens/", "Pricing.tsx"],
     ["/about/", "GhostReport"],

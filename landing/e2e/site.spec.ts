@@ -21,7 +21,7 @@ test("landing, grant app and public report share an automated test session", asy
       route.fulfill({ json: { role: "B" } }),
     );
 
-  await page.goto("/");
+  await page.goto("/try/");
   const assignmentPromise = page.waitForResponse(
     (r) => new URL(r.url()).pathname === "/roles/assign",
   );

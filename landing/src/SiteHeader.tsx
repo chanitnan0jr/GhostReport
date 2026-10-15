@@ -1,8 +1,10 @@
-// Pitch order; console/ and app/ use the same tabs.
+import { REPO_URL } from "./content";
+
+// Pitch order; console/ and app/ use the same tabs (shared/tokens.css .gr-header).
 export const links = [
   ["Home", "/"],
   ["Demo", "/seed/"],
-  ["Try the App", "/app/"],
+  ["Try the App", "/try/"],
   ["Segments", "/report/#segments"],
   ["Workflow Map", "/report/#workflow"],
   ["Report", "/report/"],
@@ -11,17 +13,17 @@ export const links = [
   ["About", "/about/"],
 ] as const;
 
-export function SiteHeader({ light = false }: { light?: boolean }) {
+export function SiteHeader() {
   const path = location.pathname.replace(/\/$/, "") || "/";
   return (
-    <header className={`global-header${light ? " global-header-light" : ""}`}>
-      <a href="/" className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          {light ? "c." : "G"}
+    <header className="gr-header">
+      <a href="/" className="gr-brand">
+        <span className="gr-brand-mark" aria-hidden="true">
+          G
         </span>
-        {light ? "common ground" : "GhostReport"}
+        GhostReport
       </a>
-      <nav className="global-nav" aria-label="Main navigation">
+      <nav className="gr-nav" aria-label="Main navigation">
         {links.map(([label, href]) => (
           <a
             key={href}
@@ -34,6 +36,9 @@ export function SiteHeader({ light = false }: { light?: boolean }) {
           </a>
         ))}
       </nav>
+      <a className="gr-github" href={REPO_URL} target="_blank" rel="noreferrer">
+        GitHub ↗
+      </a>
     </header>
   );
 }

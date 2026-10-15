@@ -1,5 +1,5 @@
 import { REPO_URL } from "./content";
-import { SiteHeader } from "./SiteHeader";
+import { Shell } from "./HomePage";
 
 // Every snippet below is copied from code in this repository; the config shows only
 // the keys the engine reads today (engine/config.py), with the rest marked as planned.
@@ -78,78 +78,84 @@ function Step({
 
 export function InstallPage() {
   return (
-    <div className="seed-shell">
-      <SiteHeader />
-      <main className="seed-page install-page">
-        <p className="seed-kicker">Install · 3 steps</p>
-        <h1>Add GhostReport to your repo</h1>
-        <p className="seed-intro">
-          Start read-only: point it at a pinned commit and get a workflow map,
-          evidence gaps and hypotheses to review, as we did with{" "}
-          <a href="/ens/">ENS</a>. Add events and the optional question when
-          you are ready.
-        </p>
+    <Shell>
+      <div className="seed-shell">
+        <main className="seed-page install-page">
+          <p className="seed-kicker">Install · 3 steps</p>
+          <h1>Add GhostReport to your repo</h1>
+          <p className="seed-intro">
+            Start read-only: point it at a pinned commit and get a workflow map,
+            evidence gaps and hypotheses to review, as we did with{" "}
+            <a href="/ens/">ENS</a>. Add events and the optional question when
+            you are ready.
+          </p>
 
-        <Step number="01" title="Describe the workflow in one file">
-          <p>
-            <code>ghostreport.yaml</code> names the repo, the words that find the
-            workflow, and your tracking functions.
-          </p>
-          <div className="install-pair">
-            <Code>{CONFIG_READ_ONLY}</Code>
-            <Code>{CONFIG_EVENTS}</Code>
-          </div>
-          <p className="install-note">
-            Read today: <code>repo</code>, <code>workflow.keywords</code>,{" "}
-            <code>mode</code>, <code>analytics.calls</code>, <code>events</code>.
-            Planned, not enforced yet: <code>requires_seq</code>,{" "}
-            <code>privacy</code>, <code>probe</code>.
-          </p>
-          <Code>{ANALYZE}</Code>
-          <p>
-            The draft is never applied on its own: an operator reviews the
-            hypotheses and probe questions first.
-          </p>
-        </Step>
+          <Step number="01" title="Describe the workflow in one file">
+            <p>
+              <code>ghostreport.yaml</code> names the repo, the words that find
+              the workflow, and your tracking functions.
+            </p>
+            <div className="install-pair">
+              <Code>{CONFIG_READ_ONLY}</Code>
+              <Code>{CONFIG_EVENTS}</Code>
+            </div>
+            <p className="install-note">
+              Read today: <code>repo</code>, <code>workflow.keywords</code>,{" "}
+              <code>mode</code>, <code>analytics.calls</code>,{" "}
+              <code>events</code>. Planned, not enforced yet:{" "}
+              <code>requires_seq</code>, <code>privacy</code>,{" "}
+              <code>probe</code>.
+            </p>
+            <Code>{ANALYZE}</Code>
+            <p>
+              The draft is never applied on its own: an operator reviews the
+              hypotheses and probe questions first.
+            </p>
+          </Step>
 
-        <Step number="02" title="Send events with track()">
-          <p>
-            Copy{" "}
-            <a href={`${BLOB}/app/src/track.ts`} target="_blank" rel="noreferrer">
-              track.ts
-            </a>{" "}
-            and call it once per step. It numbers events per session, batches
-            them, and drops any property outside the allow-list or anything that
-            looks like a wallet address. Already have analytics? Skip this and
-            map your names under <code>events:</code>.
-          </p>
-          <Code>{TRACK}</Code>
-        </Step>
+          <Step number="02" title="Send events with track()">
+            <p>
+              Copy{" "}
+              <a
+                href={`${BLOB}/app/src/track.ts`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                track.ts
+              </a>{" "}
+              and call it once per step. It numbers events per session, batches
+              them, and drops any property outside the allow-list or anything
+              that looks like a wallet address. Already have analytics? Skip
+              this and map your names under <code>events:</code>.
+            </p>
+            <Code>{TRACK}</Code>
+          </Step>
 
-        <Step number="03" title="Ask one optional question at the exit">
-          <p>
-            Drop{" "}
-            <a
-              href={`${BLOB}/app/src/ProbeCard.tsx`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              &lt;ProbeCard/&gt;
-            </a>{" "}
-            where people leave. It shows only the questions approved before the
-            lock, never blocks the exit, and Skip is always one click.
-          </p>
-          <Code>{PROBE}</Code>
-          <p>Approve the draft, lock v1, and start collecting:</p>
-          <Code>{LOCK}</Code>
-        </Step>
-      </main>
-      <footer>
-        <span>GhostReport · Install</span>
-        <a href={REPO_URL} target="_blank" rel="noreferrer">
-          Source on GitHub ↗
-        </a>
-      </footer>
-    </div>
+          <Step number="03" title="Ask one optional question at the exit">
+            <p>
+              Drop{" "}
+              <a
+                href={`${BLOB}/app/src/ProbeCard.tsx`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                &lt;ProbeCard/&gt;
+              </a>{" "}
+              where people leave. It shows only the questions approved before
+              the lock, never blocks the exit, and Skip is always one click.
+            </p>
+            <Code>{PROBE}</Code>
+            <p>Approve the draft, lock v1, and start collecting:</p>
+            <Code>{LOCK}</Code>
+          </Step>
+        </main>
+        <footer>
+          <span>GhostReport · Install</span>
+          <a href={REPO_URL} target="_blank" rel="noreferrer">
+            Source on GitHub ↗
+          </a>
+        </footer>
+      </div>
+    </Shell>
   );
 }

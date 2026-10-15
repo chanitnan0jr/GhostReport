@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { DaoHome } from "./DaoHome";
-import { SiteHeader } from "./SiteHeader";
-import {
-  CONFIG_EXAMPLE,
-  INTEGRATION_LEVELS,
-  REPO_URL,
-  ROLE_CARDS,
-} from "./content";
+import { ROLE_CARDS } from "./content";
+import { Shell } from "./HomePage";
 
 const defaultNavigate = (url: string) => window.location.assign(url);
 
@@ -19,10 +13,10 @@ function uuid(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/** Try the App: the roles service assigns A or B (randomised, blind); judges never choose. */
 export default function App({
   navigate = defaultNavigate,
-  page = "guide",
-}: { navigate?: (url: string) => void; page?: "dao" | "guide" } = {}) {
+}: { navigate?: (url: string) => void } = {}) {
   const [assignment, setAssignment] = useState<{
     sessionId: string;
     role: "A" | "B";
@@ -71,142 +65,86 @@ export default function App({
 
   if (assignment)
     return (
-      <main className="role-screen">
-        <p className="role-text">{ROLE_CARDS[assignment.role]}</p>
-        <button
-          className="primary"
-          onClick={() =>
-            navigate(
-              `/app/?sid=${encodeURIComponent(assignment.sessionId)}${pendingProject.current ? `#/project/${pendingProject.current}` : ""}`,
-            )
-          }
-        >
-          Start
-        </button>
-      </main>
-    );
-
-  if (page === "dao")
-    return (
-      <DaoHome
-        onStart={(id) => void start(id)}
-        preparing={preparing}
-        error={error}
-      />
+      <Shell>
+        <main className="gr-card role-card-screen">
+          <p className="role-text">{ROLE_CARDS[assignment.role]}</p>
+          <button
+            className="gr-button"
+            onClick={() =>
+              navigate(
+                `/app/?sid=${encodeURIComponent(assignment.sessionId)}${pendingProject.current ? `#/project/${pendingProject.current}` : ""}`,
+              )
+            }
+          >
+            Start
+          </button>
+        </main>
+      </Shell>
     );
 
   return (
-    <div className="landing">
-      <SiteHeader />
-      <main>
-        <section className="hero">
-          <h1>
-            Follow the drop-off.
-            <br />
-            <span>Find the missing evidence.</span>
-          </h1>
-          <p className="pitch">
-            GhostReport connects code, behavior, and optional feedback into an
-            investigation you can trace.
-          </p>
-          <p className="simulation-note">
-            The wallet is simulated. No real wallet or funds. A network error
-            may be simulated once.
-          </p>
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="repo-link"
-          >
-            View on GitHub ↗
-          </a>
-        </section>
-        <section className="step first-step" aria-labelledby="step-one">
-          <span className="step-number" aria-hidden="true">
-            01
-          </span>
-          <div className="step-content">
-            <h2 id="step-one">Try the app as a user</h2>
+    <Shell>
+      <main className="gr-page">
+        <span className="gr-kicker">Try the App</span>
+        <h1>Try the app as a real user</h1>
+        <p className="gr-lead">
+          Follow a short role card, use the grant app the way you really would,
+          and see where you land. You may get one optional question when you
+          leave. Your session counts as a visitor, separately from the simulated
+          users.
+        </p>
+        <div className="try-steps">
+          <section className="gr-card">
+            <span className="try-number">1</span>
+            <h2>Get a role card</h2>
             <p>
-              Get a short role card. Explore the grant app and make your own
-              choices.
+              The roles service gives you card A (a team looking for funding) or
+              B (curious about the community) at random, so the results stay
+              comparable. You don’t pick.
             </p>
             <button
-              className="primary"
+              className="gr-button"
               onClick={() => void start()}
               disabled={preparing}
             >
               {preparing ? "Preparing your session…" : "Try the app as a user"}
-              <span aria-hidden="true">↗</span>
             </button>
             {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
+              <div className="gr-error" role="alert">
+                {error} <a href="/app/">Continue without a role →</a>
+              </div>
             )}
-          </div>
-        </section>
-        <section className="step" aria-labelledby="step-two">
-          <span className="step-number" aria-hidden="true">
-            02
-          </span>
-          <div className="step-content">
-            <h2 id="step-two">See the investigation update</h2>
+          </section>
+          <section className="gr-card">
+            <span className="try-number">2</span>
+            <h2>Use the app</h2>
             <p>
-              Compare the locked baseline with new evidence. Your session will
-              be highlighted in the report.
+              Common Ground DAO is a mock grant app. The wallet is simulated: no
+              real wallet or funds. The first connection may show a simulated
+              network error once; retrying always works.
             </p>
-            <a className="text-link" href="/report/">
-              Open the investigation <span aria-hidden="true">→</span>
-            </a>
-          </div>
-        </section>
-        <section className="step integration-step" aria-labelledby="step-three">
-          <span className="step-number" aria-hidden="true">
-            03
-          </span>
-          <div className="step-content">
-            <h2 id="step-three">Add it to your repo</h2>
+          </section>
+          <section className="gr-card">
+            <span className="try-number">3</span>
+            <h2>Optional question when you leave</h2>
             <p>
-              Start with source code. Add events and optional feedback when
-              you’re ready.
+              If you leave at a point under investigation, one question may
+              appear. Skip is always one click, and it never blocks you.
             </p>
-            <div className="integration-levels">
-              {INTEGRATION_LEVELS.map(([level, title, description]) => (
-                <article key={level}>
-                  <span className="level">{level}</span>
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <details className="config-example">
-              <summary>View ghostreport.yaml</summary>
-              <pre>
-                <code>{CONFIG_EXAMPLE}</code>
-              </pre>
-            </details>
-            <a className="text-link ens-link" href="/ens/">
-              Tested on a real repo: ENS <span aria-hidden="true">↗</span>
-            </a>
-            <a
-              className="text-link"
-              href={REPO_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Explore the source on GitHub <span aria-hidden="true">↗</span>
-            </a>
+          </section>
+        </div>
+        <div className="gr-card try-after">
+          <div>
+            <h3>Finished? See where you landed</h3>
+            <p className="gr-muted">
+              The app links to your own path and segment in the report.
+            </p>
           </div>
-        </section>
+          <a className="gr-button-quiet" href="/report/#segments">
+            Open Segments →
+          </a>
+        </div>
       </main>
-      <footer>
-        <span>GhostReport</span>
-        <span>Built for questions worth investigating.</span>
-      </footer>
-    </div>
+    </Shell>
   );
 }

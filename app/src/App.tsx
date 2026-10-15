@@ -15,7 +15,7 @@ import { connectWallet, type Wallet, type WalletAttempt } from "./wallet";
 const NAVIGATION = [
   ["Home", "/"],
   ["Demo", "/seed/"],
-  ["Try the App", "/app/"],
+  ["Try the App", "/try/"],
   ["Segments", "/report/#segments"],
   ["Workflow Map", "/report/#workflow"],
   ["Report", "/report/"],
@@ -211,7 +211,7 @@ export default function App() {
             <a
               key={href}
               href={href}
-              aria-current={href === "/app/" ? "page" : undefined}
+              aria-current={href === "/try/" ? "page" : undefined}
             >
               {label}
             </a>

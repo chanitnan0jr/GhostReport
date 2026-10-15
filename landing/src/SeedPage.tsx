@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { DemoClips } from "./DemoClips";
-import { SiteHeader } from "./SiteHeader";
+import { Shell } from "./HomePage";
 
 interface SeedSession {
   session_id: string;
@@ -116,158 +116,161 @@ export function SeedPage() {
   }, [selected, revision]);
 
   return (
-    <div className="seed-shell">
-      <SiteHeader />
-      <main className="seed-page">
-        <p className="seed-kicker">Recorded activity · Read only</p>
-        <h1>Four simulated users, one real app</h1>
-        <p className="seed-label">Simulated users (Playwright) — seed</p>
-        <p className="seed-intro">
-          Playwright clicked through the real app as four people from the role
-          cards. Every event below came from the app's own <code>track()</code>{" "}
-          and was received by the server; the report counts these sessions as
-          seed, never as visitors. Nothing runs live on this page.
-        </p>
-        <DemoClips />
-        <div className="clips-next">
-          <a className="clips-cta" href="/app/">
-            Now try it yourself →
-          </a>
-          <span>Your session joins the report as a visitor.</span>
-        </div>
-        <h2 className="seed-section">All 20 simulated sessions</h2>
-        {import.meta.env.VITE_MOCK === "1" && (
-          <p className="seed-error">
-            Mock preview — local fixture, not a recorded browser run.
+    <Shell>
+      <div className="seed-shell">
+        <main className="seed-page">
+          <p className="seed-kicker">Recorded activity · Read only</p>
+          <h1>Four simulated users, one real app</h1>
+          <p className="seed-label">Simulated users (Playwright) — seed</p>
+          <p className="seed-intro">
+            Playwright clicked through the real app as four people from the role
+            cards. Every event below came from the app's own{" "}
+            <code>track()</code> and was received by the server; the report
+            counts these sessions as seed, never as visitors. Nothing runs live
+            on this page.
           </p>
-        )}
-        <p className="seed-intro">
-          Explore the recorded steps of every simulated session. These are separate
-          from visitor activity. Opening this page does not create sessions or
-          send answers.
-        </p>
-        <div className="seed-toolbar">
-          <a href="/report/">Open the full report ↗</a>
-          <button
-            className="seed-refresh"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            {loading ? "Loading…" : "Refresh recorded sessions"}
-          </button>
-        </div>
-        {error && (
-          <div role="alert" className="seed-error">
-            {error} Use Refresh to try again.
+          <DemoClips />
+          <div className="clips-next">
+            <a className="clips-cta" href="/app/">
+              Now try it yourself →
+            </a>
+            <span>Your session joins the report as a visitor.</span>
           </div>
-        )}
-        {loading ? (
-          <p role="status">Loading recorded sessions…</p>
-        ) : !sessions.length && !error ? (
-          <div className="seed-empty">
-            <h2>No seed sessions in this run yet</h2>
-            <p>
-              Recorded sessions will appear once the demo run has been seeded.
-              Visitor and automated test sessions are not displayed here.
+          <h2 className="seed-section">All 20 simulated sessions</h2>
+          {import.meta.env.VITE_MOCK === "1" && (
+            <p className="seed-error">
+              Mock preview — local fixture, not a recorded browser run.
             </p>
-            <a href="/">Try the DAO app instead →</a>
+          )}
+          <p className="seed-intro">
+            Explore the recorded steps of every simulated session. These are
+            separate from visitor activity. Opening this page does not create
+            sessions or send answers.
+          </p>
+          <div className="seed-toolbar">
+            <a href="/report/">Open the full report ↗</a>
+            <button
+              className="seed-refresh"
+              disabled={loading}
+              onClick={() => setRevision((value) => value + 1)}
+            >
+              {loading ? "Loading…" : "Refresh recorded sessions"}
+            </button>
           </div>
-        ) : (
-          sessions.length > 0 && (
-            <div className="seed-layout">
-              <aside className="seed-session-list" aria-label="Seed sessions">
-                <h2>Recorded sessions</h2>
-                <p>
-                  {sessions.length} of {sessions.length} seed sessions
-                </p>
-                {sessions.map((item) => (
-                  <button
-                    key={item.session_id}
-                    aria-pressed={selected === item.session_id}
-                    onClick={() => {
-                      setError("");
-                      setSelected(item.session_id);
-                    }}
-                  >
-                    <span>
-                      {cohortNames[item.cohort] ?? readable(item.cohort)}
-                    </span>
-                    <code>{item.session_id}</code>
-                  </button>
-                ))}
-              </aside>
-              <section
-                className="seed-detail"
-                aria-label="Recorded session details"
-              >
-                {!session ? (
-                  !error && <p role="status">Loading session details…</p>
-                ) : (
-                  <>
-                    <span className="seed-kicker">
-                      Observed · Server-received events
-                    </span>
-                    <h2>
-                      {cohortNames[session.cohort] ?? readable(session.cohort)}
-                    </h2>
-                    <code className="seed-id">{session.session_id}</code>
-                    <dl className="seed-facts">
-                      <div>
-                        <dt>Source</dt>
-                        <dd>Simulated users (Playwright) — seed</dd>
-                      </div>
-                      <div>
-                        <dt>Telemetry coverage</dt>
-                        <dd>{session.coverage}</dd>
-                      </div>
-                      <div>
-                        <dt>Exit</dt>
-                        <dd>{readable(session.exit_type)}</dd>
-                      </div>
-                    </dl>
-                    <ol className="seed-timeline">
-                      {session.events.map((event) => (
-                        <li key={event.seq}>
-                          <span className="seed-seq">{event.seq}</span>
-                          <div>
-                            <strong>{readable(event.event)}</strong>
-                            <p>{event.page}</p>
-                            <time dateTime={event.received_at}>
-                              {new Date(event.received_at).toLocaleString()}
-                            </time>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                    {session.probe && (
-                      <section className="seed-probe">
-                        <h3>
-                          Optional response · {session.probe.decision_point}
-                        </h3>
-                        <p>
-                          Shown after event {session.probe.after_seq} ·{" "}
-                          {readable(session.probe.status)}
-                        </p>
-                        {session.probe.selected.length > 0 && (
-                          <ul>
-                            {session.probe.selected.map((option) => (
-                              <li key={option}>{option}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </section>
-                    )}
-                  </>
-                )}
-              </section>
+          {error && (
+            <div role="alert" className="seed-error">
+              {error} Use Refresh to try again.
             </div>
-          )
-        )}
-      </main>
-      <footer>
-        <span>GhostReport · Recorded demo activity</span>
-        <a href="/about/">About this project</a>
-      </footer>
-    </div>
+          )}
+          {loading ? (
+            <p role="status">Loading recorded sessions…</p>
+          ) : !sessions.length && !error ? (
+            <div className="seed-empty">
+              <h2>No seed sessions in this run yet</h2>
+              <p>
+                Recorded sessions will appear once the demo run has been seeded.
+                Visitor and automated test sessions are not displayed here.
+              </p>
+              <a href="/">Try the DAO app instead →</a>
+            </div>
+          ) : (
+            sessions.length > 0 && (
+              <div className="seed-layout">
+                <aside className="seed-session-list" aria-label="Seed sessions">
+                  <h2>Recorded sessions</h2>
+                  <p>
+                    {sessions.length} of {sessions.length} seed sessions
+                  </p>
+                  {sessions.map((item) => (
+                    <button
+                      key={item.session_id}
+                      aria-pressed={selected === item.session_id}
+                      onClick={() => {
+                        setError("");
+                        setSelected(item.session_id);
+                      }}
+                    >
+                      <span>
+                        {cohortNames[item.cohort] ?? readable(item.cohort)}
+                      </span>
+                      <code>{item.session_id}</code>
+                    </button>
+                  ))}
+                </aside>
+                <section
+                  className="seed-detail"
+                  aria-label="Recorded session details"
+                >
+                  {!session ? (
+                    !error && <p role="status">Loading session details…</p>
+                  ) : (
+                    <>
+                      <span className="seed-kicker">
+                        Observed · Server-received events
+                      </span>
+                      <h2>
+                        {cohortNames[session.cohort] ??
+                          readable(session.cohort)}
+                      </h2>
+                      <code className="seed-id">{session.session_id}</code>
+                      <dl className="seed-facts">
+                        <div>
+                          <dt>Source</dt>
+                          <dd>Simulated users (Playwright) — seed</dd>
+                        </div>
+                        <div>
+                          <dt>Telemetry coverage</dt>
+                          <dd>{session.coverage}</dd>
+                        </div>
+                        <div>
+                          <dt>Exit</dt>
+                          <dd>{readable(session.exit_type)}</dd>
+                        </div>
+                      </dl>
+                      <ol className="seed-timeline">
+                        {session.events.map((event) => (
+                          <li key={event.seq}>
+                            <span className="seed-seq">{event.seq}</span>
+                            <div>
+                              <strong>{readable(event.event)}</strong>
+                              <p>{event.page}</p>
+                              <time dateTime={event.received_at}>
+                                {new Date(event.received_at).toLocaleString()}
+                              </time>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                      {session.probe && (
+                        <section className="seed-probe">
+                          <h3>
+                            Optional response · {session.probe.decision_point}
+                          </h3>
+                          <p>
+                            Shown after event {session.probe.after_seq} ·{" "}
+                            {readable(session.probe.status)}
+                          </p>
+                          {session.probe.selected.length > 0 && (
+                            <ul>
+                              {session.probe.selected.map((option) => (
+                                <li key={option}>{option}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </section>
+                      )}
+                    </>
+                  )}
+                </section>
+              </div>
+            )
+          )}
+        </main>
+        <footer>
+          <span>GhostReport · Recorded demo activity</span>
+          <a href="/about/">About this project</a>
+        </footer>
+      </div>
+    </Shell>
   );
 }
