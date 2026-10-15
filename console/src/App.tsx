@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
+import { GeneratedJourneys } from "./GeneratedJourneys";
+import { activeSite } from "../../shared/navigation";
 import { ConsoleHeader, useConsoleHash } from "./ConsoleHeader";
 import { InvestigationDocument } from "./InvestigationDocument";
 import { Segments } from "./Segments";
@@ -13,7 +15,8 @@ import { SANDBOX_BANNER } from "./sandbox/types";
 const WorkflowMap = lazy(() => import("./WorkflowMap"));
 
 export default function App() {
-  const { report, error, updatedAt, refresh } = useReport();
+  const project = activeSite(new URL(location.href));
+  const { report, error, updatedAt, refresh } = useReport(project === "app");
   const warnings = report ? reportWarnings(report) : [];
   const mode = report?.run.mode;
   const hash = useConsoleHash();
@@ -40,6 +43,42 @@ export default function App() {
     });
     return () => cancelAnimationFrame(frame);
   }, [hash, ready, page, sandbox]);
+  if (project === "ens")
+    return (
+      <>
+        <ConsoleHeader hash={hash} />
+        <div className="console-shell">
+          <main className="workspace">
+            <p className="mode-banner">
+              ENS data · code_only · read-only · nothing deployed
+            </p>
+            {page === "workflow" ? (
+              <Suspense fallback={<p>Opening Workflow Map…</p>}>
+                <WorkflowMap target="ens" />
+              </Suspense>
+            ) : page === "segments" ? (
+              <div id="segments">
+                <GeneratedJourneys project="ens" />
+              </div>
+            ) : (
+              <section className="panel" id="top">
+                <h1>ENS code-only project</h1>
+                <p>
+                  No recorded sessions for this project. Generate journeys from
+                  its Workflow Map to see the proposed segments.
+                </p>
+                <p>
+                  No behavioural report is available.{" "}
+                  <a href="/ens/?project=ens">
+                    Read the code evidence and manual reference review →
+                  </a>
+                </p>
+              </section>
+            )}
+          </main>
+        </div>
+      </>
+    );
   return (
     <>
       <ConsoleHeader hash={hash} />

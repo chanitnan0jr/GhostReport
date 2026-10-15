@@ -1,3 +1,4 @@
+import { GeneratedJourneys } from "./GeneratedJourneys";
 import { useState } from "react";
 import { CohortFlow } from "./CohortFlow";
 import { CohortCards } from "./CohortCards";
@@ -145,12 +146,23 @@ export function Segments({ report }: { report: Report | null }) {
             {own.error}
           </p>
         )}
-        <CohortFlow
-          population={population}
-          selected={focus}
-          personal={Boolean(personal && focus === personal.cohort)}
-          onSelect={selectCohort}
-        />
+        <div className="journey-comparison">
+          <div className="journey-template">
+            <h2>Template · original cohorts</h2>
+            <CohortFlow
+              population={population}
+              selected={focus}
+              personal={Boolean(personal && focus === personal.cohort)}
+              onSelect={selectCohort}
+            />
+          </div>
+          <GeneratedJourneys
+            source={
+              ["seed", "test", "visitor"].includes(filter) ? filter : undefined
+            }
+            exclude={filter === "no_test" ? "test" : undefined}
+          />
+        </div>
       </section>
       <div className="cohort-grouping-note">
         <span className="evidence-label">Observed</span>

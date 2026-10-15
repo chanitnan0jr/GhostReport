@@ -285,8 +285,13 @@ function WorkflowGraph({
   );
 }
 
-export default function WorkflowMap({ revision }: { revision?: string }) {
-  const [target, setTarget] = useState<WorkflowTarget>("app");
+export default function WorkflowMap({
+  revision,
+  target = "app",
+}: {
+  revision?: string;
+  target?: WorkflowTarget;
+}) {
   const [view, setView] = useState<WorkflowView | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -297,7 +302,6 @@ export default function WorkflowMap({ revision }: { revision?: string }) {
     const onHash = () => {
       if (!location.hash.startsWith("#fact-")) return;
       setInitialFact(location.hash.slice(6));
-      setTarget("app");
       document.getElementById("workflow")?.scrollIntoView();
     };
     window.addEventListener("hashchange", onHash);
@@ -332,26 +336,6 @@ export default function WorkflowMap({ revision }: { revision?: string }) {
       description="Edges follow state order and file associations. Select a node to inspect its source evidence."
     >
       <div className="graph-section-toolbar">
-        <div className="graph-toggle" role="group" aria-label="Workflow target">
-          {(
-            [
-              ["Our app", "app"],
-              ["ENS", "ens"],
-            ] as const
-          ).map(([label, value]) => (
-            <button
-              type="button"
-              key={value}
-              aria-pressed={target === value}
-              onClick={() => {
-                setInitialFact(null);
-                setTarget(value);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         {view && (
           <span className="small muted">
             {safeText(view.mode)} · {view.scope.searched_files} searched files

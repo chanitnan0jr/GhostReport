@@ -1,3 +1,4 @@
+import { sessions } from "../format";
 import type { Reveal } from "./types";
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
@@ -13,6 +14,44 @@ export function RevealPanel({ reveal }: { reveal: Reveal }) {
     );
   return (
     <div className="sbx-reveal">
+      {Boolean(reveal.journeys?.length) && (
+        <section>
+          <h3>Generated paths and approved segments</h3>
+          <p className="sbx-hint">
+            Generator ground truth is read only for this reveal. Grouping uses
+            the events the engine received, with unknown coverage kept separate.
+          </p>
+          <table className="sbx-table">
+            <thead>
+              <tr>
+                <th>Generated event path</th>
+                <th>Simulated sessions</th>
+                <th>Approved generated segments</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reveal.journeys?.map((path) => (
+                <tr key={path.events.join("/")}>
+                  <td>
+                    <code>{path.events.join(" → ")}</code>
+                  </td>
+                  <td>{sessions(path.sessions, path.total_sessions)}</td>
+                  <td>
+                    {Object.entries(path.generated_segments).map(
+                      ([label, count]) => (
+                        <p key={label}>
+                          {label}: {sessions(count, path.sessions)}
+                        </p>
+                      ),
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {reveal.questions.map((question) => {
         const lost =
           question.counted.not_counted_unknown_coverage +

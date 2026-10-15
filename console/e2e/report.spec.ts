@@ -78,3 +78,49 @@ test("keeps each decision point's population separate under a hypothesis", async
     /^Self-reported at DP1\. 2 of 3 respondents selected this answer \(seed 2 of 3\)\./,
   ]);
 });
+
+test("selects ENS across tabs without leaking mock sessions or operator controls", async ({
+  page,
+}) => {
+  await page.goto("/report/#segments");
+  const select = page.getByRole("combobox", { name: "Project data" });
+  await expect(select).toHaveValue("app");
+  await select.selectOption("ens");
+  await expect(page).toHaveURL(/project=ens#segments/);
+  await expect(
+    page.getByRole("heading", {
+      name: "Proposed journeys (from code, not observed)",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Session Explorer" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Sandbox", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Generate user journeys" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "Workflow Map", exact: true }).click();
+  await expect(page).toHaveURL(/project=ens#workflow/);
+  await expect(
+    page.getByRole("group", { name: "Workflow target" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("ENS (real repo, code-only)")).toBeVisible();
+  await page.screenshot({ path: "/tmp/ghostreport-project-ens.png" });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole("combobox", { name: "Project data" })
+    .selectOption("app");
+  await expect(page).not.toHaveURL(/project=ens/);
+  await page.getByRole("link", { name: "Segments", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Template · original cohorts" }),
+  ).toBeVisible();
+  await page.screenshot({ path: "/tmp/ghostreport-journeys-comparison.png" });
+});

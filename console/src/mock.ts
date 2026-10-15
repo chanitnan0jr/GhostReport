@@ -51,6 +51,20 @@ export function installMockBackend() {
     if (url.pathname === "/api/report") return json(state);
     if (url.pathname === "/api/report/document") return json(document);
     if (url.pathname === "/api/evidence") return json(mockEvidence(state));
+    if (url.pathname === "/api/journeys/spec")
+      return new Response(
+        JSON.stringify({
+          project: url.searchParams.get("project") === "ens" ? "ens" : "app",
+          status: "ready",
+          draft: null,
+          approved: null,
+          template: null,
+          comparison: null,
+          validation: [],
+          stale: false,
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
     if (url.pathname.startsWith("/api/journeys/session/")) {
       const sid = decodeURIComponent(
         url.pathname.slice("/api/journeys/session/".length),

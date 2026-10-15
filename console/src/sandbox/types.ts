@@ -117,6 +117,7 @@ export interface SandboxState {
   sessions_total: number;
   sessions_used?: number; // sessions_total plus those removed by resets; the limit counts these
   resets?: number;
+  journeys?: { status: "running" | "ready"; approved_digest: string | null };
   batches: TrafficResult[];
   rpc_error_rate: number; // 0.1: first connect attempt of a session only
   banner: string; // SANDBOX_BANNER
@@ -181,6 +182,12 @@ export interface LockResult {
 
 /** GET /api/sandbox/{id}/reveal (public). available=false before post-lock traffic. */
 export interface Reveal {
+  journeys?: {
+    events: string[];
+    sessions: number;
+    total_sessions: number;
+    generated_segments: Record<string, number>;
+  }[];
   available: boolean;
   questions: {
     decision_point: DecisionPoint;

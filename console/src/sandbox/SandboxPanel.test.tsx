@@ -177,7 +177,7 @@ it("generates traffic with the owner's token and stays on that step", async () =
   expect(post?.url).toBe(`/api/sandbox/${ID}/traffic`);
   // The result stays in view, with the next step offered.
   expect(
-    screen.getByRole("button", { name: "Next: investigate" }),
+    screen.getByRole("button", { name: "Next: generate journeys" }),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(FORBIDDEN);
 });
@@ -231,7 +231,7 @@ it("reviews the AI draft and locks it, then shows the full digest", async () => 
   // After the lock the panel moves on to traffic with the approved questions.
   await waitFor(() =>
     expect(
-      screen.getByRole("button", { name: /Step 4:\s*Traffic after the lock/ }),
+      screen.getByRole("button", { name: /Step 5:\s*Traffic after the lock/ }),
     ).toHaveAttribute("aria-current", "step"),
   );
   expect(screen.getByText(/The hidden answers/)).toBeInTheDocument();

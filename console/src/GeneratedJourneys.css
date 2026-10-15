@@ -1,0 +1,109 @@
+.journey-comparison {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+.journey-template {
+  min-width: 0;
+}
+.journey-template > h2 {
+  padding: 16px 20px;
+  margin: 0;
+  color: var(--gr-ink);
+  font-size: 20px;
+}
+.generated-journeys {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--gr-line);
+  border-radius: 18px;
+  background: var(--gr-surface);
+  font-size: 15px;
+  line-height: 1.65;
+}
+.generated-journeys h2 {
+  font-size: 22px;
+  margin: 10px 0;
+}
+.generated-journeys header p,
+.journey-note,
+.journey-empty {
+  color: var(--gr-muted);
+}
+.generated-journeys details {
+  margin-block: 14px;
+}
+.generated-journeys summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.generated-journeys code {
+  overflow-wrap: anywhere;
+}
+.generated-journeys pre {
+  white-space: pre-wrap;
+  font-size: 13px;
+  background: var(--gr-bg);
+  padding: 12px;
+  border-radius: 10px;
+}
+.generated-journeys blockquote {
+  margin: 12px 0;
+  padding: 12px;
+  border-left: 3px solid var(--gr-line);
+  white-space: pre-wrap;
+  font-size: 13px;
+}
+.generated-journeys .journey-state {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--gr-accent-soft);
+  color: var(--gr-accent-ink);
+  font-weight: 600;
+}
+.journey-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+.journey-controls form,
+.journey-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.journey-controls input {
+  min-height: 44px;
+}
+.generated-rules {
+  padding-left: 20px;
+}
+.generated-rules > li {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--gr-line);
+}
+.generated-segment {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--gr-line);
+}
+.generated-segment h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+.generated-graph {
+  height: 420px;
+  margin-block: 20px;
+  border: 1px solid var(--gr-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.generated-graph .react-flow__node strong,
+.generated-graph .react-flow__node span {
+  display: block;
+}
+.generated-graph .react-flow__node span {
+  font-size: 12px;
+  margin-top: 8px;
+}

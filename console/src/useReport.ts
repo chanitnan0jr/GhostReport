@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchReport } from "./api";
 import type { Report } from "./types";
 
-export function useReport() {
+export function useReport(enabled = true) {
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const mounted = useRef(false);
   const inFlight = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
-    if (!mounted.current || inFlight.current) return;
+    if (!enabled || !mounted.current || inFlight.current) return;
     const controller = new AbortController();
     inFlight.current = controller;
     try {
@@ -32,9 +32,10 @@ export function useReport() {
     } finally {
       if (inFlight.current === controller) inFlight.current = null;
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     mounted.current = true;
     void refresh();
     const interval = setInterval(() => void refresh(), 3000);
@@ -47,6 +48,6 @@ export function useReport() {
       inFlight.current?.abort();
       inFlight.current = null;
     };
-  }, [refresh]);
+  }, [refresh, enabled]);
   return { report, error, updatedAt, refresh };
 }

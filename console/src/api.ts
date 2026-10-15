@@ -131,3 +131,6 @@ export async function approveInvestigation(): Promise<void> {
     true,
   );
 }
+
+export const authorizedRequest = (path: string, init: RequestInit) =>
+  request(path, init, true);

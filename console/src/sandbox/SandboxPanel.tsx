@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GeneratedJourneys } from "../GeneratedJourneys";
 import { SANDBOX_START } from "../../../shared/sandbox";
 import { time } from "../format";
 import type { Report } from "../types";
@@ -30,10 +31,11 @@ export interface SandboxPanelProps {
   refresh: () => Promise<void>;
 }
 
-type Step = "before" | "investigate" | "lock" | "after" | "reveal";
+type Step = "before" | "journeys" | "investigate" | "lock" | "after" | "reveal";
 
 const STEPS: [Step, string][] = [
   ["before", "Traffic before the lock"],
+  ["journeys", "Generate journeys"],
   ["investigate", "Investigate"],
   ["lock", "Approve and lock v1"],
   ["after", "Traffic after the lock"],
@@ -60,6 +62,7 @@ function suggested(state: SandboxState): Step {
 
 function available(step: Step, state: SandboxState): boolean {
   const locked = state.phase === "locked";
+  if (step === "journeys") return state.sessions_total > 0;
   if (step === "before" || step === "investigate") return !locked;
   if (step === "lock") return !locked && state.phase !== "investigating";
   if (step === "after") return locked;
@@ -68,6 +71,7 @@ function available(step: Step, state: SandboxState): boolean {
 
 function done(step: Step, state: SandboxState): boolean {
   const locked = state.phase === "locked";
+  if (step === "journeys") return Boolean(state.journeys?.approved_digest);
   if (step === "before") return state.sessions_total > 0;
   if (step === "investigate") return locked || state.phase === "draft_ready";
   if (step === "lock") return locked;
@@ -160,7 +164,7 @@ export function SandboxPanel({
       if (phase.current !== next.phase) {
         // A new phase moves the panel to the step that comes next.
         phase.current = next.phase;
-        setView(null);
+        setView((current) => (current === "journeys" ? current : null));
       }
       if (next.phase === "locked")
         setReveal(await fetchReveal(sandboxId, signal));
@@ -395,6 +399,20 @@ export function SandboxPanel({
           </>
         )}
 
+        {step === "journeys" && (
+          <>
+            <GeneratedJourneys key={state.resets ?? 0} />
+            <button
+              className="secondary"
+              type="button"
+              onClick={() => setView("investigate")}
+              disabled={state.journeys?.status === "running"}
+            >
+              Next: investigate
+            </button>
+          </>
+        )}
+
         {step === "investigate" && (
           <>
             <p className="sbx-lead">
@@ -550,9 +568,9 @@ export function SandboxPanel({
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => setView("investigate")}
+                  onClick={() => setView("journeys")}
                 >
-                  Next: investigate
+                  Next: generate journeys
                 </button>
               )}
             {step === "after" && lastBatch.phase === "post_lock" && (
