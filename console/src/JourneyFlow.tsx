@@ -10,6 +10,8 @@ import {
   type SourceCounts,
 } from "./journeys";
 import "./JourneyFlow.css";
+import { useJudgeSession } from "./useJudgeSession";
+import { useSessionJourney, type SessionJourney } from "./useSessionJourney";
 
 function SourceSplit({
   counts,
@@ -34,18 +36,31 @@ function labelLines(label: string): string[] {
   const lines: string[] = [];
   for (const word of label.split(" ")) {
     const last = lines.at(-1);
-    if (!last || `${last} ${word}`.length > 23) lines.push(word);
+    if (!last || `${last} ${word}`.length > 17) lines.push(word);
     else lines[lines.length - 1] = `${last} ${word}`;
   }
   return lines;
 }
 
-const nodeWidth = 218;
+const nodeWidth = 156;
 const nodeHeight = 100;
-const columnWidth = 278;
+const columnWidth = 192;
 
-export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
+export function JourneyDiagram({
+  graph,
+  own,
+}: {
+  graph: JourneyGraph;
+  own?: SessionJourney | null;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [showOwn, setShowOwn] = useState(true);
+  const ownVisible = Boolean(own && (!graph.only || graph.only === own.source));
+  const ownActive = ownVisible && showOwn;
+  const ownNodes = new Set(ownActive ? own?.nodes : []);
+  const ownEdges = new Set(
+    ownActive ? own?.edges.map((edge) => `${edge.source}|${edge.target}`) : [],
+  );
   const titleId = useId();
   const descriptionId = useId();
   const markerId = useId().replaceAll(":", "");
@@ -101,6 +116,35 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
           {sessions(graph.sessions, graph.sessions)}
         </span>
       </div>
+      {own && (
+        <aside className="your-session" aria-label="Your session journey">
+          <div>
+            <strong>Your session</strong>
+            <p>{safeText(own.segment_label)}</p>
+            <span className="small muted">
+              {journeySourceNames[own.source]}
+              {own.probe ? ` · Question ${own.probe.replaceAll("_", " ")}` : ""}
+            </span>
+          </div>
+          {ownVisible ? (
+            <button
+              className="secondary"
+              type="button"
+              aria-pressed={ownActive}
+              onClick={() => {
+                setShowOwn((value) => !value);
+                setSelected(null);
+              }}
+            >
+              {ownActive ? "Clear your path highlight" : "Highlight your path"}
+            </button>
+          ) : (
+            <span className="small muted">
+              Choose All to see your path in this chart.
+            </span>
+          )}
+        </aside>
+      )}
       <p id={descriptionId}>
         Segments group the report’s existing cohorts. Choose a card to highlight
         its segment and incoming paths. Scroll horizontally to follow the full
@@ -145,7 +189,7 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#738b9a" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--gr-unknown)" />
             </marker>
             <marker
               id={`${markerId}-selected`}
@@ -156,7 +200,7 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#87e1c3" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--gr-accent)" />
             </marker>
           </defs>
           {columns.map((column, index) => (
@@ -178,11 +222,13 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
             const middle = (start + end) / 2;
             const y1 = from.y + nodeHeight / 2;
             const y2 = to.y + nodeHeight / 2;
-            const active = edge.target === selected;
+            const active = ownActive
+              ? ownEdges.has(`${edge.source}|${edge.target}`)
+              : edge.target === selected;
             return (
               <g
                 key={`${edge.source}:${edge.target}`}
-                className={`journey-edge${active ? " is-selected" : ""}${selected && !active ? " is-dimmed" : ""}`}
+                className={`journey-edge${active ? " is-selected" : ""}${(selected || ownActive) && !active ? " is-dimmed" : ""}`}
               >
                 <title>{`${from.node.label} → ${to.node.label}: ${sessions(edge.count, graph.sessions)}. ${journeySources.map((s) => `${s}: ${sessions(edge.by_source[s], edge.count)}`).join("; ")}`}</title>
                 <path
@@ -197,12 +243,17 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
             );
           })}
           {[...positions.values()].map(({ x, y, node }) => {
-            const active = node.id === selected;
+            const active = ownActive
+              ? ownNodes.has(node.id)
+              : node.id === selected;
             return (
               <g
                 key={node.id}
                 transform={`translate(${x}, ${y})`}
-                className={`journey-node${node.kind === "segment" ? " is-segment" : ""}${active ? " is-selected" : ""}${selected && node.kind === "segment" && !active ? " is-dimmed" : ""}`}
+                data-segment={
+                  node.kind === "segment" ? node.id.split(":")[1] : undefined
+                }
+                className={`journey-node${node.kind === "segment" ? " is-segment" : ""}${active ? " is-selected" : ""}${(ownActive && !active) || (selected && node.kind === "segment" && !active) ? " is-dimmed" : ""}`}
               >
                 <title>{`${node.label}: ${sessions(node.count, graph.sessions)}. ${journeySources.map((s) => `${journeySourceNames[s]}: ${sessions(node.by_source[s], node.count)}`).join("; ")}`}</title>
                 <rect width={nodeWidth} height={nodeHeight} rx="9" />
@@ -222,9 +273,11 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
         </svg>
       </div>
       <p className="journey-selection" role="status">
-        {chosen
-          ? `Highlighted: ${chosen.label}. Select the card again to clear.`
-          : "Showing all three segments."}
+        {ownActive
+          ? `Your session: ${own!.segment_label}. Recorded nodes and edges are highlighted.`
+          : chosen
+            ? `Highlighted: ${chosen.label}. Select the card again to clear.`
+            : "Showing all three segments."}
       </p>
       <div className="journey-segments" aria-label="Journey segments">
         {graph.segments.map((segment) => (
@@ -232,12 +285,14 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
             key={segment.id}
             type="button"
             className={`journey-segment-card${selected === segment.id ? " is-selected" : ""}`}
+            data-segment={segment.segment}
             aria-pressed={selected === segment.id}
-            onClick={() =>
+            onClick={() => {
+              setShowOwn(false);
               setSelected((previous) =>
                 previous === segment.id ? null : segment.id,
-              )
-            }
+              );
+            }}
           >
             <span className="journey-card-heading">
               <strong>{safeText(segment.label)}</strong>
@@ -322,6 +377,8 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
 }
 
 function JourneyLoader({ source }: { source?: JourneySource }) {
+  const sid = useJudgeSession();
+  const personal = useSessionJourney(sid);
   const [graph, setGraph] = useState<JourneyGraph | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -357,6 +414,11 @@ function JourneyLoader({ source }: { source?: JourneySource }) {
   }, [source]);
   return (
     <>
+      {personal?.error && (
+        <p className="journey-fetch-warning" role="status">
+          {personal.error}
+        </p>
+      )}
       {error && (
         <p className="journey-fetch-warning" role="alert">
           {safeText(error)}.{" "}
@@ -367,7 +429,7 @@ function JourneyLoader({ source }: { source?: JourneySource }) {
         </p>
       )}
       {graph ? (
-        <JourneyDiagram graph={graph} />
+        <JourneyDiagram graph={graph} own={personal?.value} />
       ) : (
         !error && (
           <p className="journey-loading" role="status">

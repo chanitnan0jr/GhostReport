@@ -1,4 +1,4 @@
-import { safeText } from "./format";
+import { safeText, selfReportLabel } from "./format";
 import type { Report } from "./types";
 
 export function NarrativeSummary({ report }: { report: Report }) {
@@ -14,7 +14,12 @@ export function NarrativeSummary({ report }: { report: Report }) {
       aria-labelledby="summary-title"
     >
       <div className="narrative-heading">
-        <h1 id="summary-title">Investigation summary</h1>
+        <div>
+          <p className="section-kicker">
+            Before and after the optional question
+          </p>
+          <h1 id="summary-title">Wallet step investigation report</h1>
+        </div>
         {usable && (
           <span className="narrative-badge">
             {narrative.source === "llm"
@@ -25,10 +30,30 @@ export function NarrativeSummary({ report }: { report: Report }) {
       </div>
       {usable ? (
         <>
-          <p className="narrative-text">{safeText(narrative.text)}</p>
+          <div className="narrative-copy">
+            <h2>Summary</h2>
+            <p className="narrative-text">
+              {/\b(?:recommend\w*|should|most common reason)\b/i.test(
+                narrative.text,
+              )
+                ? "Summary withheld by wording guard. See the counted evidence below."
+                : safeText(narrative.text)}
+            </p>
+          </div>
           <details className="narrative-facts">
             <summary>See the facts</summary>
-            <pre>{JSON.stringify(narrative.facts ?? {}, null, 2)}</pre>
+            <p className="small muted">
+              Source facts from the report API. Numeric fields are unchanged;
+              string labels use the same wording guard as the report.
+            </p>
+            <pre>
+              {JSON.stringify(
+                narrative.facts ?? {},
+                (_key, value: unknown) =>
+                  typeof value === "string" ? selfReportLabel(value) : value,
+                2,
+              )}
+            </pre>
           </details>
         </>
       ) : (

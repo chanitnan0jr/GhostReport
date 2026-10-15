@@ -44,7 +44,7 @@ function layout(view: WorkflowView) {
     label: "State order",
     type: "smoothstep",
     markerEnd: { type: MarkerType.ArrowClosed },
-    style: { stroke: "#9bafbd" },
+    style: { stroke: "var(--gr-muted)" },
   }));
   const unattached = new Set<string>();
   for (const node of view.nodes.filter((item) => item.kind !== "state")) {
@@ -66,7 +66,7 @@ function layout(view: WorkflowView) {
       type: "smoothstep",
       label: "Same file",
       markerEnd: { type: MarkerType.ArrowClosed },
-      style: { stroke: "#6e8698", strokeDasharray: "5 5" },
+      style: { stroke: "var(--gr-unknown)", strokeDasharray: "5 5" },
     });
   }
   const graph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));

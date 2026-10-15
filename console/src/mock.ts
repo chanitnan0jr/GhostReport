@@ -49,6 +49,28 @@ export function installMockBackend() {
       });
     if (url.pathname === "/api/report") return json(state);
     if (url.pathname === "/api/evidence") return json(mockEvidence(state));
+    if (url.pathname.startsWith("/api/journeys/session/")) {
+      const sid = decodeURIComponent(
+        url.pathname.slice("/api/journeys/session/".length),
+      );
+      const session = state.current.sessions.find(
+        (item) => item.session_id === sid,
+      );
+      if (!session) return json({ detail: "no such session in this run" }, 404);
+      const graph = mockJourneys({
+        ...state,
+        current: { ...state.current, sessions: [session] },
+      });
+      const segment = graph.segments.find((item) => item.sessions === 1)!;
+      return json({
+        source: "seed",
+        segment: segment.segment,
+        segment_label: segment.label,
+        nodes: graph.nodes.map((node) => node.id),
+        edges: graph.edges.map(({ source, target }) => ({ source, target })),
+        probe: null,
+      });
+    }
     if (url.pathname === "/api/journeys")
       return json(
         mockJourneys(

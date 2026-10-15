@@ -31,12 +31,12 @@ const kindNames = {
   segment: "Segment",
 };
 const colors = {
-  code: "#b1c7db",
-  hypothesis: "#cfb4ef",
-  option: "#98c6ed",
-  rule: "#eac27a",
-  finding: "#8fe0c1",
-  segment: "#bad593",
+  code: "var(--gr-muted)",
+  hypothesis: "var(--gr-seg-browsers)",
+  option: "var(--gr-accent)",
+  rule: "var(--gr-seg-stalled)",
+  finding: "var(--gr-found)",
+  segment: "var(--gr-ai)",
 };
 type MapNode = Node<{ label: ReactNode }>;
 
@@ -209,7 +209,7 @@ function EvidenceDiagram({
         type: "smoothstep",
         markerEnd: { type: MarkerType.ArrowClosed },
         style: {
-          stroke: highlighted ? "#bda1e8" : "#829baa",
+          stroke: highlighted ? "var(--gr-accent)" : "var(--gr-unknown)",
           opacity:
             highlighted &&
             (!highlighted.has(edge.source) || !highlighted.has(edge.target))

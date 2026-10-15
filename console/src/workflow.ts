@@ -31,9 +31,9 @@ export const instrumentationLabels: Record<Instrumentation, string> = {
   unknown: "Unknown in searched scope",
 };
 export const instrumentationColors: Record<Instrumentation, string> = {
-  found_in_code: "#87e1c3",
-  not_found_in_scope: "#f3c67b",
-  unknown: "#b2bdcd",
+  found_in_code: "var(--gr-found)",
+  not_found_in_scope: "var(--gr-gap)",
+  unknown: "var(--gr-unknown)",
 };
 
 export function workflowPermalink(

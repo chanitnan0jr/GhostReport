@@ -78,9 +78,12 @@ provided. The public navigation links to landing’s `/ens/` code-only page.
 
 ## Current console views (C1–C5)
 
-The global header follows Home → Demo → Try the App → Segments → Workflow Map
-→ Report → ENS. Hash changes and browser navigation select the active console
-view. The sidebar links into report sections.
+The shared light header follows Home → Demo → Try the App → Segments →
+Workflow Map → Report → ENS → Install → About. Home is GhostReport and Try the
+App links to landing's `/try/` role-card page, which starts `/app/`. Hash
+changes select the active console view; report links preserve the session
+query. The full-width laptop layout uses `shared/tokens.css`. Report sections
+are linked by a horizontal navigation row.
 
 - `/report/`: checked narrative text and its source badge; See the facts
   exposes only the facts JSON. Population follows, then hypotheses v1/current,
@@ -90,6 +93,11 @@ view. The sidebar links into report sections.
 - `/report/#segments`: `/api/journeys`, source filter All / Visitors / Seed,
   three cards and their incoming-edge highlights. Stopped at the wallet is
   labeled Investigated population. All source splits keep their denominators.
+  `?sid=<id>#segments` additionally polls `/api/journeys/session/<id>` and
+  highlights only the returned node/edge IDs, with the supplied segment label.
+  A 404 adds no session panel; other failures have a retry status. The URL's
+  session takes precedence over `ghost:judge_sid`. A source filter that excludes
+  that session hides its highlight and explains how to return to All.
 - `/report/#workflow`: `/api/workflow?target=app|ens`, a graph plus source
   inspector. State-order edges and shared-file attachments are generated
   deterministically. Unmatched facts stay unattached. Both source targets
@@ -112,9 +120,13 @@ invented. The mock evidence graph omits answer-option/rule links that are
 absent from the report fixture, with an explanatory note. The real evidence
 endpoint supplies those links.
 
-Percentage threshold labels are displayed as Selected (self-report), beside
-the exact `finding.text` count. No threshold or backend classification is
-changed. Unchecked narrative drafts/rejection details are never rendered.
+Percentage threshold labels are displayed as Selected by at least half
+(self-report), beside the exact `finding.text` count. No threshold or backend
+classification is changed. Facts JSON keeps numeric fields intact and explicitly
+applies the same display labels/wording guard to strings. Other percentage text
+and unsupported wording are withheld. Narrative recommendations are withheld;
+recommendations remain in Next Action. Unchecked drafts/rejection details are
+never rendered. Report warnings remain visible in all three console views.
 
 This iteration was checked with normal and mock production builds, including
 TypeScript. Unit/browser suites were not run; no mobile changes were requested.

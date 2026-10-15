@@ -9,7 +9,10 @@ export function Segments() {
       <div className="graph-section-toolbar">
         <div>
           <span className="evidence-label">Observed</span>
-          <h2>Segments</h2>
+          <h1>User journeys and segments</h1>
+          <p className="muted">
+            See where sessions stopped, and where they were asked.
+          </p>
         </div>
         <div
           className="graph-toggle"

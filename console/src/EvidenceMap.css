@@ -6,20 +6,20 @@
 }
 .evidence-hypothesis-select button {
   padding: 10px 14px;
-  border: 1px solid #5b5377;
+  border: 1px solid var(--gr-line);
   border-radius: 5px;
-  background: #1c2230;
-  color: #d5c5ec;
+  background: var(--gr-surface);
+  color: var(--gr-accent-ink);
   font: inherit;
   font-size: 13px;
 }
 .evidence-hypothesis-select button[aria-pressed="true"] {
-  background: #42345b;
-  border-color: #cfb4ef;
+  background: var(--gr-accent-soft);
+  border-color: var(--gr-accent);
 }
 .evidence-hypothesis-select small {
   padding-left: 8px;
-  color: #aeb9c8;
+  color: var(--gr-muted);
 }
 .evidence-map-body {
   margin: 24px 0;
@@ -33,23 +33,23 @@
 .evidence-map-canvas {
   height: 740px;
   min-width: 0;
-  border: 1px solid #425865;
+  border: 1px solid var(--gr-line);
   border-radius: 7px;
   overflow: hidden;
 }
 .evidence-map-canvas .react-flow {
-  --xy-background-color: #0c141b;
-  --xy-controls-button-background-color: #182730;
-  --xy-controls-button-color: #e4ecef;
-  --xy-controls-button-border-color: #536b79;
+  --xy-background-color: var(--gr-bg);
+  --xy-controls-button-background-color: var(--gr-surface);
+  --xy-controls-button-color: var(--gr-ink);
+  --xy-controls-button-border-color: var(--gr-line);
 }
 .evidence-map-canvas .hypothesis-map-node {
   width: 264px;
   height: 128px;
   border-width: 2px;
   padding: 12px 14px;
-  color: #e7eef1;
-  background: #15232c;
+  color: var(--gr-ink);
+  background: var(--gr-surface);
   text-align: left;
 }
 .hypothesis-map-node > div {
@@ -60,7 +60,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #adbdcc;
+  color: var(--gr-muted);
 }
 .hypothesis-map-node strong {
   font-size: 13px;
@@ -81,23 +81,24 @@
   overflow: hidden;
 }
 .evidence-map-canvas .react-flow__node.selected {
-  box-shadow: 0 0 0 4px #cfb4ef40;
+  outline: 3px solid var(--gr-accent);
+  outline-offset: 3px;
 }
 .evidence-map-canvas .react-flow__edge-textbg {
-  fill: #0c141b;
+  fill: var(--gr-bg);
 }
 .evidence-map-canvas .react-flow__edge-text {
-  fill: #cfdaed;
+  fill: var(--gr-muted);
   font-size: 10px;
 }
 .evidence-map-details {
   min-width: 0;
   height: 740px;
   overflow-y: auto;
-  border: 1px solid #75658c;
+  border: 1px solid var(--gr-line);
   padding: 22px;
   border-radius: 7px;
-  background: #19212c;
+  background: var(--gr-surface-2);
 }
 .evidence-map-details h3 {
   margin: 18px 0;
@@ -112,7 +113,7 @@
   line-height: 1.8;
 }
 .evidence-map-details dt {
-  color: #a8b7c4;
+  color: var(--gr-muted);
   margin-top: 12px;
 }
 .evidence-map-details dd {
@@ -122,8 +123,8 @@
 .evidence-map-details pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #0b151c;
-  border: 1px solid #425865;
+  background: var(--gr-surface);
+  border: 1px solid var(--gr-line);
   padding: 14px;
   font-size: 12px;
   line-height: 1.8;

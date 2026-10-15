@@ -53,35 +53,16 @@ export default function App() {
     <>
       <ConsoleHeader hash={hash} />
       <div className="console-shell">
-        <aside className="sidebar">
-          <a className="brand" href="#top">
-            <span className="brand-icon" aria-hidden="true">
-              G
-            </span>
-            GhostReport
-          </a>
-          <span className="nav-title">Investigation</span>
-          <nav aria-label="Report panels">
-            {navigation.map(([id, label]) => (
-              <a key={id} href={`#${id}`}>
-                {label}
-              </a>
-            ))}
-          </nav>
-          <a className="partb-link" href="/ens/">
-            Tested on ENS ↗
-          </a>
-          <div className="sidebar-footer">
-            <span className="status-dot" />
-            Evidence you can trace
-          </div>
-        </aside>
         <main id="top" className="workspace">
           <header className="workspace-top">
             <span>
               {new URLSearchParams(location.search).get("operator") === "1"
                 ? "Operator console"
-                : "Investigation report"}
+                : page === "segments"
+                  ? "User journeys and segments"
+                  : page === "workflow"
+                    ? "App workflow and instrumentation"
+                    : "Wallet step investigation report"}
             </span>
             <div className="refresh-status">
               <span
@@ -124,6 +105,16 @@ export default function App() {
               </span>
             </div>
           )}
+          {warnings.length > 0 && (
+            <div className="warning report-errors" role="alert">
+              <strong>Report requires attention</strong>
+              <ul>
+                {warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {page === "segments" ? (
             <Segments />
           ) : page === "workflow" ? (
@@ -148,16 +139,13 @@ export default function App() {
             <>
               <NarrativeSummary report={report} />
               <Population report={report} />
-              {warnings.length > 0 && (
-                <div className="warning report-errors" role="alert">
-                  <strong>Report requires attention</strong>
-                  <ul>
-                    {warnings.map((warning) => (
-                      <li key={warning}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <nav className="report-section-nav" aria-label="Report panels">
+                {navigation.map(([id, label]) => (
+                  <a key={id} href={`#${id}`}>
+                    {label}
+                  </a>
+                ))}
+              </nav>
               <ReportPanels report={report} />
               <Suspense
                 fallback={

@@ -39,7 +39,8 @@ export function findingLabel(finding: Finding): string {
 }
 
 export function selfReportLabel(value: string): string {
-  if (value === "Selected by ≥ 50%") return "Selected (self-report)";
+  if (value === "Selected by ≥ 50%")
+    return "Selected by at least half (self-report)";
   return value.includes("%") ? "See respondent counts" : safeText(value);
 }
 
@@ -87,7 +88,9 @@ export function findingText(
 }
 
 export function safeText(value: string): string {
-  return /\b(?:confirmed|root cause|cause|proved)\b/i.test(value)
+  return /\b(?:confirmed|root cause|caus(?:e|es|ed|ing)|proved)\b|%/i.test(
+    value,
+  )
     ? "Text withheld by wording guard"
     : value;
 }

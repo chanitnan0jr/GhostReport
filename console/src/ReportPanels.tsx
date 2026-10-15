@@ -80,7 +80,7 @@ function HypothesisMatrix({ report }: { report: Report }) {
   return (
     <Panel
       id="hypotheses"
-      title="Hypothesis Matrix"
+      title="Hypotheses · v1 vs v2"
       label="Inferred → Self-report"
       description="The same hypotheses, before and after new evidence. Self-report and observation stay separate."
     >
@@ -145,7 +145,11 @@ function HypothesisMatrix({ report }: { report: Report }) {
                   <td>
                     <div className="finding-status">
                       <span className="status neutral">Unresolved</span>
-                      <strong className="count-text">0 of 0 respondents</strong>
+                      <span className="small muted">
+                        {report.v1
+                          ? "Locked before probe evidence"
+                          : "Awaiting baseline lock"}
+                      </span>
                       <BaselineObservation
                         report={report}
                         hypothesisId={hypothesis.id}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 function readSid(): string | null {
+  const fromUrl = new URLSearchParams(location.search).get("sid");
+  if (fromUrl) return fromUrl;
   try {
     return localStorage.getItem("ghost:judge_sid");
   } catch {
@@ -14,9 +16,11 @@ export function useJudgeSession(): string | null {
     const refresh = () => setSid(readSid());
     window.addEventListener("storage", refresh);
     window.addEventListener("focus", refresh);
+    window.addEventListener("popstate", refresh);
     return () => {
       window.removeEventListener("storage", refresh);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("popstate", refresh);
     };
   }, []);
   return sid;
