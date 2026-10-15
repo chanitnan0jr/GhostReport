@@ -1,0 +1,693 @@
+{
+  "run": {
+    "run_id": "sample",
+    "mode": "seed",
+    "code_commit": "uncommitted",
+    "app_build": "dev",
+    "build_verified": true,
+    "policy_version": "mvp-v1",
+    "catalog_version": "mvp-v1"
+  },
+  "investigation_id": "inv-never-attempted",
+  "workflow": {
+    "version": "wf-fixture-1",
+    "scope": {
+      "commit_sha": "fixture",
+      "searched_files": [
+        "src/ApplyModal.tsx",
+        "src/wallet.ts",
+        "src/ProjectPage.tsx"
+      ],
+      "unresolved_imports": [],
+      "truncated": false
+    },
+    "states": [
+      {
+        "id": "apply_gated",
+        "desc": "ApplyModal requires a connected wallet before the application form",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            28,
+            28
+          ],
+          "quote": "if (!wallet) return requireWallet();"
+        },
+        "instrumentation": "found_in_code"
+      }
+    ],
+    "outcomes": [
+      {
+        "id": "wallet_rejected",
+        "desc": "User rejects the connection in the wallet popup",
+        "code_ref": {
+          "file": "src/wallet.ts",
+          "lines": [
+            31,
+            37
+          ],
+          "quote": "function onReject(error: Error): void {"
+        },
+        "instrumentation": "not_found_in_scope"
+      },
+      {
+        "id": "wallet_errored",
+        "desc": "Simulated RPC error after approval",
+        "code_ref": {
+          "file": "src/wallet.ts",
+          "lines": [
+            42,
+            48
+          ],
+          "quote": "if (random() < RPC_ERROR_RATE) {"
+        },
+        "instrumentation": "not_found_in_scope"
+      }
+    ],
+    "ui_facts": [
+      {
+        "id": "no_requirement_copy",
+        "desc": "ProjectPage does not say a wallet is required before applying",
+        "code_ref": {
+          "file": "src/ProjectPage.tsx",
+          "lines": [
+            31,
+            31
+          ],
+          "quote": "onClick={onApply}>Apply</button>"
+        },
+        "instrumentation": "unknown"
+      },
+      {
+        "id": "gate_permission_copy",
+        "desc": "The gate shows what connecting allows",
+        "code_ref": {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "What you’re allowing"
+        },
+        "instrumentation": "unknown"
+      }
+    ]
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Did not know a wallet was required before applying",
+      "class_id": "HC-unaware-requirement",
+      "code_evidence": [
+        "no_requirement_copy",
+        "apply_gated"
+      ],
+      "generic": false
+    },
+    {
+      "id": "H2",
+      "statement": "Concerned about the permissions shown in the wallet gate",
+      "class_id": "HC-gate-permission",
+      "code_evidence": [
+        "gate_permission_copy"
+      ],
+      "generic": false
+    },
+    {
+      "id": "H3",
+      "statement": "Browsing projects without intending to apply yet",
+      "class_id": "HC-browsing",
+      "code_evidence": [],
+      "generic": true
+    },
+    {
+      "id": "H_other",
+      "statement": "A reason not yet proposed",
+      "class_id": null,
+      "code_evidence": [],
+      "generic": true
+    }
+  ],
+  "class_mappings": [
+    {
+      "hypothesis_id": "H1",
+      "class_id": "HC-unaware-requirement",
+      "approved_by": "operator",
+      "approved_at": "2026-10-15T00:00:00Z"
+    },
+    {
+      "hypothesis_id": "H2",
+      "class_id": "HC-gate-permission",
+      "approved_by": "operator",
+      "approved_at": "2026-10-15T00:00:00Z"
+    },
+    {
+      "hypothesis_id": "H3",
+      "class_id": "HC-browsing",
+      "approved_by": "operator",
+      "approved_at": "2026-10-15T00:00:00Z"
+    }
+  ],
+  "locked": true,
+  "v1": {
+    "digest": "7d12bb3756c494a5d8279b1c9f2c35971c61fd7e7ec7bc09bb4d0c59c9d47688",
+    "data_cutoff": "2026-10-16T03:00:00+00:00",
+    "sessions": [
+      {
+        "session_id": "s1",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s1-1",
+          "s1-2",
+          "s1-3",
+          "s1-4"
+        ]
+      },
+      {
+        "session_id": "s2",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s2-1",
+          "s2-2",
+          "s2-3",
+          "s2-4"
+        ]
+      },
+      {
+        "session_id": "s3",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s3-1",
+          "s3-2",
+          "s3-3",
+          "s3-4"
+        ]
+      },
+      {
+        "session_id": "s4",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s4-1",
+          "s4-2",
+          "s4-3",
+          "s4-4"
+        ]
+      },
+      {
+        "session_id": "s5",
+        "cohort": "no_gate_event",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "back",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s5-1",
+          "s5-2"
+        ]
+      },
+      {
+        "session_id": "s6",
+        "cohort": "no_gate_event",
+        "coverage": "unknown",
+        "coverage_reasons": [
+          "missing_exit"
+        ],
+        "exit_type": "open",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s6-1"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "Recorded gate evidence or incomplete coverage",
+        "result": "observed",
+        "session_ids": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "evidence_ids": [
+          "s1-1",
+          "s1-2",
+          "s1-3",
+          "s1-4",
+          "s2-1",
+          "s2-2",
+          "s2-3",
+          "s2-4",
+          "s3-1",
+          "s3-2",
+          "s3-3",
+          "s3-4",
+          "s4-1",
+          "s4-2",
+          "s4-3",
+          "s4-4"
+        ],
+        "contradicted_hypotheses": [],
+        "rule_ids": [],
+        "catalog_version": "mvp-v1"
+      },
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "R2: no gate event in verified, contiguous entry-to-exit windows",
+        "result": "not_observed",
+        "session_ids": [
+          "s5"
+        ],
+        "evidence_ids": [
+          "s5-1",
+          "s5-2"
+        ],
+        "contradicted_hypotheses": [
+          "H2"
+        ],
+        "rule_ids": [
+          "R2"
+        ],
+        "catalog_version": "mvp-v1"
+      },
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "Recorded gate evidence or incomplete coverage",
+        "result": "unknown_coverage",
+        "session_ids": [
+          "s6"
+        ],
+        "evidence_ids": [
+          "s6-1"
+        ],
+        "contradicted_hypotheses": [],
+        "rule_ids": [],
+        "catalog_version": "mvp-v1"
+      }
+    ]
+  },
+  "current": {
+    "data_cutoff": "2026-10-16T03:01:00+00:00",
+    "funnel": {
+      "visitors": 6,
+      "apply_clicked": 4,
+      "attempted": 0,
+      "connected": 0
+    },
+    "cohorts": [
+      {
+        "cohort": "gate_event_no_attempt",
+        "sessions": 4,
+        "coverage_complete": 4,
+        "coverage_unknown": 0,
+        "exit_types": {
+          "not_now": 4
+        }
+      },
+      {
+        "cohort": "no_gate_event",
+        "sessions": 2,
+        "coverage_complete": 1,
+        "coverage_unknown": 1,
+        "exit_types": {
+          "back": 1,
+          "open": 1
+        }
+      }
+    ],
+    "sessions": [
+      {
+        "session_id": "s1",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s1-1",
+          "s1-2",
+          "s1-3",
+          "s1-4"
+        ]
+      },
+      {
+        "session_id": "s2",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s2-1",
+          "s2-2",
+          "s2-3",
+          "s2-4"
+        ]
+      },
+      {
+        "session_id": "s3",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s3-1",
+          "s3-2",
+          "s3-3",
+          "s3-4"
+        ]
+      },
+      {
+        "session_id": "s4",
+        "cohort": "gate_event_no_attempt",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "not_now",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s4-1",
+          "s4-2",
+          "s4-3",
+          "s4-4"
+        ]
+      },
+      {
+        "session_id": "s5",
+        "cohort": "no_gate_event",
+        "coverage": "complete",
+        "coverage_reasons": [],
+        "exit_type": "back",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s5-1",
+          "s5-2"
+        ]
+      },
+      {
+        "session_id": "s6",
+        "cohort": "no_gate_event",
+        "coverage": "unknown",
+        "coverage_reasons": [
+          "missing_exit"
+        ],
+        "exit_type": "open",
+        "attempt_states": [],
+        "after_retry": false,
+        "event_ids": [
+          "s6-1"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "Recorded gate evidence or incomplete coverage",
+        "result": "observed",
+        "session_ids": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "evidence_ids": [
+          "s1-1",
+          "s1-2",
+          "s1-3",
+          "s1-4",
+          "s2-1",
+          "s2-2",
+          "s2-3",
+          "s2-4",
+          "s3-1",
+          "s3-2",
+          "s3-3",
+          "s3-4",
+          "s4-1",
+          "s4-2",
+          "s4-3",
+          "s4-4"
+        ],
+        "contradicted_hypotheses": [],
+        "rule_ids": [],
+        "catalog_version": "mvp-v1"
+      },
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "R2: no gate event in verified, contiguous entry-to-exit windows",
+        "result": "not_observed",
+        "session_ids": [
+          "s5"
+        ],
+        "evidence_ids": [
+          "s5-1",
+          "s5-2"
+        ],
+        "contradicted_hypotheses": [
+          "H2"
+        ],
+        "rule_ids": [
+          "R2"
+        ],
+        "catalog_version": "mvp-v1"
+      },
+      {
+        "decision_point": "DP0",
+        "action_id": "check_gate:no_attempt:R2",
+        "data_version": "db3add6998c62abb",
+        "reason": "Recorded gate evidence or incomplete coverage",
+        "result": "unknown_coverage",
+        "session_ids": [
+          "s6"
+        ],
+        "evidence_ids": [
+          "s6-1"
+        ],
+        "contradicted_hypotheses": [],
+        "rule_ids": [],
+        "catalog_version": "mvp-v1"
+      }
+    ],
+    "probes": [
+      {
+        "plan_id": "plan-dp1",
+        "decision_point": "DP1",
+        "question_version": "dp1.v1",
+        "stem": "What best describes your decision not to connect right now?",
+        "target_cohorts": [
+          "gate_event_no_attempt"
+        ],
+        "target_n": 10,
+        "budget": 30,
+        "ends_at": "2026-10-16T18:00:00+07:00",
+        "counts": {
+          "shown": 4,
+          "answered": 3,
+          "skipped": 1,
+          "shown_no_response": 0,
+          "pending": 0,
+          "unknown_coverage": 0,
+          "inferred_from_response": 0
+        }
+      },
+      {
+        "plan_id": "plan-dp2",
+        "decision_point": "DP2",
+        "question_version": "dp2.v1",
+        "stem": "What were you hoping to do on this page?",
+        "target_cohorts": [
+          "no_gate_event"
+        ],
+        "target_n": 10,
+        "budget": 30,
+        "ends_at": "2026-10-16T18:00:00+07:00",
+        "counts": {
+          "shown": 0,
+          "answered": 0,
+          "skipped": 0,
+          "shown_no_response": 0,
+          "pending": 0,
+          "unknown_coverage": 0,
+          "inferred_from_response": 0
+        }
+      }
+    ],
+    "findings": [
+      {
+        "hypothesis_id": "H1",
+        "cohort": "gate_event_no_attempt",
+        "question_version": "dp1.v1",
+        "decision_point": "DP1",
+        "selected": 2,
+        "respondents": 3,
+        "self_report": "Selected by ≥ 50%",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [
+          "x-s1",
+          "x-s2",
+          "x-s3"
+        ],
+        "rule_version": "mvp-v1",
+        "text": "2 of 3 respondents"
+      },
+      {
+        "hypothesis_id": "H2",
+        "cohort": "gate_event_no_attempt",
+        "question_version": "dp1.v1",
+        "decision_point": "DP1",
+        "selected": 1,
+        "respondents": 3,
+        "self_report": "Selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [
+          "x-s1",
+          "x-s2",
+          "x-s3"
+        ],
+        "rule_version": "mvp-v1",
+        "text": "1 of 3 respondents"
+      },
+      {
+        "hypothesis_id": "H3",
+        "cohort": "gate_event_no_attempt",
+        "question_version": "dp1.v1",
+        "decision_point": "DP1",
+        "selected": 1,
+        "respondents": 3,
+        "self_report": "Selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [
+          "x-s1",
+          "x-s2",
+          "x-s3"
+        ],
+        "rule_version": "mvp-v1",
+        "text": "1 of 3 respondents"
+      },
+      {
+        "hypothesis_id": "H_other",
+        "cohort": "gate_event_no_attempt",
+        "question_version": "dp1.v1",
+        "decision_point": "DP1",
+        "selected": 0,
+        "respondents": 3,
+        "self_report": "Not selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [
+          "x-s1",
+          "x-s2",
+          "x-s3"
+        ],
+        "rule_version": "mvp-v1",
+        "text": "0 of 3 respondents"
+      },
+      {
+        "hypothesis_id": "H1",
+        "cohort": "no_gate_event",
+        "question_version": "dp2.v1",
+        "decision_point": "DP2",
+        "selected": 0,
+        "respondents": 0,
+        "self_report": "Unresolved",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [],
+        "rule_version": "mvp-v1",
+        "text": "0 of 0 respondents"
+      },
+      {
+        "hypothesis_id": "H2",
+        "cohort": "no_gate_event",
+        "question_version": "dp2.v1",
+        "decision_point": "DP2",
+        "selected": 0,
+        "respondents": 0,
+        "self_report": "Unresolved",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [],
+        "rule_version": "mvp-v1",
+        "text": "0 of 0 respondents"
+      },
+      {
+        "hypothesis_id": "H3",
+        "cohort": "no_gate_event",
+        "question_version": "dp2.v1",
+        "decision_point": "DP2",
+        "selected": 0,
+        "respondents": 0,
+        "self_report": "Unresolved",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [],
+        "rule_version": "mvp-v1",
+        "text": "0 of 0 respondents"
+      },
+      {
+        "hypothesis_id": "H_other",
+        "cohort": "no_gate_event",
+        "question_version": "dp2.v1",
+        "decision_point": "DP2",
+        "selected": 0,
+        "respondents": 0,
+        "self_report": "Unresolved",
+        "observation": "No contradiction",
+        "evidence_conflict": false,
+        "evidence_ids": [],
+        "rule_version": "mvp-v1",
+        "text": "0 of 0 respondents"
+      }
+    ],
+    "orphan_responses": 0,
+    "errors": []
+  },
+  "snapshots": [
+    {
+      "version": 1,
+      "digest": "7d12bb3756c494a5d8279b1c9f2c35971c61fd7e7ec7bc09bb4d0c59c9d47688",
+      "data_cutoff": "2026-10-16T03:00:00+00:00"
+    }
+  ]
+}
