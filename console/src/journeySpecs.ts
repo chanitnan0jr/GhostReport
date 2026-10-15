@@ -73,7 +73,8 @@ export async function readSpec(
   const query = new URLSearchParams({ project });
   if (source) query.set("source", source);
   if (exclude) query.set("exclude", exclude);
-  const response = await fetch(apiUrl(`/api/journeys/spec?${query}`), {
+  const path = `/api/journeys/spec?${query}`;
+  const response = await fetch(project === "ens" ? path : apiUrl(path), {
     signal,
   });
   if (!response.ok)
@@ -95,15 +96,16 @@ export async function readSpec(
 export async function journeyAction(
   action: "generate" | "approve",
   body?: object,
+  project: "app" | "ens" = "app",
 ) {
-  const path = `/api/journeys/${action}?project=app`;
+  const path = `/api/journeys/${action}?project=${project}`;
   const init = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     ...(body ? { body: JSON.stringify(body) } : {}),
   };
   const sandbox = sandboxId();
-  if (!sandbox) return authorizedRequest(path, init);
+  if (!sandbox || project === "ens") return authorizedRequest(path, init);
   const token = readSandboxToken(sandbox);
   if (!token)
     throw new Error(

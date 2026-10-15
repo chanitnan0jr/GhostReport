@@ -72,7 +72,7 @@ it("shows validated draft evidence but hides generate and approval from visitors
   ).not.toBeInTheDocument();
 });
 it("shows the generated ENS draft and graph as pending approval without counts or controls", async () => {
-  history.replaceState(null, "", "/report/?project=ens&operator=1#segments");
+  history.replaceState(null, "", "/report/?project=ens#segments");
   const fetch = vi.fn().mockResolvedValue(
     new Response(
       JSON.stringify({
@@ -106,6 +106,9 @@ it("shows the generated ENS draft and graph as pending approval without counts o
   ).not.toBeInTheDocument();
   expect(screen.queryByLabelText("Operator token")).not.toBeInTheDocument();
   expect(
+    screen.getByRole("link", { name: "Review and approve this draft →" }),
+  ).toHaveAttribute("href", "/report/?project=ens&operator=1#segments");
+  expect(
     screen.queryByRole("button", { name: "Generate user journeys" }),
   ).not.toBeInTheDocument();
   expect(
@@ -114,6 +117,65 @@ it("shows the generated ENS draft and graph as pending approval without counts o
   expect(
     fetch.mock.calls.every(([url]) => url === "/api/journeys/spec?project=ens"),
   ).toBe(true);
+});
+it("lets the ENS operator approve the displayed digest without offering generation", async () => {
+  history.replaceState(null, "", "/report/?project=ens&operator=1#segments");
+  let approved: object | null = null;
+  const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+    if (init?.method === "POST") {
+      approved = {
+        ...ensDraft,
+        kind: "approved",
+        approved_by: "ENS reviewer",
+        approved_at: "2026-10-16T06:00:00Z",
+      };
+      return new Response(JSON.stringify(approved));
+    }
+    return new Response(
+      JSON.stringify({ ...view, project: "ens", draft: ensDraft, approved }),
+    );
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(<GeneratedJourneys project="ens" />);
+  await screen.findByLabelText("Operator token");
+  fireEvent.change(screen.getByLabelText("Operator token"), {
+    target: { value: "operator-secret" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Unlock operator tools" }),
+  );
+  const button = screen.getByRole("button", {
+    name: "Approve reviewed definitions",
+  });
+  expect(button).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Reviewer name"), {
+    target: { value: "ENS reviewer" },
+  });
+  fireEvent.click(button);
+  await screen.findByText("Approved definitions");
+  expect(screen.getByText(/Approved by ENS reviewer/)).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Download approved fixture" }),
+  ).toBeVisible();
+  expect(
+    fetch.mock.calls.some(
+      ([url, init]) =>
+        url === "/api/journeys/approve?project=ens" &&
+        new Headers(init?.headers).get("Authorization") ===
+          "Bearer operator-secret" &&
+        init?.body ===
+          JSON.stringify({
+            digest: ensDraft.digest,
+            approved_by: "ENS reviewer",
+          }),
+    ),
+  ).toBe(true);
+  expect(
+    screen.queryByRole("button", { name: "Generate user journeys" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Approve reviewed definitions" }),
+  ).not.toBeInTheDocument();
 });
 it("requires an operator token and submits the reviewed digest with the reviewer", async () => {
   history.replaceState(null, "", "/report/?operator=1#segments");

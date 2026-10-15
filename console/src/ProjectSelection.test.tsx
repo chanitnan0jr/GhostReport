@@ -32,12 +32,12 @@ describe("project-scoped navigation", () => {
       "app",
     );
   });
-  it("keeps the project in links, removes ENS operator and sandbox context", () => {
+  it("keeps the project and operator mode in report links, removes ENS sandbox context", () => {
     const current = new URL(
       "https://ghost.test/report/?sandbox=sbx-aaaaaaaaaaaaaaaa&operator=1&project=ens#segments",
     );
     expect(navigationHref("/report/#workflow", current)).toBe(
-      "/report/?project=ens#workflow",
+      "/report/?operator=1&project=ens#workflow",
     );
     expect(navigationHref("/install/", current)).toBe("/install/?project=ens");
     expect(navigationHref("/app/", current)).toBe("/app/");

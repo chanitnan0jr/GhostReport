@@ -64,11 +64,14 @@ export default function App() {
               <section className="panel" id="top">
                 <h1>ENS code-only project</h1>
                 <p>
-                  No recorded sessions for this project. Generate journeys from
-                  its Workflow Map to see the proposed segments.
+                  ENS has no recorded sessions or behavioural report. Explore
+                  its code evidence and the journeys proposed from its Workflow
+                  Map.
                 </p>
+                <a className="primary" href="/report/?project=ens#segments">
+                  View generated ENS journeys →
+                </a>
                 <p>
-                  No behavioural report is available.{" "}
                   <a href="/ens/?project=ens">
                     Read the code evidence and manual reference review →
                   </a>

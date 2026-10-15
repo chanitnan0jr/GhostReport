@@ -73,12 +73,15 @@ export function GeneratedJourneys({
         action === "approve"
           ? { digest: view?.draft?.digest, approved_by: reviewer.trim() }
           : undefined,
+        project,
       );
       await load();
       setMessage(
         action === "generate"
           ? "Draft requested. Definitions appear only after validation."
-          : "Journey definitions approved. The report still uses the template.",
+          : project === "ens"
+            ? "ENS journey definitions approved. This code-only view remains read-only for visitors."
+            : "Journey definitions approved. The report still uses the template.",
       );
       if (action === "approve")
         requestAnimationFrame(() => {
@@ -91,20 +94,35 @@ export function GeneratedJourneys({
       setBusy(false);
     }
   }
+  function downloadApprovedFixture() {
+    if (!view?.approved) return;
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(view.approved, null, 2) + "\n"], {
+        type: "application/json",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "journeys.ens.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
   const record = view?.approved ?? view?.draft;
   const sbx = sandboxId();
   const owner = sbx ? Boolean(readSandboxToken(sbx)) : false;
   const controls = !view?.approved && (
     <div className="journey-controls">
-      <button
-        className="secondary"
-        disabled={busy || view?.status === "running" || !view}
-        onClick={() => void act("generate")}
-      >
-        {view?.status === "running"
-          ? "Generating journeys…"
-          : "Generate user journeys"}
-      </button>
+      {project === "app" && (
+        <button
+          className="secondary"
+          disabled={busy || view?.status === "running" || !view}
+          onClick={() => void act("generate")}
+        >
+          {view?.status === "running"
+            ? "Generating journeys…"
+            : "Generate user journeys"}
+        </button>
+      )}
       {view?.draft && view.validation.length === 0 && (
         <form
           onSubmit={(e) => {
@@ -190,6 +208,37 @@ export function GeneratedJourneys({
                 ? "LLM-generated draft · awaiting operator approval"
                 : "Validated draft · review required"}
           </p>
+          {project === "ens" &&
+            (new URLSearchParams(location.search).get("operator") === "1" ? (
+              <OperatorGate>
+                {view?.approved ? (
+                  <>
+                    <button
+                      className="secondary"
+                      onClick={downloadApprovedFixture}
+                    >
+                      Download approved fixture
+                    </button>
+                    <p className="small muted">
+                      For deployment, save this file as{" "}
+                      <code>fixtures/partb/journeys.ens.json</code> and commit
+                      it.
+                    </p>
+                  </>
+                ) : (
+                  controls
+                )}
+              </OperatorGate>
+            ) : (
+              !view?.approved && (
+                <p className="small muted">
+                  For the operator:{" "}
+                  <a href="/report/?project=ens&operator=1#segments">
+                    Review and approve this draft →
+                  </a>
+                </p>
+              )
+            ))}
           {project === "ens" && !view?.approved && (
             <p className="journey-note">
               This draft passed the definition and code-reference checks. Review
