@@ -4,10 +4,7 @@ import { apiUrl, sandboxId } from "./api";
 import { safeText, time } from "./format";
 import { cohortInfo, cohortOrder, sourceOf } from "./segmentView";
 import { SourceIcon } from "./sourceIcons";
-import {
-  useSeedSessionDetails,
-  type SeedSessionDetail,
-} from "./useSeedSessionDetails";
+import { useSessionDetails, type SessionLog } from "./useSessionDetails";
 import "./SegmentSessions.css";
 
 const RULE: Record<Cohort, number> = {
@@ -82,7 +79,7 @@ function SessionDetail({
 }: {
   session: Session;
   report: Report;
-  detail: SeedSessionDetail | null | undefined;
+  detail: SessionLog | null | undefined;
   index: number;
   total: number;
   own: boolean;
@@ -137,16 +134,16 @@ function SessionDetail({
           <a
             className="explorer-outline-link"
             href={
-              source === "seed" && detail
+              detail
                 ? apiUrl(
-                    `/api/seed-sessions/${encodeURIComponent(session.session_id)}`,
+                    `/api/sessions/${encodeURIComponent(session.session_id)}`,
                   )
                 : reportHref
             }
             target="_blank"
             rel="noreferrer"
           >
-            {source === "seed" && detail ? "Raw JSON" : "Open in new tab"} ↗
+            {detail ? "Raw JSON" : "Open in new tab"} ↗
           </a>
           <div className="explorer-stepper">
             <button
@@ -247,7 +244,7 @@ function SessionDetail({
           </svg>
           Event timeline <span>(server time UTC)</span>
         </h4>
-        {source !== "seed" || detail === null ? (
+        {detail === null ? (
           <div className="explorer-empty">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
@@ -255,14 +252,10 @@ function SessionDetail({
             </svg>
             <strong>Raw event timeline unavailable</strong>
             <p>
-              {source === "seed"
-                ? "Raw events could not be loaded for this seed session. No event path is reconstructed."
-                : "The public API exposes the cohort summary for this session, but not individual raw events. No path or probe response is inferred."}
+              Raw events could not be loaded for this session. No event path or
+              probe response is reconstructed.
             </p>
             <a href={reportHref}>View classification in Report →</a>
-            <p className="explorer-info">
-              Raw event traces are available for simulated seed sessions.
-            </p>
           </div>
         ) : detail === undefined ? (
           <p className="explorer-muted" role="status">
@@ -324,7 +317,7 @@ function SessionDetail({
             reported by /api/report: {info.description}
           </p>
           <p>
-            {source === "seed" && detail
+            {detail
               ? `Its raw log ${has("wallet_gate_shown") ? "contains" : "has no"} wallet_gate_shown, ${has("wallet_attempted") ? "contains" : "has no"} wallet_attempted and ${has("wallet_connected") ? "contains" : "has no"} wallet_connected.`
               : "Individual raw events for this session are not available, so this label is not independently checked against an event log."}
           </p>
@@ -386,11 +379,12 @@ export function SegmentSessions({
   const current =
     rows.find((s) => s.session_id === chosen) ?? page[0] ?? rows[0];
   const index = current ? rows.indexOf(current) : -1;
-  const seedIds = [...page, ...(current ? [current] : [])]
-    .filter((s) => sourceOf(report, s) === "seed")
-    .map((s) => s.session_id);
-  const detailFor = useSeedSessionDetails(report.run.run_id, [
-    ...new Set(seedIds),
+  // Event logs for the rows on screen and the open session, from the events table.
+  const shownIds = [...page, ...(current ? [current] : [])].map(
+    (s) => s.session_id,
+  );
+  const detailFor = useSessionDetails(report.run.run_id, [
+    ...new Set(shownIds),
   ]);
 
   function choose(id: string) {
@@ -437,8 +431,8 @@ export function SegmentSessions({
           </span>
           <strong>{population.length} sessions</strong>
           <small>
-            Rows from /api/report; seed event logs from /api/seed-sessions
-            (refreshed every 15 s). Use the population filter above for sources.
+            Rows from /api/report; event logs from /api/sessions (refreshed
+            every 15 s). Use the population filter above for sources.
           </small>
         </div>
       </header>
@@ -515,8 +509,7 @@ export function SegmentSessions({
               <tbody>
                 {page.map((session) => {
                   const source = sourceOf(report, session);
-                  const detail =
-                    source === "seed" ? detailFor(session.session_id) : null;
+                  const detail = detailFor(session.session_id);
                   const selected = session.session_id === current?.session_id;
                   return (
                     <tr
@@ -644,11 +637,7 @@ export function SegmentSessions({
             key={current.session_id}
             session={current}
             report={report}
-            detail={
-              sourceOf(report, current) === "seed"
-                ? detailFor(current.session_id)
-                : null
-            }
+            detail={detailFor(current.session_id)}
             index={index}
             total={rows.length}
             own={current.session_id === sid}

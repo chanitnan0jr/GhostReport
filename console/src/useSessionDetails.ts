@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import type { Cohort, Session } from "./types";
+import type { Cohort, Session, SessionSource } from "./types";
 import { apiUrl } from "./api";
 
-export interface SeedSessionDetail {
+// /api/sessions/{id}: one recorded session as the server received it, any source.
+export interface SessionLog {
   session_id: string;
-  source: "seed";
+  source: SessionSource;
   cohort: Cohort;
   exit_type: Session["exit_type"];
   coverage: Session["coverage"];
@@ -25,10 +26,8 @@ export interface SeedSessionDetail {
     responded_received_at: string | null;
   };
 }
-export function useSeedSessionDetails(runId: string, ids: string[]) {
-  const [cache, setCache] = useState<Record<string, SeedSessionDetail | null>>(
-    {},
-  );
+export function useSessionDetails(runId: string, ids: string[]) {
+  const [cache, setCache] = useState<Record<string, SessionLog | null>>({});
   const key = JSON.stringify(ids);
   useEffect(() => {
     const requested: string[] = JSON.parse(key);
@@ -44,7 +43,7 @@ export function useSeedSessionDetails(runId: string, ids: string[]) {
           const sid = requested[cursor++];
           try {
             const response = await fetch(
-              apiUrl(`/api/seed-sessions/${encodeURIComponent(sid)}`),
+              apiUrl(`/api/sessions/${encodeURIComponent(sid)}`),
               {
                 signal: AbortSignal.any([
                   controller.signal,
@@ -53,11 +52,11 @@ export function useSeedSessionDetails(runId: string, ids: string[]) {
               },
             );
             if (!response.ok) throw new Error("Unavailable");
-            const value: SeedSessionDetail = await response.json();
+            const value: SessionLog = await response.json();
             if (
               !value ||
               value.session_id !== sid ||
-              value.source !== "seed" ||
+              !["seed", "test", "visitor"].includes(value.source) ||
               !Array.isArray(value.events) ||
               value.events.some(
                 (e) =>

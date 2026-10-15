@@ -54,6 +54,7 @@ from engine.report import (
     lock_v1,
     run_dp0,
     seed_session,
+    session_detail,
     snapshots,
 )
 from engine.seed import seed_run
@@ -618,6 +619,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         body = seed_session(store(), records(), inv(), session_id, now=settings.clock())
         if body is None:
             raise HTTPException(404, "only existing seed sessions are served")
+        return jsonable_encoder(body)
+
+    @app.get("/api/sessions/{session_id}")
+    async def session_view(session_id: str) -> Any:
+        """Any recorded session (seed, test or visitor) as the server received it."""
+        body = session_detail(store(), records(), inv(), session_id, now=settings.clock())
+        if body is None:
+            raise HTTPException(404, "no recorded events for this session")
         return jsonable_encoder(body)
 
     @app.get("/api/journeys", response_model=None)

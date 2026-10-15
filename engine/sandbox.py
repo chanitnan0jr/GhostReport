@@ -72,7 +72,7 @@ BRANCHES: dict[str, dict[str, float]] = {
 # What the hub forwards: public reads, and the owner's controls.
 READS = re.compile(
     r"^(report|report/document|journeys|journeys/session/[^/]+|evidence|workflow"
-    r"|seed-sessions/[^/]+|health|draft)$")
+    r"|seed-sessions/[^/]+|sessions/[^/]+|health|draft)$")
 CONTROLS = {"state": "GET", "reveal": "GET", "traffic": "POST", "investigate": "POST",
             "lock": "POST"}
 DecisionPoint = Literal["DP1", "DP2"]

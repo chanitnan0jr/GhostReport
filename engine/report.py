@@ -211,12 +211,20 @@ def seed_session(
     store: Store, records: ProbeRecords, investigation: Investigation, session_id: str, *,
     now: datetime,
 ) -> dict[str, Any] | None:
-    """One simulated session as the server received it (for the recorded /demo clips).
-
-    Only seed sessions are exposed; visitor sessions are never served one by one.
-    """
+    """One simulated session as the server received it (for the recorded /demo clips)."""
     if session_source(session_id) != "seed":
         return None
+    return session_detail(store, records, investigation, session_id, now=now)
+
+
+def session_detail(
+    store: Store, records: ProbeRecords, investigation: Investigation, session_id: str, *,
+    now: datetime,
+) -> dict[str, Any] | None:
+    """Any recorded session's events, cohort and question result, from the events table.
+
+    Events carry only whitelisted fields (name, page, sequence, times); props are not served.
+    """
     events = [e for e in store.events() if e.session_id == session_id]
     if not events:
         return None
@@ -243,7 +251,7 @@ def seed_session(
         }
     return {
         "session_id": session_id,
-        "source": "seed",
+        "source": session_source(session_id),
         "events": [{"seq": e.seq, "event": e.event, "page": e.page,
                     "occurred_at": e.occurred_at, "received_at": e.received_at}
                    for e in sorted(events, key=lambda e: e.seq)],

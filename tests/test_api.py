@@ -383,6 +383,14 @@ def test_seed_session_view_serves_only_simulated_sessions(tmp_path: Path) -> Non
         assert body["probe"]["status"] == "answered" and body["probe"]["selected"]
         assert client.get("/api/seed-sessions/a-visitor").status_code == 404
         assert client.get("/api/seed-sessions/seed-99").status_code == 404
+        # /api/sessions serves any recorded session, visitors included, without props.
+        client.post("/api/events", json={"events": gate_then_not_now("a-visitor")})
+        visitor = client.get("/api/sessions/a-visitor").json()
+        assert visitor["source"] == "visitor" and visitor["cohort"] == "gate_event_no_attempt"
+        assert [e["event"] for e in visitor["events"]][-1] == "not_now_clicked"
+        assert all("props" not in e for e in visitor["events"])
+        assert client.get("/api/sessions/seed-07").json()["source"] == "seed"
+        assert client.get("/api/sessions/nobody").status_code == 404
 
 
 def test_report_narrative_is_written_once_per_data_change_and_checked(tmp_path: Path) -> None:
