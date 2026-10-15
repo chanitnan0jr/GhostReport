@@ -1312,3 +1312,59 @@ pre code {
     scroll-behavior: auto !important;
   }
 }
+
+.population {
+  border: 1px solid #45635c;
+  background: #122822;
+  padding: 24px;
+  margin: 24px 0;
+  border-radius: 6px;
+}
+.population-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.population-summary {
+  font-size: 22px;
+  color: #b8e8d1;
+}
+.population dl {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.population dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.population dd {
+  margin: 10px 0 0;
+  font-size: 17px;
+}
+.population > .muted {
+  line-height: 1.8;
+}
+.finding-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.partb-link {
+  margin-top: 20px;
+  line-height: 1.8;
+  font-size: 13px;
+  color: var(--mint);
+}
+@media (max-width: 800px) {
+  .population {
+    padding: 18px;
+  }
+  .population dl {
+    gap: 22px;
+  }
+}

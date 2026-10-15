@@ -1,5 +1,6 @@
 import { cohortNames } from "./format";
 import type { Report } from "./types";
+import { sessionSource } from "./Sources";
 
 export function YourSession({
   report,
@@ -22,6 +23,7 @@ export function YourSession({
       </div>
       {session ? (
         <div className="your-session-details">
+          <span>Source: {sessionSource(report, session)}</span>
           <span>Telemetry coverage: {session.coverage}</span>
           <span>Exit: {session.exit_type.replaceAll("_", " ")}</span>
         </div>

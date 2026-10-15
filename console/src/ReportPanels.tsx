@@ -176,7 +176,7 @@ function HypothesisMatrix({ report }: { report: Report }) {
 function Funnel({ report }: { report: Report }) {
   const total = report.current.sessions.length;
   const steps = [
-    ["Visitors", report.current.funnel.visitors],
+    ["Recorded sessions", report.current.funnel.visitors],
     ["Apply clicked", report.current.funnel.apply_clicked],
     ["Attempted", report.current.funnel.attempted],
     ["Connected", report.current.funnel.connected],
@@ -385,6 +385,10 @@ function Coverage({ report }: { report: Report }) {
       description="Delivery, response and telemetry coverage are reported separately."
     >
       <YourSession report={report} sid={sid} />
+      <p className="small muted">
+        Coverage counts below combine recorded sources, including seed and test
+        sessions. Per-probe source counts are not supplied by this API.
+      </p>
       <div className="probe-coverage">
         {report.current.probes.map((probe) => (
           <article key={probe.plan_id}>

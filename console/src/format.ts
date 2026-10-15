@@ -44,10 +44,37 @@ export function findingText(finding: Finding): string | null {
     finding.respondents < finding.selected
   )
     return null;
-  return finding.text ===
-    `${finding.selected} of ${finding.respondents} respondents`
-    ? finding.text
-    : null;
+  let expected = `${finding.selected} of ${finding.respondents} respondents`;
+  if (finding.by_source) {
+    const entries = Object.entries(finding.by_source);
+    if (
+      entries.some(
+        ([source, value]) =>
+          !["seed", "test", "visitor"].includes(source) ||
+          !value ||
+          !Number.isInteger(value.selected) ||
+          !Number.isInteger(value.respondents) ||
+          value.selected < 0 ||
+          value.respondents < value.selected,
+      )
+    )
+      return null;
+    if (
+      entries.reduce((n, [, v]) => n + v.selected, 0) !== finding.selected ||
+      entries.reduce((n, [, v]) => n + v.respondents, 0) !== finding.respondents
+    )
+      return null;
+    const parts = (["seed", "test", "visitor"] as const).flatMap((source) => {
+      const value = finding.by_source?.[source];
+      return value?.respondents
+        ? [
+            `${source === "visitor" ? "visitors" : source} ${value.selected} of ${value.respondents}`,
+          ]
+        : [];
+    });
+    if (parts.length) expected += ` (${parts.join(" · ")})`;
+  }
+  return finding.text === expected ? finding.text : null;
 }
 
 export function safeText(value: string): string {

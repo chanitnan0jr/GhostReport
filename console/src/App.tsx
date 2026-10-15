@@ -4,6 +4,7 @@ import { ReportPanels } from "./ReportPanels";
 import { RunBanner } from "./RunBanner";
 import { reportWarnings, safeText, time } from "./format";
 import { useReport } from "./useReport";
+import { Population } from "./Sources";
 
 const navigation = [
   ["funnel", "Funnel"],
@@ -38,6 +39,9 @@ export default function App() {
             </a>
           ))}
         </nav>
+        <a className="partb-link" href="/ens/">
+          Tested on ENS ↗
+        </a>
         <div className="sidebar-footer">
           <span className="status-dot" />
           Evidence you can trace
@@ -73,7 +77,7 @@ export default function App() {
               {mode === "replay"
                 ? "Recorded run. This is not a live investigation."
                 : mode === "demo"
-                  ? "20 seeded sessions + live visitors"
+                  ? "Prepared investigation + recorded activity"
                   : "Demonstration dataset. These are not live participant results."}
             </span>
           </div>
@@ -112,6 +116,7 @@ export default function App() {
               </code>
             </div>
             <RunBanner run={report.run} />
+            <Population report={report} />
             <OperatorGate key={report.run.run_id}>
               <OperatorBar
                 key={report.run.run_id}
@@ -120,6 +125,7 @@ export default function App() {
               />
             </OperatorGate>
             <nav className="mobile-report-nav" aria-label="Jump to report">
+              <a href="/ens/">Tested on ENS</a>
               <a href="#coverage">Your session & coverage</a>
               <a href="#findings">Findings</a>
               <a href="#limitations">Limitations</a>

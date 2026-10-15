@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { findingLabel, findingText, safeText } from "./format";
 import type { CodeFact, Finding } from "./types";
+import { FindingSources } from "./Sources";
 
 export function Panel({
   id,
@@ -85,6 +86,7 @@ export function FindingStatus({ finding }: { finding: Finding }) {
       <strong className="count-text">
         {text ?? "Count withheld by validation guard"}
       </strong>
+      <FindingSources finding={finding} />
       <span className="observation">{safeText(finding.observation)}</span>
       <EvidenceRefs ids={finding.evidence_ids} />
     </div>

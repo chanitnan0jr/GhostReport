@@ -219,7 +219,9 @@ it("highlights the visitor session and renders the supplied event verification",
   );
   const { container } = render(<App />);
   await screen.findByRole("heading", { name: "Coverage" });
-  expect(screen.getByText("20 seeded sessions + live visitors")).toBeVisible();
+  expect(
+    screen.getByText("Prepared investigation + recorded activity"),
+  ).toBeVisible();
   expect(screen.getByText("gate renders once")).toBeVisible();
   expect(container.querySelector(".your-cohort")).toHaveTextContent(
     "Your session",

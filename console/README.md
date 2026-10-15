@@ -29,7 +29,7 @@ The browser suite checks the sample report at projector resolution and 375 px wi
 4. The console requests `/api/report` immediately and every three seconds. It retains the last report with a visible warning if refresh fails. Each finding uses its own question version, decision point and exposure cohort.
 5. Paste the externally held digest into **Digest held outside the system**, then click **Write v2 snapshot**. A mismatch is shown as a 409 warning. Current evidence is labeled a candidate; a persisted snapshot is listed separately.
 
-The public banner shows the run mode, build status and exact commit. `demo` shows **20 seeded sessions + live visitors**; `seed` and `replay` retain prominent badges. Per-event provenance comes only from the authoritative `run.verification[event]` mapping (`verified`, nullable `commit`, nullable `test`, optional `passed_at`). False is shown as **unverified**; dirty commit suffixes are preserved. The raw `run.verifications` array is not interpreted by the frontend.
+The public banner shows the run mode, build status and exact commit. `demo` identifies prepared recorded activity; the population panel shows the API’s exact `current.population`; `seed` and `replay` retain prominent badges. Per-event provenance comes only from the authoritative `run.verification[event]` mapping (`verified`, nullable `commit`, nullable `test`, optional `passed_at`). False is shown as **unverified**; dirty commit suffixes are preserved. The raw `run.verifications` array is not interpreted by the frontend.
 
 If `localStorage['ghost:judge_sid']` exists, Coverage shows **Your session**, its current cohort, coverage and exit, and highlights its cohort row. No role is read or sent. In development, visit through landing on 5175 to share one origin across all three Vite apps; direct ports have separate localStorage.
 
@@ -59,3 +59,19 @@ GHOST_LIVE=1 GHOST_API_TARGET=http://127.0.0.1:18001 npm run test:browser
 ```
 
 This opt-in check requires a locked `pilot` or `demo` run. It opens the real app and public console on 5183/5184, drops the exposure beacon intentionally, selects Something else, and checks H_other's exact respondent count, inferred exposure, session highlight and the console update within three seconds. It adds synthetic sessions, so use a dedicated test database. It never calls Analyze or any LLM endpoint.
+
+## Session and respondent sources
+
+`current.population` is displayed alongside validated `current.sources`
+totals. The funnel’s first stage is labeled **Recorded sessions**, since its
+legacy `visitors` field includes all recorded sources. Seed sessions are
+labeled **Simulated users (Playwright) — seed**; automated tests and visitors
+are shown separately. `current.session_sources` labels Your session. Missing
+source metadata is reported as unavailable, never inferred from a session ID.
+
+The engine’s exact `finding.text` is retained, including its source suffix,
+only when it matches both overall counts and `finding.by_source`. Each source
+also gets its own `k of n respondents` row. Findings are still engine labels
+for the combined population; the console does not invent visitor-only labels.
+Coverage is explicitly combined because per-probe source counts are not
+provided. The public navigation links to landing’s `/ens/` code-only page.

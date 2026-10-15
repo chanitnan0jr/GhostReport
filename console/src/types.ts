@@ -3,8 +3,10 @@ export type Cohort =
   | "attempted_no_success"
   | "gate_event_no_attempt"
   | "no_gate_event";
+export type SessionSource = "seed" | "test" | "visitor";
 export interface Session {
   session_id: string;
+  source?: SessionSource;
   cohort: Cohort;
   coverage: "complete" | "unknown";
   coverage_reasons: string[];
@@ -51,6 +53,9 @@ export interface Finding {
   evidence_ids: string[];
   rule_version: string;
   text: string;
+  by_source?: Partial<
+    Record<SessionSource, { selected: number; respondents: number }>
+  >;
 }
 export interface ProbeCounts {
   shown: number;
@@ -113,6 +118,9 @@ export interface Report {
     decisions: Decision[];
   } | null;
   current: {
+    sources?: Record<SessionSource, number>;
+    session_sources?: Record<string, SessionSource>;
+    population?: string;
     data_cutoff: string;
     funnel: {
       visitors: number;

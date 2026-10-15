@@ -74,7 +74,9 @@ test("a real answer reaches the public report within three seconds", async ({
   const liveGroup = page
     .locator("#findings .finding-group")
     .filter({ has: page.getByRole("heading", { name: /^DP1/ }) });
-  await expect(liveGroup.getByText(expectedText, { exact: true })).toBeVisible({
+  await expect(
+    liveGroup.getByText(new RegExp(`^${expectedText}(?: \\(|$)`)),
+  ).toBeVisible({
     timeout: 3000,
   });
   const latency = Date.now() - started;
