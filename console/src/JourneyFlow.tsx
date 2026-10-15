@@ -245,6 +245,11 @@ export function JourneyDiagram({ graph }: { graph: JourneyGraph }) {
                 {selected === segment.id ? "Highlighted" : "Highlight ↗"}
               </span>
             </span>
+            {segment.segment === "stalled_at_wallet" && (
+              <span className="journey-investigated">
+                Investigated population
+              </span>
+            )}
             <strong className="journey-card-count">
               {sessions(segment.sessions, graph.sessions)}
             </strong>

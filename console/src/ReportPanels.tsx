@@ -212,43 +212,6 @@ function Funnel({ report }: { report: Report }) {
   );
 }
 
-function Workflow({ report }: { report: Report }) {
-  const groups = [
-    ["States", report.workflow.states],
-    ["Outcomes", report.workflow.outcomes],
-    ["UI facts", report.workflow.ui_facts],
-  ] as const;
-  return (
-    <Panel
-      id="workflow"
-      title="Workflow Map"
-      label="Code evidence"
-      description={`Source map ${report.workflow.version} · commit ${report.workflow.scope.commit_sha}`}
-    >
-      {groups.map(([title, facts]) => (
-        <div className="workflow-group" key={title}>
-          <h3>{title}</h3>
-          {facts.length ? (
-            facts.map((fact) => (
-              <article
-                className="code-fact"
-                id={`fact-${fact.id}`}
-                key={fact.id}
-              >
-                <span className="fact-id">{safeText(fact.id)}</span>
-                <p>{safeText(fact.desc)}</p>
-                <CodeReference fact={fact} />
-              </article>
-            ))
-          ) : (
-            <p className="muted">No source facts returned for this category.</p>
-          )}
-        </div>
-      ))}
-    </Panel>
-  );
-}
-
 function Gaps({ report }: { report: Report }) {
   const gaps = report.workflow.outcomes.filter(
     (o) => o.instrumentation !== "found_in_code",
@@ -636,19 +599,14 @@ function Limitations() {
 export function ReportPanels({ report }: { report: Report }) {
   return (
     <>
-      <Funnel report={report} />
       <HypothesisMatrix report={report} />
-      <div className="panel-pair">
-        <Workflow report={report} />
-        <Gaps report={report} />
-      </div>
-      <Trace report={report} />
-      <Coverage report={report} />
       <Findings report={report} />
-      <div className="panel-pair final-pair">
-        <NextAction report={report} />
-        <Limitations />
-      </div>
+      <Coverage report={report} />
+      <Gaps report={report} />
+      <Limitations />
+      <Funnel report={report} />
+      <Trace report={report} />
+      <NextAction report={report} />
     </>
   );
 }

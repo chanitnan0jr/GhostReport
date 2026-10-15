@@ -62,7 +62,8 @@ Clicking a card highlights the matching segment node and its incoming
 edges. Clicking it again clears the selection. Cards are keyboard buttons
 with a pressed state, an explicit highlight label and a visible focus ring.
 Selection persists during refreshes. The chart scrolls inside its own
-container; the cards stack on smaller screens. Reduced motion is respected.
+container; cards are side by side for the requested laptop layout (1280 px
+and wider). Reduced motion is respected.
 
 All three segment nodes are rendered even when a segment has zero sessions;
 zero counts come from `segments[]`, without fabricating edges. API failures
@@ -76,16 +77,17 @@ label is not presented as evidence that every segment session was asked.
 No role data, individual session IDs, event ingestion, LLM requests or
 production browser automation is added.
 
-## Validation and remaining work
+## Current integration
 
-`npm run build` in console passed (TypeScript includes these source files).
-Unit/browser tests were not added or run for this change. The component is
-not mounted in a page here; the frontend page owner should choose the host,
-connect its mock response if needed, and perform rendered integration checks.
+The console now mounts the component at `/report/#segments`, with an
+All / Visitors / Seed source toggle. Stopped at the wallet carries an
+Investigated population badge. The console owns this integration; landing
+can link to it without importing the component across app packages.
 
-Local module commit includes only the new component, CSS, API types/helper
-and this handoff. Other session's page/navigation edits are excluded. No push.
+`npm run build` passes. Unit/browser tests were not added or run in this
+iteration. See [the C1–C5 handoff](docs/summaries/2026-10-15-console-c1-c5.md)
+for the full scope and verification limits. No push was performed.
 
 Workflow: agentic-workflow for scope and commit isolation; UI-UX-Design for
-keyboard access, responsive navigation/diagram controls and focus states;
-React best practices for abortable requests and bounded polling.
+keyboard access and focus states; React best practices for abortable requests
+and bounded polling. Mobile work is deferred by the user's current scope.

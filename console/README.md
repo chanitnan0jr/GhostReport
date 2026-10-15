@@ -1,6 +1,6 @@
 # GhostReport operator console
 
-Requires Node 22.13 or newer. This directory owns only the presentation and operator controls; it does not implement investigation rules.
+Requires Node 22.13 or newer. Current layout targets laptops at least 1280 px wide. This directory owns only the presentation and operator controls; it does not implement investigation rules.
 
 ```sh
 cd console
@@ -8,7 +8,7 @@ npm ci
 VITE_MOCK=1 npm run dev   # http://localhost:5174/report/
 ```
 
-Mock mode imports `../fixtures/report.sample.json` directly without rewriting or duplicating it. The fixture is visibly labeled **SEED DATA**. Mock snapshot requests validate the pasted digest and return 409 for a mismatch. Mock snapshots are local to the page and reset on reload.
+Mock mode imports `../fixtures/report.sample.json` read-only. Its in-memory adapter adds the current narrative/source fields and labels the entire fixture as seed; no fixture file is rewritten. The fixture is visibly labeled **SEED DATA**. Mock snapshot requests validate the pasted digest and return 409 for a mismatch. Mock snapshots are local to the page and reset on reload.
 
 For the real backend, run `npm run dev` without `VITE_MOCK=1`. `/api` proxies to `GHOST_API_TARGET` (default `http://127.0.0.1:18000`); `/roles` proxies separately to `GHOST_ROLES_TARGET` (default `http://127.0.0.1:18100`). `GHOST_API_TARGET=http://127.0.0.1:18001 npm run dev` can point a local verification session at an isolated API instance; the default is port 18000; the shell or console-local `.env.local` can override it. Production builds use `base: '/report/'`. The engine owns serving built frontends and the production reverse proxy.
 
@@ -75,3 +75,48 @@ also gets its own `k of n respondents` row. Findings are still engine labels
 for the combined population; the console does not invent visitor-only labels.
 Coverage is explicitly combined because per-probe source counts are not
 provided. The public navigation links to landing’s `/ens/` code-only page.
+
+## Current console views (C1–C5)
+
+The global header follows Home → Demo → Try the App → Segments → Workflow Map
+→ Report → ENS. Hash changes and browser navigation select the active console
+view. The sidebar links into report sections.
+
+- `/report/`: checked narrative text and its source badge; See the facts
+  exposes only the facts JSON. Population follows, then hypotheses v1/current,
+  findings, coverage, evidence gaps and the permanent limitations. Funnel,
+  decision trace, next action, hypothesis evidence map, workflow graph and
+  run/operator metadata follow below.
+- `/report/#segments`: `/api/journeys`, source filter All / Visitors / Seed,
+  three cards and their incoming-edge highlights. Stopped at the wallet is
+  labeled Investigated population. All source splits keep their denominators.
+- `/report/#workflow`: `/api/workflow?target=app|ens`, a graph plus source
+  inspector. State-order edges and shared-file attachments are generated
+  deterministically. Unmatched facts stay unattached. Both source targets
+  preserve their own legend, pinned links or permalink availability note,
+  reviewer verdict and scope. Existing `#fact-ID` links select the app node.
+- `#evidence` in the report: `/api/evidence`, with the exact supplied edges
+  and per-hypothesis highlight membership. Self-report and observation are
+  separate, low respondent counts stay Unresolved, and H_other/generic labels
+  are retained. Conflict badges reuse a matching `/api/report` finding's
+  actual flag; no conflict is inferred from label text.
+
+The graph dependencies are pinned exactly: `@xyflow/react` 12.12.0 and
+`@dagrejs/dagre` 3.1.1. The workflow uses dagre rankdir LR. Graph code loads
+separately from the initial summary. Map nodes are selectable with the mouse
+or keyboard; dragging, connecting and deletion are disabled.
+
+Mock mode serves all new endpoints. Journey steps are explicitly a UI
+preview reconstructed from the fixture; no per-session probe branches are
+invented. The mock evidence graph omits answer-option/rule links that are
+absent from the report fixture, with an explanatory note. The real evidence
+endpoint supplies those links.
+
+Percentage threshold labels are displayed as Selected (self-report), beside
+the exact `finding.text` count. No threshold or backend classification is
+changed. Unchecked narrative drafts/rejection details are never rendered.
+
+This iteration was checked with normal and mock production builds, including
+TypeScript. Unit/browser suites were not run; no mobile changes were requested.
+Implementation sources: [React Flow custom nodes](https://reactflow.dev/learn/customization/custom-nodes)
+and [React Flow's dagre layout example](https://reactflow.dev/examples/layout/dagre).

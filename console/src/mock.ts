@@ -1,9 +1,39 @@
 import sample from "../../fixtures/report.sample.json";
 import type { Report } from "./types";
+import { mockJourneys, mockWorkflow } from "./mockViews";
+import type { JourneySource } from "./journeys";
+import { mockEvidence } from "./mockEvidence";
 
 /** The shared report fixture is read directly; it is never rewritten. */
 export function installMockBackend() {
   const state = structuredClone(sample) as Report;
+  state.current.sources = {
+    seed: state.current.sessions.length,
+    test: 0,
+    visitor: 0,
+  };
+  state.current.population = `seed ${state.current.sessions.length} + visitors 0`;
+  state.current.session_sources = Object.fromEntries(
+    state.current.sessions.map((session) => [session.session_id, "seed"]),
+  );
+  state.current.findings = state.current.findings.map((finding) => ({
+    ...finding,
+    by_source: {
+      seed: { selected: finding.selected, respondents: finding.respondents },
+      test: { selected: 0, respondents: 0 },
+      visitor: { selected: 0, respondents: 0 },
+    },
+    text: `${finding.selected} of ${finding.respondents} respondents${finding.respondents ? ` (seed ${finding.selected} of ${finding.respondents})` : ""}`,
+  }));
+  state.narrative = {
+    source: "template",
+    text: `Population: ${state.current.population} sessions. These are simulated sessions for a report preview. ${state.current.findings[0]?.text ?? "0 of 0 respondents"}. Self-report and observed behavior remain separate.`,
+    facts: {
+      population: state.current.population,
+      sources: state.current.sources,
+      findings: state.current.findings,
+    },
+  };
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = new URL(
@@ -18,6 +48,22 @@ export function installMockBackend() {
         headers: { "Content-Type": "application/json" },
       });
     if (url.pathname === "/api/report") return json(state);
+    if (url.pathname === "/api/evidence") return json(mockEvidence(state));
+    if (url.pathname === "/api/journeys")
+      return json(
+        mockJourneys(
+          state,
+          (url.searchParams.get("source") ?? undefined) as
+            JourneySource | undefined,
+        ),
+      );
+    if (url.pathname === "/api/workflow")
+      return json(
+        mockWorkflow(
+          state,
+          url.searchParams.get("target") === "ens" ? "ens" : "app",
+        ),
+      );
     if (url.pathname === "/api/lock" && init?.method === "POST") {
       if (!state.v1)
         return json(

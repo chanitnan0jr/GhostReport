@@ -78,6 +78,11 @@ export interface Probe {
   counts: ProbeCounts;
 }
 export interface Report {
+  narrative?: {
+    source: "llm" | "template";
+    text: string;
+    facts: Record<string, unknown>;
+  };
   run: {
     run_id: string;
     mode: string;

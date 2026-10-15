@@ -1,0 +1,135 @@
+.evidence-hypothesis-select {
+  display: flex;
+  gap: 8px;
+  margin: 22px 0 18px;
+  flex-wrap: wrap;
+}
+.evidence-hypothesis-select button {
+  padding: 10px 14px;
+  border: 1px solid #5b5377;
+  border-radius: 5px;
+  background: #1c2230;
+  color: #d5c5ec;
+  font: inherit;
+  font-size: 13px;
+}
+.evidence-hypothesis-select button[aria-pressed="true"] {
+  background: #42345b;
+  border-color: #cfb4ef;
+}
+.evidence-hypothesis-select small {
+  padding-left: 8px;
+  color: #aeb9c8;
+}
+.evidence-map-body {
+  margin: 24px 0;
+  min-width: 0;
+}
+.evidence-map-body.has-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 18px;
+}
+.evidence-map-canvas {
+  height: 740px;
+  min-width: 0;
+  border: 1px solid #425865;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.evidence-map-canvas .react-flow {
+  --xy-background-color: #0c141b;
+  --xy-controls-button-background-color: #182730;
+  --xy-controls-button-color: #e4ecef;
+  --xy-controls-button-border-color: #536b79;
+}
+.evidence-map-canvas .hypothesis-map-node {
+  width: 264px;
+  height: 128px;
+  border-width: 2px;
+  padding: 12px 14px;
+  color: #e7eef1;
+  background: #15232c;
+  text-align: left;
+}
+.hypothesis-map-node > div {
+  display: grid;
+  gap: 8px;
+}
+.hypothesis-map-node span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #adbdcc;
+}
+.hypothesis-map-node strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.hypothesis-map-node strong small {
+  font-size: 9px;
+  margin-left: 6px;
+  font-weight: 400;
+}
+.hypothesis-map-node p {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.evidence-map-canvas .react-flow__node.selected {
+  box-shadow: 0 0 0 4px #cfb4ef40;
+}
+.evidence-map-canvas .react-flow__edge-textbg {
+  fill: #0c141b;
+}
+.evidence-map-canvas .react-flow__edge-text {
+  fill: #cfdaed;
+  font-size: 10px;
+}
+.evidence-map-details {
+  min-width: 0;
+  height: 740px;
+  overflow-y: auto;
+  border: 1px solid #75658c;
+  padding: 22px;
+  border-radius: 7px;
+  background: #19212c;
+}
+.evidence-map-details h3 {
+  margin: 18px 0;
+  overflow-wrap: anywhere;
+}
+.evidence-map-details p {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.evidence-map-details dl {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.evidence-map-details dt {
+  color: #a8b7c4;
+  margin-top: 12px;
+}
+.evidence-map-details dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+.evidence-map-details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #0b151c;
+  border: 1px solid #425865;
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 18px;
+}
+.evidence-map-details .evidence-finding-count {
+  font-size: 17px;
+  margin: 18px 0;
+}

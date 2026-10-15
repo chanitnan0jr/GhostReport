@@ -58,7 +58,11 @@ export function Population({ report }: { report: Report }) {
   );
 }
 
-export function FindingSources({ finding }: { finding: Finding }) {
+export function FindingSources({
+  finding,
+}: {
+  finding: Pick<Finding, "selected" | "respondents" | "text" | "by_source">;
+}) {
   if (!finding.by_source || !findingText(finding)) return null;
   return (
     <div className="finding-sources" aria-label="Respondents by source">

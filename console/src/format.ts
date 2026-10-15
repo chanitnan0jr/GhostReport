@@ -33,10 +33,19 @@ export function groupKey(
 }
 
 export function findingLabel(finding: Finding): string {
-  return finding.respondents < 3 ? "Unresolved" : finding.self_report;
+  return finding.respondents < 3
+    ? "Unresolved"
+    : selfReportLabel(finding.self_report);
 }
 
-export function findingText(finding: Finding): string | null {
+export function selfReportLabel(value: string): string {
+  if (value === "Selected by ≥ 50%") return "Selected (self-report)";
+  return value.includes("%") ? "See respondent counts" : safeText(value);
+}
+
+export function findingText(
+  finding: Pick<Finding, "selected" | "respondents" | "text" | "by_source">,
+): string | null {
   if (
     !Number.isInteger(finding.selected) ||
     !Number.isInteger(finding.respondents) ||
