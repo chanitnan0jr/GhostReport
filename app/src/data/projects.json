@@ -1,0 +1,77 @@
+[
+  {
+    "id": "p1",
+    "title": "Open Source Commons",
+    "category": "Developer tools",
+    "grant": "$5,000–$15,000",
+    "summary": "Build the public tools that make the next idea possible.",
+    "description": "Great tools should belong to everyone. We support small teams maintaining open source libraries, developer infrastructure, and documentation that make the ecosystem easier to build in.",
+    "goals": [
+      "An open source project with a clear public benefit",
+      "A practical milestone you can deliver in eight weeks",
+      "A short plan for keeping your work accessible"
+    ],
+    "color": "sage",
+    "number": "01"
+  },
+  {
+    "id": "p2",
+    "title": "Local Climate Lab",
+    "category": "Climate & community",
+    "grant": "$3,000–$10,000",
+    "summary": "Turn a local climate challenge into a shared experiment.",
+    "description": "From neighborhood heat maps to community energy projects, we fund grounded experiments that give people useful ways to respond to a changing climate.",
+    "goals": [
+      "A specific community and a concrete climate challenge",
+      "A small, measurable experiment",
+      "A plan to share what you learn openly"
+    ],
+    "color": "clay",
+    "number": "02"
+  },
+  {
+    "id": "p3",
+    "title": "Learning Without Borders",
+    "category": "Education",
+    "grant": "$2,000–$8,000",
+    "summary": "Make useful knowledge easier to find, share, and build on.",
+    "description": "Help people learn together. This grant supports open educational resources, community workshops, translations, and accessible learning experiences.",
+    "goals": [
+      "A learning need you understand firsthand",
+      "Materials that others can use and adapt",
+      "A realistic plan for reaching your first learners"
+    ],
+    "color": "sand",
+    "number": "03"
+  },
+  {
+    "id": "p4",
+    "title": "Community Signals",
+    "category": "Governance",
+    "grant": "$4,000–$12,000",
+    "summary": "Help communities make decisions with more voices in the room.",
+    "description": "We support thoughtful approaches to collective decision making: accessible proposals, community research, and small governance tools that people actually want to use.",
+    "goals": [
+      "A real community with a decision to make",
+      "A clear way to include less-heard voices",
+      "An experiment that can inform future decisions"
+    ],
+    "color": "lavender",
+    "number": "04"
+  },
+  {
+    "id": "p5",
+    "title": "Creative Public Spaces",
+    "category": "Arts & culture",
+    "grant": "$1,500–$6,000",
+    "summary": "Create something that brings people and places together.",
+    "description": "Support for community-led art, digital archives, and creative projects that make shared spaces more welcoming. Start small and invite others to take part.",
+    "goals": [
+      "A creative idea rooted in a community",
+      "A shared output people can experience",
+      "An achievable budget and delivery plan"
+    ],
+    "color": "rose",
+    "number": "05"
+  }
+]
