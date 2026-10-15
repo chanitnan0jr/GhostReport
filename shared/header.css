@@ -31,10 +31,10 @@ div.gr-site-header-surface {
   align-items: center;
   gap: 10px;
   color: var(--gr-ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--gr-font);
   font-size: 25px;
   letter-spacing: -0.8px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }

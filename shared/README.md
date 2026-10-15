@@ -2,8 +2,14 @@
 
 `SiteHeader.tsx` is the single header implementation used by landing, the grant
 app and the report console. `navigation.ts` owns menu order, labels, links,
-brand artwork and the GitHub URL. `header.css` owns the shared header styling: a floating glass surface, serif
+brand artwork and the GitHub URL. `header.css` owns the shared header styling: a floating glass surface, sans-serif
 wordmark with the supplied ghost logo, centered navigation and an active underline.
+
+All frontend UI uses `--gr-font`, the DAO Mock font stack:
+`"DM Sans", "Segoe UI", Arial, sans-serif`. Headings use the same family with
+lighter weights. This retains the existing system fallback behavior without
+adding a remote font dependency. Code, event IDs and technical data keep
+`--gr-mono` for readability.
 
 The header derives its active menu from the current URL and subscribes to hash
 and browser history changes. A pill switch beside GitHub selects GhostReport or

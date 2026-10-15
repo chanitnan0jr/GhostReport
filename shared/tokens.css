@@ -1,7 +1,7 @@
 /* GhostReport design tokens: one light theme for landing/ and console/ (laptop, ≥1280px).
    Import first: @import "../../shared/tokens.css"; then use the variables only. */
 :root {
-  --gr-font: Inter, "Segoe UI", Arial, sans-serif;
+  --gr-font: "DM Sans", "Segoe UI", Arial, sans-serif;
   --gr-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --gr-bg: #f6f8fb;
@@ -37,7 +37,8 @@
 
   --gr-radius: 12px;
   --gr-radius-sm: 8px;
-  --gr-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.06);
+  --gr-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.06);
   --gr-page: 1280px; /* content width; side padding 40px */
 }
 
