@@ -71,4 +71,4 @@ BASE_URL=https://your-demo.example npm run test:browser
 
 `e2e/full-loop.spec.ts` checks DP1 Not now, DP2 Back, and Skip on desktop and a 375 px viewport. The answer tests select the required Something else option, verify H_other's numerator/denominator and the correct exposure cohort, and drop the beacon to exercise response recovery. The suite adds synthetic sessions; use an isolated run with open plans, not the judging population. Default mock browser tests start their own server on 18176; override with `GHOST_E2E_PORT`.
 
-Production builds use `base: '/app/'`. Both `/api` and `/roles` use `GHOST_API_TARGET` in development. For cross-app navigation with shared localStorage during development, enter through the landing server on 5175, which proxies `/app/` and `/report/` to the two Vite servers.
+Production builds use `base: '/app/'`. `/api` uses `GHOST_API_TARGET` (default 18000); `/roles` uses `GHOST_ROLES_TARGET` (default `http://127.0.0.1:18100`) in development. For cross-app navigation with shared localStorage during development, enter through the landing server on 5175, which proxies `/app/` and `/report/` to the two Vite servers.

@@ -16,9 +16,9 @@ export default defineConfig(({ mode }) => ({
       },
       "/roles": {
         target:
-          process.env.GHOST_API_TARGET ??
-          loadEnv(mode, process.cwd(), "GHOST_").GHOST_API_TARGET ??
-          "http://127.0.0.1:18000",
+          process.env.GHOST_ROLES_TARGET ??
+          loadEnv(mode, process.cwd(), "GHOST_").GHOST_ROLES_TARGET ??
+          "http://127.0.0.1:18100",
         changeOrigin: true,
       },
     },
