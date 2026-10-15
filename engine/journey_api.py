@@ -55,6 +55,7 @@ class JourneySpecs:
     def __init__(self, ghost: "Ghost") -> None:
         self.ghost = ghost
         self.path = ghost.settings.db_dir / f"{ghost.settings.run_id}.journeys.jsonl"
+        self.ens_approval_path = ghost.settings.db_dir / "journeys.ens.approved.json"
         self.records: list[dict[str, Any]] = []
         if self.path.exists():
             self.records = [json.loads(line) for line in self.path.read_text().splitlines()]
@@ -89,7 +90,10 @@ class JourneySpecs:
 
     def latest(self, project: Project, kind: str) -> dict[str, Any] | None:
         if project == "ens":
-            path = ENS_FIXTURE if kind == "approved" else ENS_DRAFT
+            if kind == "approved":
+                path = ENS_FIXTURE if ENS_FIXTURE.exists() else self.ens_approval_path
+            else:
+                path = ENS_DRAFT
             if path.exists():
                 try:
                     record = json.loads(path.read_text(encoding="utf-8"))
@@ -225,6 +229,16 @@ class JourneySpecs:
                   "approved_at": self.ghost.settings.clock().isoformat()}
         if not record["approved_by"]:
             raise ValueError("approved_by must name the reviewer")
+        if project == "ens":
+            self.ens_approval_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with self.ens_approval_path.open("x", encoding="utf-8") as file:
+                    file.write(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+            except FileExistsError as error:
+                raise ValueError(
+                    "ENS definitions are already saved; review the existing approval",
+                ) from error
+            return record
         self.append(record)
         return record
 
@@ -244,7 +258,7 @@ def add_journey_routes(app: FastAPI, ghost: "Ghost", operator: Callable[..., Non
     @app.post("/api/journeys/generate", status_code=202, dependencies=[Depends(operator)])
     async def generate_journeys(project: Project = "app") -> Any:
         if project == "ens":
-            raise HTTPException(403, "ENS definitions are generated and approved offline only")
+            raise HTTPException(403, "ENS generation is offline only; review the prepared draft")
         if service.running():
             raise HTTPException(409, "Journey generation is already running")
         if service.view(project)["approved"]:
@@ -261,8 +275,6 @@ def add_journey_routes(app: FastAPI, ghost: "Ghost", operator: Callable[..., Non
 
     @app.post("/api/journeys/approve", dependencies=[Depends(operator)])
     async def approve_journeys(body: ApproveJourney, project: Project = "app") -> Any:
-        if project == "ens":
-            raise HTTPException(403, "ENS approval is offline only")
         if service.running() or service.view(project)["approved"]:
             raise HTTPException(409, "Generation is running or definitions are already approved")
         try:

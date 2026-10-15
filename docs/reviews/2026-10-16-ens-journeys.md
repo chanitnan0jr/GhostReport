@@ -35,9 +35,32 @@ original Workflow Map remain labelled there and are excluded as rule evidence.
 The API validates the committed draft before returning it and its code-only
 graph. It does not assign sessions, create counts, or mark the draft approved.
 Approval of this exact digest is still required before creating the approved
-fixture. Visitors cannot generate or approve ENS definitions on the website.
+fixture. Visitors cannot generate or approve ENS definitions. Following the
+owner's clarification that the missing Approve button should be available,
+authenticated operators can now approve the prepared draft on the website.
+ENS generation remains offline.
 
 ## Approve after review
+
+### Operator page
+
+1. Open `/report/?project=ens&operator=1#segments`, or use the draft's
+   "Review and approve this draft" link.
+2. Enter the configured `GHOST_OPERATOR_TOKEN`, unlock operator tools, and enter
+   the reviewer's name. Select **Approve reviewed definitions**.
+3. The server validates the exact digest and code refs and saves the approval
+   to `journeys.ens.approved.json` in its persistent database directory. It
+   survives a process restart, run switch, or Docker rebuild with the volume
+   retained. No LLM call is made, and the report and locked v1 are unchanged.
+4. Use **Download approved fixture**, save it as
+   `fixtures/partb/journeys.ens.json`, and commit it for deployment. The repository
+   fixture takes precedence over the server-local approval when present.
+
+Operators cannot overwrite an existing approval. Public views stay read-only.
+Merely unlocking the form does not authenticate an approval: the server checks
+the bearer token on the request.
+
+### Terminal alternative
 
 ```sh
 uv run python -m engine.journey_cli approve fixtures/partb/journeys.ens.draft.json \
@@ -46,5 +69,6 @@ uv run python -m engine.journey_cli approve fixtures/partb/journeys.ens.draft.js
 ```
 
 Commit the approved fixture and rebuild with GIT_SHA. The website then displays
-proposed journeys from code, read-only, with no behavioural counts or generation
-controls. Approval is not a claim that the proposed segmentation is observed.
+proposed journeys from code, read-only for visitors, with no behavioural counts
+or generation controls. Approval is not a claim that the proposed segmentation
+is observed.

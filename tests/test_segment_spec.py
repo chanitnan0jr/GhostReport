@@ -248,11 +248,47 @@ def test_ens_committed_draft_is_reviewable_without_approval_or_llm(
             assert "sessions" not in item and "by_source" not in item
         headers = {"Authorization": "Bearer test-operator"}
         assert client.post("/api/journeys/generate?project=ens", headers=headers).status_code == 403
-        assert client.post("/api/journeys/approve?project=ens", headers=headers, json={
+        assert client.post("/api/journeys/approve?project=ens", json={
             "digest": value["draft"]["digest"], "approved_by": "Reviewer",
-        }).status_code == 403
+        }).status_code == 401
         after = client.get("/api/report").json()
         assert before["current"] == after["current"] and before["v1"] == after["v1"]
+    assert calls == []
+
+
+def test_ens_operator_approval_persists_without_llm_or_report_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(journey_api, "ENS_FIXTURE", tmp_path / "not-approved.json")
+    calls: list[int] = []
+    headers = {"Authorization": "Bearer test-operator"}
+    path = "/api/journeys/approve?project=ens"
+    with TestClient(create_app(settings(tmp_path, calls))) as client:
+        before = client.get("/api/report").json()
+        view = client.get("/api/journeys/spec?project=ens").json()
+        body = {"digest": view["draft"]["digest"], "approved_by": "ENS reviewer"}
+        assert client.post(path, json=body).status_code == 401
+        assert client.post(path, headers={"Authorization": "Bearer wrong"},
+                           json=body).status_code == 401
+        assert client.post(path, headers=headers, json={**body,
+                           "digest": "0" * 64}).status_code == 409
+        assert client.post(path, headers=headers, json={**body,
+                           "approved_by": " "}).status_code == 409
+        response = client.post(path, headers=headers, json=body)
+        assert response.status_code == 200
+        approved = response.json()
+        assert approved["kind"] == "approved" and approved["approved_by"] == "ENS reviewer"
+        assert approved["approved_at"] and approved["digest"] == body["digest"]
+        assert client.post(path, headers=headers, json=body).status_code == 409
+        after = client.get("/api/report").json()
+        assert before["current"] == after["current"] and before["v1"] == after["v1"]
+    config = settings(tmp_path, calls)
+    config.run_id = "another-run"
+    with TestClient(create_app(config)) as client:
+        view = client.get("/api/journeys/spec?project=ens").json()
+        assert view["approved"] == approved
+        assert view["comparison"]["code_only"] and "total_sessions" not in view["comparison"]
+        assert client.post(path, headers=headers, json=body).status_code == 409
     assert calls == []
 
 
