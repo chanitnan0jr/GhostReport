@@ -1,0 +1,264 @@
+{
+  "project": "ens",
+  "kind": "draft",
+  "spec": {
+    "project": "ens",
+    "version": 1,
+    "columns": [
+      {
+        "state_id": "pricing_step_gate",
+        "events": []
+      },
+      {
+        "state_id": "commit_start_pending",
+        "events": [
+          "transaction:commit:send"
+        ]
+      },
+      {
+        "state_id": "commit_ready_wait",
+        "events": []
+      },
+      {
+        "state_id": "registration_ready_finish",
+        "events": [
+          "transaction:register:send"
+        ]
+      },
+      {
+        "state_id": "registration_terminal_stop",
+        "events": [
+          "transaction:register:complete"
+        ]
+      }
+    ],
+    "rules": [
+      {
+        "id": "rule_commit_outcome",
+        "label": "Commit flow outcome recorded",
+        "segment": "commit_outcome",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "transaction:commit:send"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "commit_sent",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              296,
+              303
+            ],
+            "quote": ".with('commitSent', () => {\n        sendEvent('transaction:commit:send', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+          },
+          {
+            "node_id": "commit_start_pending",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              386,
+              390
+            ],
+            "quote": "useEffect(() => {\n    if (!commitTx) {\n      makeCommitNameFlow()\n    }\n  }, [commitTx, makeCommitNameFlow])"
+          }
+        ],
+        "rationale": "Commit transaction reaching sent stage is recorded from the pending commit state."
+      },
+      {
+        "id": "rule_register_outcome",
+        "label": "Register completion recorded",
+        "segment": "registration_outcome",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "transaction:register:complete"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "register_complete",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              336,
+              343
+            ],
+            "quote": ".with('registrationComplete', () => {\n        sendEvent('transaction:register:complete', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: registerTx?.hash,"
+          },
+          {
+            "node_id": "registration_terminal_stop",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              392,
+              398
+            ],
+            "quote": "useEffect(() => {\n    if (registerTx?.stage === 'complete' || checkRegistered) {\n      stopCurrentFlow()\n      callback({ back: false })\n    }"
+          }
+        ],
+        "rationale": "Register completion is recorded and the flow stops."
+      },
+      {
+        "id": "rule_commit_failed",
+        "label": "Commit failure recorded",
+        "segment": "commit_failed",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "transaction:commit:fail"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "commit_failed",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              304,
+              311
+            ],
+            "quote": ".with('commitFailed', () => {\n        sendEvent('transaction:commit:fail', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+          }
+        ],
+        "rationale": "Commit transaction reaching failed stage is recorded."
+      },
+      {
+        "id": "rule_register_override",
+        "label": "Registration override recorded",
+        "segment": "registration_override",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "transaction:register:override"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "registration_override",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              248,
+              254
+            ],
+            "quote": "useEffect(() => {\n    if (canRegisterOverride) {\n      sendEvent('transaction:register:override', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: name,\n      })\n      if (getSelectedKey() === commitKey) stopCurrentFlow()"
+          }
+        ],
+        "rationale": "Registration override is recorded when the commit wait is bypassed."
+      },
+      {
+        "id": "rule_profile_submitted",
+        "label": "Profile submission recorded",
+        "segment": "profile_submitted",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "register:profile"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "profile_advanced",
+            "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+            "lines": [
+              168,
+              177
+            ],
+            "quote": "if (!back) {\n      sendEvent('register:profile', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: normalisedName,\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        profile_records: records,\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        resolver_address: resolverAddress,\n      })\n    }"
+          }
+        ],
+        "rationale": "Recorded profile event when moving forward from the profile step."
+      },
+      {
+        "id": "rule_info_submitted",
+        "label": "Info submission recorded",
+        "segment": "info_submitted",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "register:info"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "info_advanced",
+            "file": "src/components/pages/profile/[name]/registration/Registration.tsx",
+            "lines": [
+              187,
+              193
+            ],
+            "quote": "const infoCallback = ({ back }: BackObj) => {\n    if (!back) {\n      sendEvent('register:info', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: normalisedName,\n      })\n    }"
+          }
+        ],
+        "rationale": "Recorded info event when moving forward from the info step."
+      },
+      {
+        "id": "rule_no_match",
+        "label": "No rule matched",
+        "segment": "no_match",
+        "predicate": {
+          "op": "always",
+          "events": [],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "pricing_step_gate",
+            "file": "src/components/pages/profile/[name]/registration/steps/Pricing/Pricing.tsx",
+            "lines": [
+              184,
+              185
+            ],
+            "quote": "return match(props)\n    .with({ address: P.nullish }, () => <ConnectButton large />)"
+          }
+        ],
+        "rationale": "Fallback when no recorded event from the vocabulary matches."
+      }
+    ],
+    "segments": [
+      {
+        "id": "commit_outcome",
+        "label": "Commit flow outcome recorded"
+      },
+      {
+        "id": "registration_outcome",
+        "label": "Register completion recorded"
+      },
+      {
+        "id": "commit_failed",
+        "label": "Commit failure recorded"
+      },
+      {
+        "id": "registration_override",
+        "label": "Registration override recorded"
+      },
+      {
+        "id": "profile_submitted",
+        "label": "Profile submission recorded"
+      },
+      {
+        "id": "info_submitted",
+        "label": "Info submission recorded"
+      },
+      {
+        "id": "no_match",
+        "label": "No vocabulary event matched"
+      }
+    ]
+  },
+  "digest": "297a3e0208547b6237c5b867137778093561207db89f95a8f835883096d0c611",
+  "workflow_sha256": "6a3df6693de24a19ced12acdf422f1a8d54bb1159e4320a568c6fd06c0097d03",
+  "context_sha256": "3b8575c176202578e839b090155f9d0008ef9c27b3ae8a14b2b63a6dce2235a5",
+  "validation": [],
+  "created_at": "2026-10-15T21:05:12.859391+00:00"
+}

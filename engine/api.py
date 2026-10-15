@@ -387,6 +387,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     log.warning("seeded %d synthetic sessions (seed-*)", seeded)
 
     def shutdown() -> None:
+        journey_service = getattr(app.state, "journey_specs", None)
+        if journey_service is not None and journey_service.task is not None:
+            journey_service.task.cancel()
         state["store"].connection.close()
 
     hub: Any = None  # the sandbox hub, when this public run hosts sandboxes
@@ -680,6 +683,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         accept_response=accept_response, draft_path=draft_path, approved_path=approved_path,
         set_investigation=lambda value: state.__setitem__("investigation", value),
     )
+    from engine.journey_api import add_journey_routes
+
+    add_journey_routes(app, app.state.ghost, operator)
+
     if settings.mode == "sandbox":
         from engine.sandbox import add_sandbox_routes
 

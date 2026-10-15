@@ -319,6 +319,19 @@ def context(body: Mapping[str, Any]) -> dict[str, Any]:
         facts.append(_fact(fact_id, "limit", "run", label, f"{label}: {value}.", source,
                            data={"value": value, "ok": ok}))
 
+    # The report always names the unchanged template, never the comparison draft.
+    from engine.segment_spec import digest as spec_digest
+    from engine.segment_spec import template_spec
+
+    template_workflow = {"target": "app", "nodes": [
+        {"id": node["id"], "kind": "state", "order": i, **node["code_ref"]}
+        for i, node in enumerate(workflow.get("states", []))]}
+    if template_workflow["nodes"]:
+        template_digest = spec_digest(template_spec(template_workflow).model_dump(mode="json"))
+        facts.append(_fact("template_spec", "lock", "plan", "Template definitions",
+                           f"Report cohort definitions use template digest {template_digest}.",
+                           "/api/journeys/spec template", data={"digest": template_digest}))
+
     v1 = body.get("v1")
     facts.append(_fact(
         "lock_v1", "lock", "plan", "Hypothesis lock (v1)",
@@ -677,6 +690,11 @@ def template(value: Mapping[str, Any]) -> str:
     out += ["## Appendix", "", "### v1 digest", ""]
     out.append(f"`{lock['digest']}` [fact:lock_v1]" if lock["locked"]
                else "Not locked yet. [fact:lock_v1]")
+    if "template_spec" in facts:
+        out += ["", "### Template definitions", "",
+                f"`{facts['template_spec']['data']['digest']}` [fact:template_spec]",
+                "The report uses the original template. Generated definitions are a separate "
+                "comparison and do not change the locked hypotheses or these counts."]
     out += ["", "### Source references", ""]
     for f in outcomes:
         if f["refs"]:

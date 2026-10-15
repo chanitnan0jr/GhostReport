@@ -39,6 +39,7 @@ from engine.cohorts import build_cohorts
 from engine.context_builder import build_context
 from engine.guards import validate_workflow
 from engine.investigation import Investigation, load_investigation
+from engine.journey_api import ApproveJourney as JourneyApproval
 from engine.llm import LLMError, deepseek_completion
 from engine.models import Event, Verification
 from engine.probe import at_exit, resolve_exposure
@@ -71,10 +72,10 @@ BRANCHES: dict[str, dict[str, float]] = {
 }
 # What the hub forwards: public reads, and the owner's controls.
 READS = re.compile(
-    r"^(report|report/document|journeys|journeys/session/[^/]+|evidence|workflow"
+    r"^(report|report/document|journeys|journeys/spec|journeys/session/[^/]+|evidence|workflow"
     r"|seed-sessions/[^/]+|sessions/[^/]+|health|draft)$")
 CONTROLS = {"state": "GET", "reveal": "GET", "traffic": "POST", "investigate": "POST",
-            "lock": "POST"}
+            "lock": "POST", "journeys/generate": "POST", "journeys/approve": "POST"}
 DecisionPoint = Literal["DP1", "DP2"]
 Step = tuple[str, str, str | None, float]  # event, page, attempt key, seconds after previous
 
@@ -246,12 +247,12 @@ class Sandbox:
         """Sessions counted against the limit, including those removed by a reset."""
         return self.sessions_total() + int(self.meta.get("discarded_sessions", 0))
 
-    def truth(self) -> list[dict[str, Any]]:
+    def truth(self, *, paths: bool = False) -> list[dict[str, Any]]:
         path = self.root / "truth.jsonl"
         if not path.exists():
             return []
         return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
-                if line.strip()]
+                if line.strip() and (json.loads(line).get("kind") == "path") == paths]
 
     def _ghost(self) -> Ghost:
         assert self.ghost is not None
@@ -307,6 +308,8 @@ class Sandbox:
                     continue
                 sent += ghost.accept_event(raw)
             exits[ending] += 1
+            truth.append({"kind": "path", "session_id": session, "batch": batch,
+                          "events": [step[0] for step in steps]})
             if not locked or ending not in ("not_now", "back"):
                 continue
             point: DecisionPoint = "DP1" if ending == "not_now" else "DP2"
@@ -476,6 +479,10 @@ class Sandbox:
                             "global_runs_left": self.hub.runs_left(),
                             "min_sessions": MIN_SESSIONS},
             "draft": draft_view, "locked": locked_view,
+            "journeys": {"status": "running" if self.app.state.journey_specs.running()
+                         else "ready", "approved_digest":
+                         (self.app.state.journey_specs.latest("app", "approved") or {}).get(
+                             "digest")} if self.app else None,
         })
 
     def reveal(self) -> Any:
@@ -555,7 +562,9 @@ class Sandbox:
             })
         return jsonable_encoder({"available": True,
                                  "questions": sorted(questions,
-                                                     key=lambda q: q["decision_point"])})
+                                                     key=lambda q: q["decision_point"]),
+                                 "journeys": self.app.state.journey_specs.truth_comparison(
+                                     self.truth(paths=True)) if self.app else []})
 
 
 LIMITS = {"sessions_per_batch": PER_BATCH, "sessions_total": PER_SANDBOX,
@@ -872,6 +881,44 @@ def add_sandbox_routes(app: FastAPI, ghost: Ghost) -> None:
             sandbox.task = asyncio.create_task(sandbox.investigate(
                 {"funnel": current["funnel"], "cohorts": current["cohorts"]}))
         return {"status": "running"}
+
+    service = app.state.journey_specs
+
+    @app.post("/api/sandbox/journeys/generate", status_code=202, dependencies=[Depends(owner)])
+    async def generate_journeys() -> Any:
+        from engine.segment_spec import digest
+
+        async with sandbox.lock:
+            if sandbox.running():
+                raise HTTPException(409, "An AI generation is already running.")
+            if service.view("app")["approved"]:
+                raise HTTPException(409, "Journey definitions are already approved.")
+            if sandbox.sessions_total() < 1:
+                raise HTTPException(422, "Generate traffic first.")
+            context = service.context("app")
+            cached = next((r for r in reversed(service.records) if r["kind"] == "draft"
+                           and r["context_sha256"] == digest(context)
+                           and service.checked(r, context["workflow"])), None)
+            if cached:
+                service.append(cached)
+                return {"status": "ready", "cached": True}
+            if sandbox.meta["investigate"]["runs_used"] >= RUNS_PER_SANDBOX:
+                raise HTTPException(429, "This sandbox has used its AI runs.")
+            if not hub.reserve():
+                raise HTTPException(429, "The shared AI budget is used up.")
+            service.task = asyncio.create_task(service.run(context, sandbox))
+            sandbox.task = service.task
+        return {"status": "running"}
+
+    @app.post("/api/sandbox/journeys/approve", dependencies=[Depends(owner)])
+    async def approve_journeys(body: JourneyApproval) -> Any:
+        async with sandbox.lock:
+            if sandbox.running() or service.view("app")["approved"]:
+                raise HTTPException(409, "Generation is running or definitions are approved.")
+            try:
+                return service.approve("app", body)
+            except ValueError as error:
+                raise HTTPException(409, str(error)) from error
 
     @app.post("/api/sandbox/lock", dependencies=[Depends(owner)])
     async def lock(body: LockIn) -> Any:
