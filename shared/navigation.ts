@@ -12,6 +12,7 @@ export const siteNavigation = [
   { id: "segments", label: "Segments", href: "/report/#segments" },
   { id: "workflow", label: "Workflow Map", href: "/report/#workflow" },
   { id: "report", label: "Report", href: "/report/" },
+  { id: "sandbox", label: "Sandbox", href: "/sandbox/" },
   { id: "install", label: "Install", href: "/install/" },
 ] as const;
 
