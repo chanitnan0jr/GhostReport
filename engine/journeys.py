@@ -5,10 +5,11 @@ Each session's events, in `seq` order, are placed on fixed columns:
     Entry → Apply → Wallet gate → Started connecting → First result → Retry → Exit
           → Segment → Probe
 
-A session skips the columns it never reached, so its edge jumps ahead. The segment is
-the session's cohort from `build_cohorts`, the same rule the report uses, so every
-count here matches the report. Only counts leave this module, never session IDs, and
-each node and edge is split by source (seed / test / visitor).
+A session skips the columns it never reached, so its edge jumps ahead. Its segment is
+one of three groups of the report's cohorts (from `build_cohorts`, unchanged), so
+every count here matches the report: Browsers, Stopped at the wallet, Connected.
+Only counts leave this module, never session IDs, and each node and edge is split by
+source (seed / test / visitor).
 """
 
 from collections import Counter, defaultdict
@@ -38,20 +39,31 @@ NODES: dict[tuple[int, str], str] = {
     (6, "back"): "Back to projects",
     (6, "inactive"): "Went quiet (10 min)",
     (6, "open"): "Still on the page",
+    (7, "browsers"): "Browsers",
+    (7, "stalled_at_wallet"): "Stopped at the wallet",
     (7, "connected"): "Connected",
-    (7, "attempted_no_success"): "Tried, no success",
-    (7, "gate_event_no_attempt"): "Saw the gate, never tried",
-    (7, "no_gate_event"): "Never saw the gate",
     (8, "answered"): "Probe answered",
     (8, "skipped"): "Probe skipped",
     (8, "shown_no_response"): "Probe shown, no response",
 }
-SEGMENTS = {
-    "connected": "a wallet connection succeeded",
-    "attempted_no_success": "started connecting at least once; no success recorded",
-    "gate_event_no_attempt": "the wallet gate was recorded; connecting never started",
-    "no_gate_event": "no wallet gate was recorded",
+# Three behaviour segments, each a fixed group of the report's cohorts.
+SEGMENTS: dict[str, dict[str, Any]] = {
+    "browsers": {
+        "cohorts": ("no_gate_event",), "probe": "DP2",
+        "definition": "Viewed a project and left without the wallet gate being recorded.",
+    },
+    "stalled_at_wallet": {
+        "cohorts": ("gate_event_no_attempt", "attempted_no_success"), "probe": "DP1",
+        "definition": "Reached the wallet gate but no connection succeeded: chose Not now, "
+                      "or started connecting with no success recorded.",
+    },
+    "connected": {
+        "cohorts": ("connected",), "probe": None,
+        "definition": "A wallet connection succeeded, first time or after a retry.",
+    },
 }
+SEGMENT_OF = {cohort: key for key, spec in SEGMENTS.items() for cohort in spec["cohorts"]}
+TOP_PATHS = 3
 KIND = {0: "step", 1: "step", 2: "step", 3: "step", 4: "outcome", 5: "outcome", 6: "exit",
         7: "segment", 8: "probe"}
 
@@ -73,7 +85,7 @@ def path(session: SessionStats, names: Sequence[str], probe: str | None) -> list
         if len(states) > 1:
             steps.append(node_id(5, "retry_connected" if "connected" in states[1:]
                                  else "retry_no_success"))
-    steps += [node_id(6, session.exit_type), node_id(7, session.cohort)]
+    steps += [node_id(6, session.exit_type), node_id(7, SEGMENT_OF[session.cohort])]
     if probe:
         steps.append(node_id(8, probe))
     return steps
@@ -97,6 +109,8 @@ def journeys(
     node_counts: dict[str, Counter[Source]] = defaultdict(Counter)
     edge_counts: dict[tuple[str, str], Counter[Source]] = defaultdict(Counter)
     coverage: dict[str, Counter[str]] = defaultdict(Counter)
+    cohorts: dict[str, Counter[str]] = defaultdict(Counter)
+    paths: dict[str, Counter[tuple[str, ...]]] = defaultdict(Counter)
     total: Counter[Source] = Counter()
     for session in sessions:
         source = session_source(session.session_id)
@@ -108,7 +122,11 @@ def journeys(
             node_counts[step][source] += 1
         for a, b in zip(steps, steps[1:], strict=False):
             edge_counts[(a, b)][source] += 1
-        coverage[session.cohort][session.coverage] += 1
+        segment = SEGMENT_OF[session.cohort]
+        coverage[segment][session.coverage] += 1
+        cohorts[segment][session.cohort] += 1
+        # The flow up to the exit; the segment and probe columns are the same for all.
+        paths[segment][tuple(step for step in steps if not step.startswith(("c7:", "c8:")))] += 1
     order = {node_id(c, k): i for i, (c, k) in enumerate(NODES)}
     nodes = [{
         "id": node_id(column, key), "column": column, "row": order[node_id(column, key)],
@@ -120,13 +138,20 @@ def journeys(
         "source": a, "target": b, "count": sum(counts.values()), "by_source": _split(counts),
     } for (a, b), counts in sorted(edge_counts.items(),
                                    key=lambda item: (order[item[0][0]], order[item[0][1]]))]
+    label = {node_id(c, k): text for (c, k), text in NODES.items()}
     segments = [{
-        "id": node_id(7, cohort), "cohort": cohort, "label": NODES[(7, cohort)],
-        "definition": definition, "sessions": sum(node_counts[node_id(7, cohort)].values()),
-        "by_source": _split(node_counts[node_id(7, cohort)]),
-        "coverage": {"complete": coverage[cohort]["complete"],
-                     "unknown": coverage[cohort]["unknown"]},
-    } for cohort, definition in SEGMENTS.items()]
+        "id": node_id(7, key), "segment": key, "label": NODES[(7, key)],
+        "definition": spec["definition"], "cohorts": dict(cohorts[key]),
+        "probe": spec["probe"], "sessions": sum(node_counts[node_id(7, key)].values()),
+        "by_source": _split(node_counts[node_id(7, key)]),
+        "coverage": {"complete": coverage[key]["complete"],
+                     "unknown": coverage[key]["unknown"]},
+        # Most common flows inside the segment (ties broken by path, so stable).
+        "top_paths": [{"steps": [label[step] for step in steps], "sessions": count}
+                      for steps, count in sorted(paths[key].items(),
+                                                 key=lambda item: (-item[1], item[0]))
+                      [:TOP_PATHS]],
+    } for key, spec in SEGMENTS.items()]
     return {
         "direction": "LR",
         "columns": [{"index": i, "label": label} for i, label in enumerate(COLUMNS)],
@@ -135,8 +160,10 @@ def journeys(
         "notes": [
             "Rejecting the wallet is not instrumented, so a rejection shows as "
             "'No result recorded'.",
-            "Segments use the report's cohort rule; coverage 'unknown' sessions are "
-            "counted but cannot support absence claims.",
+            "Segments group the report's cohorts (Browsers = no_gate_event; Stopped at "
+            "the wallet = gate_event_no_attempt + attempted_no_success; Connected = "
+            "connected). Coverage 'unknown' sessions are counted but cannot support "
+            "absence claims.",
         ],
     }
 

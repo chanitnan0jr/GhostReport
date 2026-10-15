@@ -432,8 +432,17 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
         assert graph["direction"] == "LR" and graph["sessions"] == 20
         # Segments partition the sessions and agree with the report's cohorts.
         assert sum(s["sessions"] for s in graph["segments"]) == 20
-        assert {s["cohort"]: s["sessions"] for s in graph["segments"] if s["sessions"]} == {
-            row["cohort"]: row["sessions"] for row in report["cohorts"]}
+        cohorts = {row["cohort"]: row["sessions"] for row in report["cohorts"]}
+        segments = {s["segment"]: s for s in graph["segments"]}
+        assert [s["segment"] for s in graph["segments"]] == [
+            "browsers", "stalled_at_wallet", "connected"]
+        for segment in segments.values():
+            assert segment["sessions"] == sum(cohorts.get(c, 0) for c in segment["cohorts"])
+            assert sum(p["sessions"] for p in segment["top_paths"]) <= segment["sessions"]
+        assert segments["browsers"]["sessions"] == 8
+        assert segments["stalled_at_wallet"]["cohorts"] == {
+            "gate_event_no_attempt": 7, "attempted_no_success": 1}
+        assert segments["connected"]["top_paths"][0]["sessions"] == 3
         # Edges only go left to right, and flow is conserved at every inner node.
         for edge in graph["edges"]:
             assert nodes[edge["source"]]["column"] < nodes[edge["target"]]["column"]
@@ -445,4 +454,4 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
         assert "seed-" not in str(graph)  # counts only, never session IDs
         assert client.get("/api/journeys?source=visitor").json()["sessions"] == 0
         chart = client.get("/api/journeys?format=mermaid").text
-        assert chart.startswith("flowchart LR") and "c7_connected" in chart
+        assert chart.startswith("flowchart LR") and "c7_stalled_at_wallet" in chart
