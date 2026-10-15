@@ -167,8 +167,9 @@ export function HomePage() {
                   <span aria-hidden="true">→</span>
                 </strong>
                 <span>
-                  One config file, <code>track()</code>, and one optional
-                  question at the exit. Get started in minutes.
+                  Describe the workflow in one file, send events with{" "}
+                  <code>track()</code>, then ask one optional question at the
+                  exit.
                 </span>
               </span>
             </a>
