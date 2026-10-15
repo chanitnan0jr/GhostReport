@@ -198,6 +198,7 @@ export default function EnsSimulation({
                 <label>
                   Sessions per batch
                   <select
+                    aria-label="Sessions per batch"
                     value={n}
                     disabled={busy}
                     onChange={(e) => {
@@ -215,6 +216,7 @@ export default function EnsSimulation({
                 <label>
                   Simulated delivery and feedback
                   <select
+                    aria-label="Simulated delivery and feedback"
                     value={feedback}
                     disabled={busy}
                     onChange={(e) => {
@@ -234,6 +236,7 @@ export default function EnsSimulation({
                 <label>
                   Answer preset
                   <select
+                    aria-label="Answer preset"
                     value={preset}
                     disabled={busy}
                     onChange={(e) => {

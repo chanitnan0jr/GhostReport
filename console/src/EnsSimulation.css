@@ -6,6 +6,7 @@
 }
 .ens-simulation .panel {
   padding: 24px;
+  margin: 0;
 }
 .ens-simulation h1 {
   font-size: 30px;

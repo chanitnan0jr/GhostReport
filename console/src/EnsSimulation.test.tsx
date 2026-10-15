@@ -50,10 +50,15 @@ it("sends the chosen feedback mode and preset with the simulation owner token", 
   vi.stubGlobal("fetch", fetch);
   render(<EnsSimulation />);
   await screen.findByText(sample.population.text);
-  fireEvent.change(screen.getByLabelText("Simulated delivery and feedback"), {
-    target: { value: "answered" },
-  });
-  fireEvent.change(screen.getByLabelText("Answer preset"), {
+  fireEvent.change(
+    screen.getByRole("combobox", {
+      name: "Simulated delivery and feedback",
+    }),
+    {
+      target: { value: "answered" },
+    },
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "Answer preset" }), {
     target: { value: "permission" },
   });
   fireEvent.click(
