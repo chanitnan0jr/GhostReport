@@ -54,8 +54,13 @@ const definitions = [
 export function mockJourneys(
   report: Report,
   source?: JourneySource,
+  exclude?: JourneySource,
 ): JourneyGraph {
-  const sessions = source && source !== "seed" ? [] : report.current.sessions;
+  // Every mock session is a seed session.
+  const sessions =
+    (source && source !== "seed") || exclude === "seed"
+      ? []
+      : report.current.sessions;
   const nodes = new Map<string, JourneyNode>();
   const edges = new Map<string, JourneyGraph["edges"][number]>();
   const pathCounts = new Map<string, Map<string, number>>();
@@ -182,6 +187,7 @@ export function mockJourneys(
     sessions: sessions.length,
     by_source: sourceCounts(sessions.length),
     only: source ?? null,
+    exclude: exclude ?? null,
     notes: [
       "Mock journey steps are reconstructed from the shared session fixture for UI preview. Cohort and source counts match the mock report.",
       "The fixture does not include per-session probe exposures, so this preview adds no probe branches.",

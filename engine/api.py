@@ -623,6 +623,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/journeys", response_model=None)
     async def journey_graph(
         source: Literal["seed", "test", "visitor"] | None = None,
+        exclude: Literal["seed", "test", "visitor"] | None = None,
         format: Literal["json", "mermaid"] = "json",  # noqa: A002 - query parameter name
     ) -> Any:
         """Sessions → segments as a left-to-right flowchart; counts only, no session IDs."""
@@ -630,7 +631,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         sessions = build_cohorts(events, settings.clock(),
                                  build_verified=store().run.build_verified)
         graph = journeys(events, sessions, records().exposures(), records().responses(),
-                         only=source)
+                         only=source, exclude=exclude)
         if format == "mermaid":
             return PlainTextResponse(mermaid(graph))
         return graph

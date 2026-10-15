@@ -55,6 +55,7 @@ export interface JourneyGraph {
   sessions: number;
   by_source: SourceCounts;
   only: JourneySource | null;
+  exclude?: JourneySource | null;
   notes: string[];
 }
 
@@ -226,19 +227,34 @@ function validCohorts(rows: JourneyCohort[], total: number): boolean {
   );
 }
 
+// A population: every session, one source only, or every source but one.
+export interface JourneyPopulation {
+  only?: JourneySource;
+  exclude?: JourneySource;
+}
+export function samePopulation(graph: JourneyGraph, p: JourneyPopulation) {
+  return (
+    graph.only === (p.only ?? null) &&
+    (graph.exclude ?? null) === (p.exclude ?? null)
+  );
+}
+
 export async function fetchJourneys(
-  source: JourneySource | undefined,
+  population: JourneyPopulation,
   signal: AbortSignal,
 ): Promise<JourneyGraph> {
+  const query = new URLSearchParams();
+  if (population.only) query.set("source", population.only);
+  if (population.exclude) query.set("exclude", population.exclude);
   const response = await fetch(
-    apiUrl(`/api/journeys${source ? `?source=${source}` : ""}`),
+    apiUrl(`/api/journeys${query.size ? `?${query}` : ""}`),
     { signal },
   );
   if (!response.ok)
     throw new Error(`Journey data unavailable (${response.status})`);
   const value: JourneyGraph = await response.json();
   validateJourneys(value);
-  if (value.only !== (source ?? null))
+  if (!samePopulation(value, population))
     throw new Error("Journey source does not match the requested population");
   return value;
 }

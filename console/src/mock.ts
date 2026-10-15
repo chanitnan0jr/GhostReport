@@ -79,6 +79,8 @@ export function installMockBackend() {
           state,
           (url.searchParams.get("source") ?? undefined) as
             JourneySource | undefined,
+          (url.searchParams.get("exclude") ?? undefined) as
+            JourneySource | undefined,
         ),
       );
     if (url.pathname === "/api/workflow")

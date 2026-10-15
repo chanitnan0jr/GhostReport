@@ -441,6 +441,11 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
             assert segment["sessions"] == sum(cohorts.get(c, 0) for c in segment["cohorts"])
             assert sum(p["sessions"] for p in segment["top_paths"]) <= segment["sessions"]
         assert segments["browsers"]["sessions"] == 8
+        assert segments["browsers"]["label"] == "Left before the wallet gate"
+        # Leaving out a source keeps the rest; all 20 here are seed.
+        assert client.get("/api/journeys?exclude=test").json()["sessions"] == 20
+        no_seed = client.get("/api/journeys?exclude=seed").json()
+        assert no_seed["sessions"] == 0 and no_seed["exclude"] == "seed"
         assert segments["stalled_at_wallet"]["cohorts"] == {
             "gate_event_no_attempt": 7, "attempted_no_success": 1}
         assert segments["connected"]["top_paths"][0]["sessions"] == 3

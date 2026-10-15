@@ -119,7 +119,7 @@ def _split(counter: Counter[Source]) -> dict[Source, int]:
 def journeys(
     events: Sequence[Event], sessions: Sequence[SessionStats],
     exposures: Sequence[Exposure] = (), responses: Sequence[ProbeResponse] = (), *,
-    only: Source | None = None,
+    only: Source | None = None, exclude: Source | None = None,
 ) -> dict[str, Any]:
     names: dict[str, list[str]] = defaultdict(list)
     for event in sorted(events, key=lambda e: (e.session_id, e.seq)):
@@ -142,7 +142,7 @@ def journeys(
     total: Counter[Source] = Counter()
     for session in sessions:
         source = session_source(session.session_id)
-        if only is not None and source != only:
+        if (only is not None and source != only) or source == exclude:
             continue
         total[source] += 1
         steps = path(session, names[session.session_id], probes.get(session.session_id))
@@ -203,6 +203,7 @@ def journeys(
         "columns": [{"index": i, "label": label} for i, label in enumerate(COLUMNS)],
         "nodes": nodes, "edges": edges, "segments": segments, "cohorts": cohort_rows,
         "sessions": sum(total.values()), "by_source": _split(total), "only": only,
+        "exclude": exclude,
         "notes": [
             "Rejecting the wallet is not instrumented, so a rejection shows as "
             "'No result recorded'.",

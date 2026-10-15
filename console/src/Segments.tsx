@@ -4,19 +4,19 @@ import { CohortCards } from "./CohortCards";
 import { SegmentSessions } from "./SegmentSessions";
 import {
   sessionPopulation,
+  type PopulationFilter,
   segmentSnapshotIssue,
   sourceLabel,
-  sourceOf,
 } from "./segmentView";
 import { SourceIcon } from "./sourceIcons";
 import { safeText, sessions, time } from "./format";
 import { useJudgeSession } from "./useJudgeSession";
 import { useSessionJourney } from "./useSessionJourney";
-import type { Cohort, Report, SessionSource } from "./types";
+import type { Cohort, Report } from "./types";
 import "./Segments.css";
 
 export function Segments({ report }: { report: Report | null }) {
-  const [source, setSource] = useState<SessionSource | undefined>();
+  const [choice, setChoice] = useState<PopulationFilter | null>(null);
   const [selected, setSelected] = useState<Cohort | null>(null);
   const [highlightOwn, setHighlightOwn] = useState(true);
   const sid = useJudgeSession();
@@ -39,7 +39,12 @@ export function Segments({ report }: { report: Report | null }) {
       </section>
     );
   const everyone = sessionPopulation(report);
-  const population = sessionPopulation(report, source);
+  const count = (value: PopulationFilter) =>
+    sessionPopulation(report, value).length;
+  // Automated test sessions are left out by default; "All" adds them back.
+  const tests = count("test");
+  const filter = choice ?? (tests > 0 ? "no_test" : "all");
+  const population = sessionPopulation(report, filter);
   const personal = own?.value
     ? population.find((s) => s.session_id === sid)
     : undefined;
@@ -75,7 +80,10 @@ export function Segments({ report }: { report: Report | null }) {
           >
             {(
               [
-                ["All", undefined],
+                ...(tests > 0
+                  ? ([["Seed + visitors", "no_test"]] as const)
+                  : []),
+                ["All", "all"],
                 ["Visitors", "visitor"],
                 ["Seed", "seed"],
                 ["Automated tests", "test"],
@@ -84,18 +92,21 @@ export function Segments({ report }: { report: Report | null }) {
               <button
                 type="button"
                 key={label}
-                title={value ? sourceLabel[value] : "All recorded sources"}
-                aria-pressed={source === value}
-                onClick={() => setSource(value)}
+                title={
+                  value === "all"
+                    ? "All recorded sources"
+                    : value === "no_test"
+                      ? "All sources except automated tests"
+                      : sourceLabel[value]
+                }
+                aria-pressed={filter === value}
+                onClick={() => setChoice(value)}
               >
-                {value && <SourceIcon source={value} />}
+                {value !== "all" && value !== "no_test" && (
+                  <SourceIcon source={value} />
+                )}
                 {label}
-                <span>
-                  {value
-                    ? everyone.filter((s) => sourceOf(report, s) === value)
-                        .length
-                    : everyone.length}
-                </span>
+                <span>{value === "all" ? everyone.length : count(value)}</span>
               </button>
             ))}
           </div>
@@ -162,7 +173,7 @@ export function Segments({ report }: { report: Report | null }) {
       <CohortCards
         report={report}
         population={population}
-        source={source}
+        filter={filter}
         selected={focus}
         onSelect={selectCohort}
       />

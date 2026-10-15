@@ -53,10 +53,24 @@ export function sourceOf(
     report.current.session_sources?.[session.session_id] ?? session.source;
   return value && sourceOrder.includes(value) ? value : null;
 }
-export function sessionPopulation(report: Report, source?: SessionSource) {
-  return report.current.sessions.filter(
-    (session) => !source || sourceOf(report, session) === source,
-  );
+// The population filter: every session, one source, or everything but automated tests.
+export type PopulationFilter = "all" | "no_test" | SessionSource;
+export function populationQuery(filter: PopulationFilter) {
+  return filter === "all"
+    ? {}
+    : filter === "no_test"
+      ? { exclude: "test" as const }
+      : { only: filter };
+}
+export function sessionPopulation(
+  report: Report,
+  filter: PopulationFilter = "all",
+) {
+  const { only, exclude } = populationQuery(filter);
+  return report.current.sessions.filter((session) => {
+    const source = sourceOf(report, session);
+    return (!only || source === only) && (!exclude || source !== exclude);
+  });
 }
 
 export function segmentSnapshotIssue(report: Report): string | null {

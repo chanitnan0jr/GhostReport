@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
-import type { Cohort, Report, Session, SessionSource } from "./types";
+import type { Cohort, Report, Session } from "./types";
 import { safeText, sessions } from "./format";
-import { fetchJourneys, type JourneyGraph, type JourneyStep } from "./journeys";
-import { cohortInfo, cohortOrder, sourceLabel, sourceOf } from "./segmentView";
+import {
+  fetchJourneys,
+  samePopulation,
+  type JourneyGraph,
+  type JourneyStep,
+} from "./journeys";
+import {
+  cohortInfo,
+  cohortOrder,
+  populationQuery,
+  sourceLabel,
+  sourceOf,
+  type PopulationFilter,
+} from "./segmentView";
 import { SourceIcon } from "./sourceIcons";
 import "./CohortCards.css";
 
@@ -120,7 +132,7 @@ function Step({ step }: { step: JourneyStep }) {
 
 // /api/journeys for the same population: recorded event paths and question
 // outcomes per cohort. Refreshed on its own clock, like the full journey chart.
-function useJourneyCohorts(source?: SessionSource) {
+function useJourneyCohorts(filter: PopulationFilter) {
   const [graph, setGraph] = useState<JourneyGraph | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -128,7 +140,7 @@ function useJourneyCohorts(source?: SessionSource) {
     async function refresh() {
       try {
         const value = await fetchJourneys(
-          source,
+          populationQuery(filter),
           AbortSignal.any([controller.signal, AbortSignal.timeout(8000)]),
         );
         if (!controller.signal.aborted) {
@@ -148,8 +160,9 @@ function useJourneyCohorts(source?: SessionSource) {
       controller.abort();
       clearInterval(timer);
     };
-  }, [source]);
-  const current = graph && graph.only === (source ?? null) ? graph : null;
+  }, [filter]);
+  const current =
+    graph && samePopulation(graph, populationQuery(filter)) ? graph : null;
   return { rows: current?.cohorts, loaded: Boolean(current), error };
 }
 
@@ -158,16 +171,16 @@ export function CohortCards({
   population,
   selected,
   onSelect,
-  source,
+  filter,
 }: {
   report: Report;
   population: Session[];
   selected: Cohort | null;
   onSelect: (cohort: Cohort | null) => void;
-  source?: SessionSource;
+  filter: PopulationFilter;
 }) {
   const [open, setOpen] = useState<Set<Cohort>>(() => new Set());
-  const journeys = useJourneyCohorts(source);
+  const journeys = useJourneyCohorts(filter);
   // The investigation's user-reject outcome, when its event call was not found.
   const reject = report.workflow.outcomes.find(
     (outcome) =>
