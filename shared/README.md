@@ -14,10 +14,11 @@ bundles it under each frontend's base path so the header works independently
 in development. Home references that same shared asset to avoid downloading a
 second copy of the background on its first load.
 
-The main navigation and website switch share their height, surface and spacing.
-The switch uses equal-width options with a blue selected state; inactive text
-uses a darker slate for contrast. Hover, pressed and keyboard-focus states keep
-layout bounds stable. Color/shadow transitions respect reduced-motion preferences.
+`site-switch.css` styles the website switch independently: equal-width options,
+a light recessed track and a raised white selection with blue text. The real
+ghost mark and an inline DAO cube replace the status dots. Inactive text uses a
+darker slate for contrast. Hover, pressed and keyboard-focus states keep layout
+bounds stable. Color/shadow transitions respect reduced-motion preferences.
 
 All frontend UI uses `--gr-font`, the DAO Mock font stack:
 `"DM Sans", "Segoe UI", Arial, sans-serif`. Headings use the same family with

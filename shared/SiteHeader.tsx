@@ -8,6 +8,7 @@ import {
   siteNavigation,
 } from "./navigation";
 import "./header.css";
+import "./site-switch.css";
 
 function subscribe(onChange: () => void) {
   window.addEventListener("hashchange", onChange);
@@ -70,6 +71,30 @@ export function SiteHeader({
                 href={item.href}
                 aria-current={destination === item.id ? "true" : undefined}
               >
+                {item.id === "ghostreport" ? (
+                  <img
+                    src={siteBrand.logo}
+                    width="16"
+                    height="18"
+                    alt=""
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+                    <path d="M12 12v9M4 7.5 12 12l8-4.5M8 5.25l8 4.5" />
+                  </svg>
+                )}
                 {item.label}
               </a>
             ))}
