@@ -6,8 +6,10 @@ brand artwork and the GitHub URL. `header.css` owns the shared header styling: a
 wordmark with the supplied ghost logo, centered navigation and an active underline.
 
 The header derives its active menu from the current URL and subscribes to hash
-and browser history changes. `/try/` and all hash routes under `/app/` select
-Try the App. Report selects Segments for `#segments`, Workflow Map for
+and browser history changes. A pill switch beside GitHub selects GhostReport or
+DAO Mock. DAO Mock links to `/try/` for role assignment and remains active on
+`/try/` and `/app/`; other routes select GhostReport. The main menu no longer
+contains Try the App. Report selects Segments for `#segments`, Workflow Map for
 `#workflow` or `#fact-*`, and Report for other report sections. Legacy `/seed/`
 belongs to Home. ENS and About have no matching top-level menu item.
 

@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from "react";
 import {
   activeNavigation,
+  activeSite,
   navigationHref,
   siteBrand,
+  siteDestinations,
   siteNavigation,
 } from "./navigation";
 import "./header.css";
@@ -29,6 +31,7 @@ export function SiteHeader({
   );
   const current = new URL(location);
   const active = activeNavigation(current);
+  const destination = activeSite(current);
   return (
     <div className={`gr-site-header-surface ${surfaceClassName}`.trim()}>
       <header className="gr-header gr-shared-header">
@@ -54,25 +57,38 @@ export function SiteHeader({
             </a>
           ))}
         </nav>
-        <a
-          className="gr-github"
-          href={siteBrand.repository}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        <div className="gr-header-actions">
+          <nav className="gr-site-switch" aria-label="Website switch">
+            {siteDestinations.map((item) => (
+              <a
+                key={item.id}
+                href={item.href}
+                aria-current={destination === item.id ? "true" : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <a
+            className="gr-github"
+            href={siteBrand.repository}
+            target="_blank"
+            rel="noreferrer"
           >
-            <path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6.2 0C6.6 2.8 5.6 3.1 5.6 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.2 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />
-          </svg>
-          GitHub ↗
-        </a>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6.2 0C6.6 2.8 5.6 3.1 5.6 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.2 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />
+            </svg>
+            GitHub ↗
+          </a>
+        </div>
       </header>
     </div>
   );

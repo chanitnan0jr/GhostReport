@@ -9,12 +9,20 @@ export const siteBrand = {
 
 export const siteNavigation = [
   { id: "home", label: "Home", href: "/" },
-  { id: "try", label: "Try the App", href: "/try/" },
   { id: "segments", label: "Segments", href: "/report/#segments" },
   { id: "workflow", label: "Workflow Map", href: "/report/#workflow" },
   { id: "report", label: "Report", href: "/report/" },
   { id: "install", label: "Install", href: "/install/" },
 ] as const;
+
+export const siteDestinations = [
+  { id: "ghostreport", label: "GhostReport", href: "/" },
+  { id: "dao", label: "DAO Mock", href: "/try/" },
+] as const;
+
+export function activeSite(url: URL): string {
+  return /^\/(?:try|app)(?:\/|$)/.test(url.pathname) ? "dao" : "ghostreport";
+}
 
 export function activeNavigation(url: URL): string | null {
   const path = url.pathname.replace(/\/+$/, "") || "/";
@@ -24,7 +32,6 @@ export function activeNavigation(url: URL): string | null {
       return "workflow";
     return "report";
   }
-  if (path === "/try" || path === "/app") return "try";
   if (path === "/" || path === "/seed") return "home";
   return (
     siteNavigation.find((item) => item.href.replace(/\/+$/, "") === path)?.id ??
