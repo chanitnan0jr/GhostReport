@@ -3,7 +3,7 @@
   "kind": "draft",
   "spec": {
     "project": "ens",
-    "version": 1,
+    "version": 2,
     "columns": [
       {
         "state_id": "pricing_step_gate",
@@ -34,42 +34,8 @@
     ],
     "rules": [
       {
-        "id": "rule_commit_outcome",
-        "label": "Commit flow outcome recorded",
-        "segment": "commit_outcome",
-        "predicate": {
-          "op": "has",
-          "events": [
-            "transaction:commit:send"
-          ],
-          "outcome": null,
-          "children": []
-        },
-        "evidence": [
-          {
-            "node_id": "commit_sent",
-            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
-            "lines": [
-              296,
-              303
-            ],
-            "quote": ".with('commitSent', () => {\n        sendEvent('transaction:commit:send', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
-          },
-          {
-            "node_id": "commit_start_pending",
-            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
-            "lines": [
-              386,
-              390
-            ],
-            "quote": "useEffect(() => {\n    if (!commitTx) {\n      makeCommitNameFlow()\n    }\n  }, [commitTx, makeCommitNameFlow])"
-          }
-        ],
-        "rationale": "Commit transaction reaching sent stage is recorded from the pending commit state."
-      },
-      {
         "id": "rule_register_outcome",
-        "label": "Register completion recorded",
+        "label": "Registration completion recorded",
         "segment": "registration_outcome",
         "predicate": {
           "op": "has",
@@ -99,7 +65,32 @@
             "quote": "useEffect(() => {\n    if (registerTx?.stage === 'complete' || checkRegistered) {\n      stopCurrentFlow()\n      callback({ back: false })\n    }"
           }
         ],
-        "rationale": "Register completion is recorded and the flow stops."
+        "rationale": "Matches a recorded registration completion event."
+      },
+      {
+        "id": "rule_register_override",
+        "label": "Registration override recorded",
+        "segment": "registration_override",
+        "predicate": {
+          "op": "has",
+          "events": [
+            "transaction:register:override"
+          ],
+          "outcome": null,
+          "children": []
+        },
+        "evidence": [
+          {
+            "node_id": "registration_override",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              248,
+              254
+            ],
+            "quote": "useEffect(() => {\n    if (canRegisterOverride) {\n      sendEvent('transaction:register:override', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: name,\n      })\n      if (getSelectedKey() === commitKey) stopCurrentFlow()"
+          }
+        ],
+        "rationale": "Registration override is recorded when the commit wait is bypassed."
       },
       {
         "id": "rule_commit_failed",
@@ -127,29 +118,38 @@
         "rationale": "Commit transaction reaching failed stage is recorded."
       },
       {
-        "id": "rule_register_override",
-        "label": "Registration override recorded",
-        "segment": "registration_override",
+        "id": "rule_commit_outcome",
+        "label": "Commit send recorded",
+        "segment": "commit_outcome",
         "predicate": {
           "op": "has",
           "events": [
-            "transaction:register:override"
+            "transaction:commit:send"
           ],
           "outcome": null,
           "children": []
         },
         "evidence": [
           {
-            "node_id": "registration_override",
+            "node_id": "commit_sent",
             "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
             "lines": [
-              248,
-              254
+              296,
+              303
             ],
-            "quote": "useEffect(() => {\n    if (canRegisterOverride) {\n      sendEvent('transaction:register:override', {\n        // eslint-disable-next-line @typescript-eslint/naming-convention\n        ens_name: name,\n      })\n      if (getSelectedKey() === commitKey) stopCurrentFlow()"
+            "quote": ".with('commitSent', () => {\n        sendEvent('transaction:commit:send', {\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          ens_name: name,\n          // eslint-disable-next-line @typescript-eslint/naming-convention\n          transaction_hash: commitTx?.hash,"
+          },
+          {
+            "node_id": "commit_start_pending",
+            "file": "src/components/pages/profile/[name]/registration/steps/Transactions.tsx",
+            "lines": [
+              386,
+              390
+            ],
+            "quote": "useEffect(() => {\n    if (!commitTx) {\n      makeCommitNameFlow()\n    }\n  }, [commitTx, makeCommitNameFlow])"
           }
         ],
-        "rationale": "Registration override is recorded when the commit wait is bypassed."
+        "rationale": "Matches a recorded commit send event."
       },
       {
         "id": "rule_profile_submitted",
@@ -227,20 +227,20 @@
     ],
     "segments": [
       {
-        "id": "commit_outcome",
-        "label": "Commit flow outcome recorded"
+        "id": "registration_outcome",
+        "label": "Registration completion recorded"
       },
       {
-        "id": "registration_outcome",
-        "label": "Register completion recorded"
+        "id": "registration_override",
+        "label": "Registration override recorded"
       },
       {
         "id": "commit_failed",
         "label": "Commit failure recorded"
       },
       {
-        "id": "registration_override",
-        "label": "Registration override recorded"
+        "id": "commit_outcome",
+        "label": "Commit send recorded"
       },
       {
         "id": "profile_submitted",
@@ -252,13 +252,19 @@
       },
       {
         "id": "no_match",
-        "label": "No vocabulary event matched"
+        "label": "No rule matched"
       }
     ]
   },
-  "digest": "297a3e0208547b6237c5b867137778093561207db89f95a8f835883096d0c611",
+  "digest": "596704bcf58ce8a5b4821198506633960101777ad730f75e1fee453c969a7f16",
   "workflow_sha256": "6a3df6693de24a19ced12acdf422f1a8d54bb1159e4320a568c6fd06c0097d03",
   "context_sha256": "3b8575c176202578e839b090155f9d0008ef9c27b3ae8a14b2b63a6dce2235a5",
   "validation": [],
-  "created_at": "2026-10-15T21:05:12.859391+00:00"
+  "created_at": "2026-10-15T21:05:12.859391+00:00",
+  "revised_from": "297a3e0208547b6237c5b867137778093561207db89f95a8f835883096d0c611",
+  "revision_notes": [
+    "Editorial correction to the LLM draft: registration completion precedes commit-send under first-match ordering.",
+    "Commit send is labelled as a send, not as a transaction outcome.",
+    "No approval has been recorded."
+  ]
 }

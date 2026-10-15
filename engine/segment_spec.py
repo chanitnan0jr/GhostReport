@@ -251,7 +251,11 @@ def comparison(spec: SegmentSpec, workflow: dict[str, Any], events: Sequence[Eve
                               "segments": [], "nodes": [], "edges": []}
     if code_only:
         result["segments"] = [s.model_dump() for s in spec.segments]
-        result["nodes"] = [{"id": c["id"], "column": i, "label": c["label"]}
+        result["nodes"] = [{"id": c["id"], "column": i,
+                            "label": c["id"] if nodes[c["id"]].get("ref_check") == "wrong"
+                            else c["label"],
+                            "ref_check": nodes[c["id"]].get("ref_check"),
+                            "ref_note": nodes[c["id"]].get("ref_note")}
                            for i, c in enumerate(columns)]
         result["nodes"] += [
             {"id": f"segment:{s.id}", "column": len(columns), "label": s.label}

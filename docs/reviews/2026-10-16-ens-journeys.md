@@ -1,48 +1,46 @@
-# ENS journey definitions: operator review required
+# ENS journeys: corrected draft awaiting owner approval
 
-Validated LLM draft, not an approved or observed segmentation. The public site
-loads only `journeys.ens.json` with reviewer, approval time and matching spec and
-Workflow Map digests. It does not serve this draft. There are no ENS sessions.
+Draft: `fixtures/partb/journeys.ens.draft.json`, version 2.
+Digest: `596704bcf58ce8a5b4821198506633960101777ad730f75e1fee453c969a7f16`.
+Source: the existing LLM draft with explicit editorial corrections recorded in
+`revision_notes`. No human approval has been recorded and it is not published.
 
-- Repo: ensdomains/ens-app-v3 (MIT) at `3c10925fa042568d4affd6897d34e42159abd7a3`.
-- Draft: `fixtures/partb/journeys.ens.draft.json`.
-- Digest: `297a3e0208547b6237c5b867137778093561207db89f95a8f835883096d0c611`.
-- Vocabulary: literal analytics calls in checked Workflow Map quotes. This does
-  not claim to recover every analytics call in the original repository.
-- Checks: schema, vocabulary, exact engine-resolved source refs, manual wrong-ref
-  exclusion, wording, state order, catch-all and rule reachability.
+## Corrections
 
-## Review definitions
+- Registration completion precedes commit-send, so an earlier send does not
+  override a later completion when both are present.
+- "Commit flow outcome recorded" is renamed "Commit send recorded" to match its
+  actual event. Code refs and the pinned ENS workflow are unchanged.
+- Rules are first-match groups of recorded events, not latest transaction status
+  or inferred intent. No actual ENS sessions or counts exist.
 
-| Rule | Predicate | Evidence IDs |
+| Priority | Rule | Event |
 | --- | --- | --- |
-| Commit flow outcome recorded | `has(transaction:commit:send)` | `commit_sent`, `commit_start_pending` |
-| Register completion recorded | `has(transaction:register:complete)` | `register_complete`, `registration_terminal_stop` |
-| Commit failure recorded | `has(transaction:commit:fail)` | `commit_failed` |
-| Registration override recorded | `has(transaction:register:override)` | `registration_override` |
-| Profile submission recorded | `has(register:profile)` | `profile_advanced` |
-| Info submission recorded | `has(register:info)` | `info_advanced` |
-| No rule matched | `always (catch-all)` | `pricing_step_gate` |
+| 1 | Registration completion recorded | `transaction:register:complete` |
+| 2 | Registration override recorded | `transaction:register:override` |
+| 3 | Commit failure recorded | `transaction:commit:fail` |
+| 4 | Commit send recorded | `transaction:commit:send` |
+| 5 | Profile submission recorded | `register:profile` |
+| 6 | Info submission recorded | `register:info` |
+| 7 | No rule matched | `catch-all` |
 
-## Review considerations
+## Validation
 
-Rules are first-match. A hypothetical path with both commit-send and
-register-complete enters the first group. Its label says "Commit flow outcome
-recorded" while its predicate records a send. Review that ordering and wording.
-Validation establishes references and rule validity, not the best segmentation.
-The source map still contains its known wrong state reference with a review
-badge, but this draft never cites that state as rule evidence.
+The corrected draft passes schema, vocabulary, exact code-reference, wording,
+state-order, catch-all and reachability checks. The known wrong references in the
+original Workflow Map remain labelled there and are excluded as rule evidence.
 
-## Approval after reviewing the full draft
+The public site currently shows no ENS definitions because the handoff requires
+operator approval of this exact digest before creating the published fixture.
 
-Use your reviewer name; no approval was performed automatically:
+## Approve after review
 
 ```sh
 uv run python -m engine.journey_cli approve fixtures/partb/journeys.ens.draft.json \
-  --digest 297a3e0208547b6237c5b867137778093561207db89f95a8f835883096d0c611 \
+  --digest 596704bcf58ce8a5b4821198506633960101777ad730f75e1fee453c969a7f16 \
   --approved-by '<reviewer name>' --out fixtures/partb/journeys.ens.json
 ```
 
-Then review and commit the approved fixture and rebuild. The CLI refuses stale
-references, digest mismatches and overwriting an existing output. ENS generation
-and approval are never exposed as website controls.
+Commit the approved fixture and rebuild with GIT_SHA. The website then displays
+proposed journeys from code, read-only, with no behavioural counts or generation
+controls. Approval is not a claim that the proposed segmentation is observed.
