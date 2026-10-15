@@ -1,0 +1,11 @@
+.console-shell :is(h1, h2, h3, h4, h5, h6, .brief-text) {
+  font-family: var(--gr-font);
+}
+
+.console-shell h1 {
+  font-weight: 500;
+}
+
+.console-shell :is(h2, h3) {
+  font-weight: 600;
+}
