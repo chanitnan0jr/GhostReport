@@ -4,7 +4,8 @@
 app and the report console. `navigation.ts` owns menu order, labels, links,
 brand artwork and the GitHub URL. `header.css` owns the shared header styling:
 a full-width glass surface, the supplied ghost logo and a sans-serif wordmark,
-soft mountain artwork, a pale red sun, pill navigation with an active blue dot,
+soft mountain artwork, a pale red sun, grouped pill navigation with a white
+selected surface and a short blue indicator,
 and the GhostReport / DAO Mock switch beside GitHub. The header is 100% wide,
 has no maximum width or horizontal gutter, and remains sticky in the console.
 
@@ -12,6 +13,11 @@ has no maximum width or horizontal gutter, and remains sticky in the console.
 bundles it under each frontend's base path so the header works independently
 in development. Home references that same shared asset to avoid downloading a
 second copy of the background on its first load.
+
+The main navigation and website switch share their height, surface and spacing.
+The switch uses equal-width options with a blue selected state; inactive text
+uses a darker slate for contrast. Hover, pressed and keyboard-focus states keep
+layout bounds stable. Color/shadow transitions respect reduced-motion preferences.
 
 All frontend UI uses `--gr-font`, the DAO Mock font stack:
 `"DM Sans", "Segoe UI", Arial, sans-serif`. Headings use the same family with

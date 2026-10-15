@@ -1,6 +1,9 @@
 @import "./tokens.css";
 
 div.gr-site-header-surface {
+  --gr-nav-surface: #f1f5f9b8;
+  --gr-nav-line: #dce4ef;
+  --gr-nav-text: #526077;
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
@@ -55,36 +58,56 @@ div.gr-site-header-surface {
   object-fit: contain;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  justify-self: center;
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
   margin: 0;
+  padding: 5px;
+  border: 1px solid var(--gr-nav-line);
+  border-radius: 999px;
+  background: var(--gr-nav-surface);
+  box-shadow: inset 0 1px 0 #ffffffd9;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
-  padding: 11px 14px;
+  padding: 10px 16px;
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--gr-muted);
+  color: var(--gr-nav-text);
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.4;
+  letter-spacing: -0.01em;
+  line-height: 20px;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a:hover {
-  background: #edf2fa;
-  color: var(--gr-accent-ink);
+  background: #ffffffb3;
+  color: var(--gr-ink);
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a[aria-current="page"] {
-  background: linear-gradient(180deg, #e7edffb3, #e9eefb);
-  color: #2055ff;
-  font-weight: 600;
+  background: var(--gr-surface);
+  box-shadow:
+    0 1px 3px #1e293b0c,
+    0 3px 10px #1e293b06,
+    inset 0 0 0 1px #dce5f3;
+  color: var(--gr-accent-ink);
+}
+.gr-site-header-surface .gr-shared-header .gr-nav a:active {
+  box-shadow: inset 0 1px 3px #1e293b12;
 }
 .gr-site-header-surface .gr-shared-header .gr-github {
   justify-self: end;
@@ -105,39 +128,67 @@ div.gr-site-header-surface {
   gap: 22px;
 }
 .gr-site-header-surface .gr-site-switch {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 5px;
-  border: 1px solid #dbe3f2;
+  border: 1px solid var(--gr-nav-line);
   border-radius: 999px;
-  background: #edf2fa;
-  box-shadow: inset 0 1px 3px #243c5d08;
+  background: var(--gr-nav-surface);
+  box-shadow: inset 0 1px 3px #243c5d06;
 }
 .gr-site-header-surface .gr-site-switch a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 108px;
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 999px;
-  color: var(--gr-muted);
+  background: transparent;
+  color: var(--gr-nav-text);
   font-size: 13px;
   font-weight: 600;
-  line-height: 1.4;
+  letter-spacing: -0.01em;
+  line-height: 20px;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.gr-site-header-surface .gr-site-switch a::before {
+  content: "";
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
 }
 .gr-site-header-surface .gr-site-switch a:hover {
-  color: var(--gr-accent-ink);
+  background: #ffffffb3;
+  color: var(--gr-ink);
 }
 .gr-site-header-surface .gr-site-switch a[aria-current="true"] {
-  background: linear-gradient(180deg, #2c5cff, #194aff);
-  box-shadow: 0 3px 8px #2055ff26;
+  background: var(--gr-accent);
+  box-shadow:
+    0 2px 6px #2563eb26,
+    inset 0 1px 0 #ffffff29;
   color: #fff;
+}
+.gr-site-header-surface .gr-site-switch a[aria-current="true"]::before {
+  opacity: 1;
+}
+.gr-site-header-surface .gr-site-switch a:active {
+  box-shadow: inset 0 1px 4px #0f172a26;
 }
 .gr-site-header-surface .gr-shared-header a:focus-visible {
   outline: 2px solid var(--gr-accent);
-  outline-offset: 5px;
+  outline-offset: 3px;
 }
 
 .gr-site-header-surface .gr-github svg {
@@ -206,11 +257,11 @@ div.gr-site-header-surface {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #2055ff;
+  bottom: 5px;
+  width: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--gr-accent);
   transform: translateX(-50%);
 }
 
@@ -218,4 +269,11 @@ div.gr-site-header-surface.console-header-surface {
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-site-header-surface .gr-shared-header .gr-nav a,
+  .gr-site-header-surface .gr-site-switch a {
+    transition: none;
+  }
 }
