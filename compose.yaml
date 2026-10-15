@@ -1,4 +1,4 @@
-# Local demo of the deployed stack: http://localhost:8080
+# Local demo of the deployed stack: http://localhost (DEMO_PORT=8080 if port 80 is taken)
 #   GIT_SHA=$(git rev-parse HEAD) docker compose up --build
 # Without GIT_SHA the build records no instrumentation verification (honest default).
 # Reset the demo run:  docker compose down -v
@@ -35,7 +35,7 @@ services:
   proxy:
     image: caddy:2.10.0-alpine
     ports:
-      - "${DEMO_PORT:-8080}:8080"
+      - "${DEMO_PORT:-80}:8080"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro,Z
     depends_on:

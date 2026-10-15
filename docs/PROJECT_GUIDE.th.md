@@ -144,13 +144,13 @@ flowchart TD
 GIT_SHA=$(git rev-parse HEAD) docker compose up -d --build
 ```
 
-เปิด `http://localhost:8080` แล้วเริ่มจาก **Try the app as a user** ส่วน Report อยู่ที่ `/report/` และหน้า operator อยู่ที่ `/report/?operator=1` (token ของเครื่อง local คือ `local-operator` เปลี่ยนได้ด้วย `GHOST_OPERATOR_TOKEN`)
+เปิด `http://localhost` (port 80 ถ้า port 80 ถูกใช้อยู่ให้รันด้วย `DEMO_PORT=8080` แล้วเปิด `http://localhost:8080`) แล้วเริ่มจาก **Try the app as a user** ส่วน Report อยู่ที่ `/report/` และหน้า operator อยู่ที่ `/report/?operator=1` (token ของเครื่อง local คือ `local-operator` เปลี่ยนได้ด้วย `GHOST_OPERATOR_TOKEN`)
 
 | Service | หน้าที่                                                                                              |
 | ------- | ---------------------------------------------------------------------------------------------------- |
 | `api`   | build จาก [Dockerfile](../Dockerfile) เดียวกับตอน deploy: engine + landing, app และ console บน origin เดียว เก็บ run ใน volume `api-data` |
 | `roles` | แจก role card แยก process และเก็บ DB ใน volume `roles-data` ของตัวเอง                                |
-| `proxy` | Caddy ที่ port 8080 ส่ง `/roles/*` ไป roles และที่เหลือไป api ([Caddyfile](../deploy/Caddyfile))       |
+| `proxy` | Caddy ที่ port 80 ของเครื่อง ส่ง `/roles/*` ไป roles และที่เหลือไป api ([Caddyfile](../deploy/Caddyfile))       |
 
 - run ชื่อ `demo` ล็อก v1 ตอนเปิดครั้งแรกและเติม seed 20 sessions ครั้งเดียว digest อยู่ใน `docker compose logs api`
 - ระหว่าง build ระบบรันเทสต์ว่า `wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate บนโค้ดที่กำลัง build ถ้าไม่ใส่ `GIT_SHA` build นั้นจะแสดงเป็น unverified ตามจริง
