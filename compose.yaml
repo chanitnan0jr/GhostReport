@@ -1,6 +1,7 @@
 # Local demo of the deployed stack: http://localhost (DEMO_PORT=8080 if port 80 is taken)
 #   GIT_SHA=$(git rev-parse HEAD) docker compose up --build
 # Without GIT_SHA the build records no instrumentation verification (honest default).
+# Seed it through the real app once:  (cd scripts/seed && npm ci && npm run seed)
 # Reset the demo run:  docker compose down -v
 services:
   api:
@@ -12,6 +13,7 @@ services:
     environment:
       GHOST_RUN_ID: ${GHOST_RUN_ID:-demo}
       GHOST_OPERATOR_TOKEN: ${GHOST_OPERATOR_TOKEN:-local-operator}
+      GHOST_DB_SEED: ${GHOST_DB_SEED:-}  # 1 = write seed rows directly; else run scripts/seed
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}  # only needed for operator /api/analyze
     volumes:
       - api-data:/data

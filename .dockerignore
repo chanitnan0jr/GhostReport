@@ -16,3 +16,4 @@ runs/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+scripts/seed/videos/

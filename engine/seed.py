@@ -1,4 +1,6 @@
-"""Seed a demo run with ~20 synthetic sessions so the report is never empty.
+"""Offline fallback seed (GHOST_DB_SEED=1): the same 20 sessions as scripts/seed.
+
+The primary seed drives the real app with Playwright so events come from track().
 
 Seeded sessions are labeled `seed-…`, written after v1 is locked with real
 timestamps, and go through the same models, ingest and exposure checks as live

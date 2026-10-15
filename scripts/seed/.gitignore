@@ -1,0 +1,5 @@
+node_modules/
+test-results/
+playwright-report/
+# Recorded from the deployed run for /demo; regenerate, do not hand-edit.
+videos/

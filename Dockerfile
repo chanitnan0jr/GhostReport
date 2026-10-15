@@ -43,6 +43,9 @@ ENV GHOST_COMMIT=$RAILWAY_GIT_COMMIT_SHA \
     PYTHONUNBUFFERED=1
 RUN python -m engine.demo verify --app /srv/app --from-report gate-test.json \
       --out /srv/verification.json
+# Seed by driving the real app once after deploy (scripts/seed). GHOST_DB_SEED=1 instead
+# writes the same 20 labeled sessions straight into the database (offline fallback).
 CMD python -m engine.demo serve --run-id "${GHOST_RUN_ID:-judging}" --mode demo \
       --host 0.0.0.0 --port "${PORT:-8000}" --db-dir /data/runs --repo /srv/app \
-      --investigation /srv/fixtures/investigation.app.json --verification /srv/verification.json --seed
+      --investigation /srv/fixtures/investigation.app.json --verification /srv/verification.json \
+      ${GHOST_DB_SEED:+--seed}

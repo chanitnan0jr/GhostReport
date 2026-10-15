@@ -1,0 +1,11 @@
+{
+  "name": "ghostreport-seed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

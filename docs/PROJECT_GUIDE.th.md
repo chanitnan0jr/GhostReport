@@ -152,7 +152,9 @@ GIT_SHA=$(git rev-parse HEAD) docker compose up -d --build
 | `roles` | แจก role card แยก process และเก็บ DB ใน volume `roles-data` ของตัวเอง                                |
 | `proxy` | Caddy ที่ port 80 ของเครื่อง ส่ง `/roles/*` ไป roles และที่เหลือไป api ([Caddyfile](../deploy/Caddyfile))       |
 
-- run ชื่อ `demo` ล็อก v1 ตอนเปิดครั้งแรกและเติม seed 20 sessions ครั้งเดียว digest อยู่ใน `docker compose logs api`
+- run ชื่อ `demo` ล็อก v1 ตอนเปิดครั้งแรก digest อยู่ใน `docker compose logs api`
+- เติม seed 20 sessions ด้วยบอท Playwright ที่กดแอปจริง (event มาจาก `track()` ตัวจริง) รันครั้งเดียวต่อ run และอัดวิดีโอ 4 persona ไว้ที่ `scripts/seed/videos/`:
+  `cd scripts/seed && npm ci && BASE_URL=http://localhost npm run seed` (ถ้า run นั้นมี seed แล้วจะข้ามเอง) session ของบอทขึ้นต้นด้วย `seed-` และ report แยกยอดเป็น "seed 20 + visitors n" เสมอ ถ้าไม่มี browser ให้ตั้ง `GHOST_DB_SEED=1` เพื่อเขียน seed ลง DB ตรงแทน
 - ระหว่าง build ระบบรันเทสต์ว่า `wallet_gate_shown` ยิงหนึ่งครั้งต่อการแสดง gate บนโค้ดที่กำลัง build ถ้าไม่ใส่ `GIT_SHA` build นั้นจะแสดงเป็น unverified ตามจริง
 - rebuild หลังแก้โค้ดใช้คำสั่งเดิม ข้อมูลและ digest ของ run คงอยู่ และ Report บันทึก build ใหม่ไว้ใน `builds`
 - `docker compose down` หยุดโดยเก็บข้อมูลไว้ ส่วน `docker compose down -v` ลบ volume และเริ่ม run ใหม่ (seed ใหม่ และ lock ใหม่)
