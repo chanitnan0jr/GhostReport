@@ -10,7 +10,7 @@ VITE_MOCK=1 npm run dev   # http://localhost:5174/report/
 
 Mock mode imports `../fixtures/report.sample.json` directly without rewriting or duplicating it. The fixture is visibly labeled **SEED DATA**. Mock snapshot requests validate the pasted digest and return 409 for a mismatch. Mock snapshots are local to the page and reset on reload.
 
-For the real backend, run `npm run dev` without `VITE_MOCK=1`. `/api` and `/roles` proxy to `http://127.0.0.1:18000`. `GHOST_API_TARGET=http://127.0.0.1:18001 npm run dev` can point a local verification session at an isolated API instance; the default is port 18000; the shell or console-local `.env.local` can override it. Production builds use `base: '/report/'`. The engine owns serving built frontends and the production reverse proxy.
+For the real backend, run `npm run dev` without `VITE_MOCK=1`. `/api` proxies to `GHOST_API_TARGET` (default `http://127.0.0.1:18000`); `/roles` proxies separately to `GHOST_ROLES_TARGET` (default `http://127.0.0.1:18100`). `GHOST_API_TARGET=http://127.0.0.1:18001 npm run dev` can point a local verification session at an isolated API instance; the default is port 18000; the shell or console-local `.env.local` can override it. Production builds use `base: '/report/'`. The engine owns serving built frontends and the production reverse proxy.
 
 ```sh
 npm test
