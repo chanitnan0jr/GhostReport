@@ -149,7 +149,6 @@ export function HomePage() {
             ))}
           </ol>
         </section>
-        <HomeDemo />
         <section className="ink-feature" aria-labelledby="featured-app-title">
           <a
             href="/try/"
@@ -222,6 +221,7 @@ export function HomePage() {
             </div>
           </div>
         </section>
+        <HomeDemo />
         <section className="ink-next-links" aria-label="Explore GhostReport">
           <a className="ink-next" href="/ens/">
             <span className="ink-next-icon">

@@ -160,7 +160,7 @@
   backdrop-filter: blur(16px);
 }
 .home-site .home-demo.ink-demo {
-  margin: 0;
+  margin: 12px 0 0;
   padding: 22px 26px 18px;
   scroll-margin-top: 22px;
 }
@@ -300,7 +300,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 34px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 0;
   padding: 18px 26px;
 }
 .home-site .ink-app-preview {

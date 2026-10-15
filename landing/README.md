@@ -17,8 +17,8 @@ The GhostReport guide at `/about/` has three steps: try the grant app, view the 
 ## Home + demo
 
 Home follows the approved ink-mountain reference: serif headings, a floating shared
-header, four horizontal process cards, real Playwright recordings, the featured
-Common Ground DAO app, and ENS/installation links. Home styling lives in `src/home.css`;
+header, four horizontal process cards, the featured Common Ground DAO app,
+real Playwright recordings, and ENS/installation links. Home styling lives in `src/home.css`;
 other landing routes keep the light page shell.
 **Watch the demo** and **Watch simulated users** scroll to `/#demo` on the same page.
 `/seed/` remains the detailed recording/session explorer; `/try/` assigns a role.
