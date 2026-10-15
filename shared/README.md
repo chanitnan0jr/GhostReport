@@ -2,7 +2,8 @@
 
 `SiteHeader.tsx` is the single header implementation used by landing, the grant
 app and the report console. `navigation.ts` owns menu order, labels, links,
-brand artwork and the GitHub URL. `header.css` owns the shared header styling.
+brand artwork and the GitHub URL. `header.css` owns the shared header styling: a floating glass surface, serif
+wordmark with the supplied ghost logo, centered navigation and an active underline.
 
 The header derives its active menu from the current URL and subscribes to hash
 and browser history changes. `/try/` and all hash routes under `/app/` select

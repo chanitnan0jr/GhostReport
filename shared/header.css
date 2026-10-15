@@ -1,20 +1,27 @@
 @import "./tokens.css";
 
-.gr-site-header-surface {
-  background: var(--gr-surface);
-  border-bottom: 1px solid var(--gr-line);
+div.gr-site-header-surface {
+  width: calc(100% - 96px);
+  max-width: 1320px;
+  margin: 16px auto 0;
+  border: 1px solid #ffffffd9;
+  border-radius: 12px;
+  background: #fcfdffda;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 6px 30px #2e3e5710;
   color: var(--gr-ink);
 }
 .gr-site-header-surface .gr-header.gr-shared-header {
   box-sizing: border-box;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 32px;
   width: 100%;
-  max-width: var(--gr-page);
-  min-height: 64px;
+  max-width: none;
+  min-height: 54px;
   margin: 0 auto;
-  padding: 16px 54px;
+  padding: 8px 24px;
   font-family: var(--gr-font);
   line-height: 1.4;
 }
@@ -24,7 +31,9 @@
   align-items: center;
   gap: 10px;
   color: var(--gr-ink);
-  font-size: 17px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  letter-spacing: -0.8px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
@@ -43,30 +52,35 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: auto;
-  margin-right: 110px;
+  margin: 0;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a {
   padding: 8px 12px;
-  border-radius: 8px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
   color: var(--gr-muted);
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
   white-space: nowrap;
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a:hover {
-  background: var(--gr-surface-2);
-  color: var(--gr-ink);
+  background: transparent;
+  color: var(--gr-accent-ink);
 }
 .gr-site-header-surface .gr-shared-header .gr-nav a[aria-current="page"] {
-  background: var(--gr-accent-soft);
-  color: var(--gr-accent-ink);
-  font-weight: 600;
+  background: transparent;
+  border-bottom-color: #2055ff;
+  color: #2055ff;
+  font-weight: 500;
 }
 .gr-site-header-surface .gr-shared-header .gr-github {
+  justify-self: end;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
   color: var(--gr-muted);
   font-size: 13px;
   text-decoration: none;
@@ -75,4 +89,9 @@
 .gr-site-header-surface .gr-shared-header a:focus-visible {
   outline: 2px solid var(--gr-accent);
   outline-offset: 5px;
+}
+
+.gr-site-header-surface .gr-github svg {
+  width: 20px;
+  height: 20px;
 }
