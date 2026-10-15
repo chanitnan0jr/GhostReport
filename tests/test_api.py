@@ -120,7 +120,8 @@ def test_full_loop_reports_k_of_n(client: TestClient, clock: Clock) -> None:
     assert current["funnel"] == {"visitors": 4, "apply_clicked": 4, "attempted": 0, "connected": 0}
     findings = {f["hypothesis_id"]: f for f in current["findings"]
                 if f["decision_point"] == "DP1"}
-    assert findings["H1"]["text"] == "2 of 3 respondents"
+    assert findings["H1"]["text"] == "2 of 3 respondents (visitors 2 of 3)"
+    assert current["population"] == "seed 0 + visitors 4"
     assert findings["H1"]["self_report"] == "Selected by ≥ 50%"
     assert findings["H2"]["self_report"] == "Selected"
     dp1 = next(p for p in current["probes"] if p["decision_point"] == "DP1")
@@ -319,6 +320,10 @@ def test_seeded_demo_run_reports_and_is_idempotent(tmp_path: Path) -> None:
         dp1 = next(p for p in current["probes"] if p["decision_point"] == "DP1")["counts"]
         assert (dp1["shown"], dp1["answered"], dp1["skipped"]) == (7, 6, 1)
         assert any(f["respondents"] >= 3 for f in current["findings"])
+        # Simulated answers are never counted as visitors.
+        assert current["population"] == "seed 20 + visitors 0"
+        assert all(set(f["by_source"]) <= {"seed"} for f in current["findings"])
+        assert all("visitors" not in f["text"] for f in current["findings"])
     with TestClient(create_app(settings)) as client:
         assert client.get("/api/report").json()["current"]["seeded_sessions"] == 20
 
@@ -352,3 +357,13 @@ def test_partb_serves_the_reviewed_code_only_run(client: TestClient) -> None:
     assert gate.startswith("https://github.com/ensdomains/ens-app-v3/blob/3c10925f")
     assert gate.endswith("Pricing/Pricing.tsx#L185") and "%5Bname%5D" in gate
     assert len(body["flow_map"]) == 22 and body["scope"]["searched_files"] == 16
+
+
+def test_session_source_never_counts_simulated_sessions_as_visitors() -> None:
+    from engine.report import population
+    from engine.seed import session_source
+
+    assert [session_source(s) for s in ("seed-01", "e2e-dp1-x", "a1b2")] == [
+        "seed", "test", "visitor"]
+    assert population({"seed": 20, "test": 0, "visitor": 3}) == "seed 20 + visitors 3"
+    assert population({"seed": 20, "test": 2, "visitor": 3}) == "seed 20 + test 2 + visitors 3"

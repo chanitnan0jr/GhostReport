@@ -20,7 +20,7 @@ from engine.policy import select_dp0
 from engine.probe import resolve_exposure
 from engine.reconcile import exposure_counts, reconcile
 from engine.records import ProbeRecords
-from engine.seed import SEED_PREFIX
+from engine.seed import SOURCES, Source, session_source
 from engine.storage import Store
 
 NO_ATTEMPT = frozenset({"no_gate_event", "gate_event_no_attempt"})
@@ -154,10 +154,27 @@ def evaluate(
             except ValueError as error:
                 errors.append({"plan_id": plan.plan_id, "cohort": cohort, "reason": str(error)})
                 continue
-            findings.extend({
-                **finding.model_dump(mode="json"),
-                "text": f"{finding.selected} of {finding.respondents} respondents",
-            } for finding in rows)
+            split = {source: {
+                row.hypothesis_id: row for row in reconcile(
+                    run_id=store.run.run_id, investigation_id=investigation.investigation_id,
+                    hypotheses=investigation.hypotheses, question=question, cohort=cohort,
+                    exposures=part, responses=[r for r in responses if r.exposure_id in
+                                               {e.exposure_id for e in part}],
+                    sessions_at_shown=at_shown, decisions_at_shown=decisions,
+                )} for source in SOURCES
+                if (part := [e for e in mine if session_source(e.session_id) == source])}
+            for finding in rows:
+                by_source = {source: {"selected": parts[finding.hypothesis_id].selected,
+                                      "respondents": parts[finding.hypothesis_id].respondents}
+                             for source, parts in split.items()}
+                findings.append({
+                    **finding.model_dump(mode="json"),
+                    "by_source": by_source,
+                    "text": f"{finding.selected} of {finding.respondents} respondents"
+                            + _split_text(by_source),
+                })
+    sources = {source: sum(session_source(s.session_id) == source for s in sessions)
+               for source in SOURCES}
     return {
         "data_cutoff": now,
         "funnel": funnel(sessions, events),
@@ -167,9 +184,27 @@ def evaluate(
         "probes": probes,
         "findings": findings,
         "orphan_responses": orphans,
-        "seeded_sessions": sum(s.session_id.startswith(SEED_PREFIX) for s in sessions),
+        "seeded_sessions": sources["seed"],
+        "sources": sources,
+        "session_sources": {s.session_id: session_source(s.session_id) for s in sessions},
+        "population": population(sources),
         "errors": errors,
     }
+
+
+SOURCE_LABELS: dict[Source, str] = {"seed": "seed", "test": "test", "visitor": "visitors"}
+
+
+def population(sources: dict[Source, int]) -> str:
+    """Always shows the split, e.g. "seed 20 + visitors 3"; test runs only when present."""
+    shown = [s for s in SOURCES if s != "test" or sources.get(s)]
+    return " + ".join(f"{SOURCE_LABELS[s]} {sources.get(s, 0)}" for s in shown)
+
+
+def _split_text(by_source: dict[Source, dict[str, int]]) -> str:
+    parts = [f"{SOURCE_LABELS[s]} {v['selected']} of {v['respondents']}"
+             for s, v in by_source.items() if v["respondents"]]
+    return f" ({' · '.join(parts)})" if parts else ""
 
 
 def funnel(sessions: Sequence[SessionStats], events: Sequence[Event]) -> dict[str, int]:
@@ -239,7 +274,8 @@ def append_successor(
         hypothesis_set=investigation.hypotheses, class_mappings=investigation.class_mappings,
         probe_questions=chain[0][0].probe_questions, probe_plans=chain[0][0].probe_plans,
         sessions=current["sessions"], decisions=current["decisions"],
-        findings=tuple(Finding.model_validate({k: v for k, v in f.items() if k != "text"})
+        findings=tuple(Finding.model_validate({k: v for k, v in f.items()
+                                               if k not in ("text", "by_source")})
                        for f in current["findings"]),
     )
     return state, store.append_snapshot(state, trusted_v1_digest=trusted_v1_digest)

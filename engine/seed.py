@@ -7,6 +7,7 @@ visitors. The report states how many sessions are seeded.
 
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Literal
 
 from engine.investigation import Investigation
 from engine.models import Event, Exposure, ProbeResponse
@@ -14,6 +15,18 @@ from engine.records import ProbeRecords
 from engine.storage import Store
 
 SEED_PREFIX = "seed-"
+TEST_PREFIX = "e2e-"  # Playwright suites run against the deployed site
+Source = Literal["seed", "test", "visitor"]
+SOURCES: tuple[Source, ...] = ("seed", "test", "visitor")
+
+
+def session_source(session_id: str) -> Source:
+    """Simulated sessions are never visitors. A visitor can only hide in seed, not leave it."""
+    if session_id.startswith(SEED_PREFIX):
+        return "seed"
+    if session_id.startswith(TEST_PREFIX):
+        return "test"
+    return "visitor"
 Step = tuple[str, str, str | None]  # event, page, attempt key
 VIEW: Step = ("project_viewed", "ProjectPage", None)
 APPLY: Step = ("apply_clicked", "ProjectPage", None)
