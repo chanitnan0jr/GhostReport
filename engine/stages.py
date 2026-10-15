@@ -35,8 +35,9 @@ QUESTION = "Why do sessions in the never-attempted cohort not start connecting a
 REQUESTER = "Not sure who is asking"
 OTHER = "Something else"
 TARGETS = {"DP1": "gate_event_no_attempt", "DP2": "no_gate_event"}
+GATE_EVENT = "wallet_gate_shown"
 ACTION_CATALOG = {
-    "check_event": {"params": {"event": "wallet_gate_shown", "scope": "no_attempt"},
+    "check_event": {"params": {"event": GATE_EVENT, "scope": "no_attempt"},
                     "rule_ids": ["R2"], "cost": "tier 0",
                     "does": "count recorded gate events in complete no-attempt sessions"},
     "recommend_instrument": {"params": {"outcome": "<outcome id from the Workflow Map>"},
@@ -141,6 +142,8 @@ class InvestigationDraft(BaseModel):
     probe_options: dict[str, tuple[ProbeOption, ...]]
     rejected: dict[str, list[str]]
     llm: dict[str, Any]
+    mode: Literal["behavioral", "code_only"] = "behavioral"
+    cannot_check: tuple[dict[str, str], ...] = ()
 
 
 def _digest(*parts: str) -> str:
@@ -199,8 +202,13 @@ def run_stage_a(
 def run_stage_b(
     llm: LLM, pack: ContextPack, workflow: WorkflowMap, cohort_stats: dict[str, Any], *,
     investigation_id: str = "inv-never-attempted", repo_root: str = "app",
+    mapped_events: frozenset[str] | None = None, code_only: bool = False,
 ) -> InvestigationDraft:
-    """Hypotheses, catalog-only actions and probe options; nothing here is approved."""
+    """Hypotheses, catalog-only actions and probe options; nothing here is approved.
+
+    `mapped_events` (canonical names the target emits; None = not checked) drops any
+    check_event whose event is unmapped and records the rule as cannot_check (§10).
+    """
     instructions = json.dumps({
         "investigation_question": QUESTION,
         "workflow_map": workflow.model_dump(mode="json"),
@@ -233,9 +241,16 @@ def run_stage_b(
     ids = {h.id for h in grounded.hypotheses}
     outcome_ids = {o.id for o in workflow.outcomes}
     actions, recommendations = [], []
+    cannot_check = []
+    if mapped_events is not None and GATE_EVENT not in mapped_events:
+        cannot_check = [{"rule_id": rule, "needs_event": GATE_EVENT, "rule": text}
+                        for rule, text in RULE_CATALOG.items()]
     for action in draft.proposed_actions:
         spec = ACTION_CATALOG.get(action.action_type)
         if action.action_type == "check_event" and spec is not None:
+            if cannot_check:
+                rejected["action"].append(f"check_event:unmapped {GATE_EVENT}")
+                continue
             if action.params == spec["params"] and set(action.rule_ids) <= set(RULE_CATALOG):
                 actions.append({**action.model_dump(), "note_affects_state": False})
                 continue
@@ -271,6 +286,7 @@ def run_stage_b(
         investigation_id=investigation_id, repo_root=repo_root, workflow=workflow,
         hypotheses=grounded, actions=tuple(actions), recommendations=tuple(recommendations),
         probe_options=options, rejected=rejected,
+        mode="code_only" if code_only else "behavioral", cannot_check=tuple(cannot_check),
         llm={"model": llm.model, "thinking": llm.thinking,
              "prompts": [f"{s}.v{v}" for s, v in (STAGE_A, STAGE_B)]},
     )
