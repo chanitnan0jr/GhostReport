@@ -5,6 +5,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig(({ mode }) => ({
   base: "/app/",
   plugins: [react()],
+  resolve: { dedupe: ["react", "react-dom"] },
   server: {
     proxy: {
       "/api": {

@@ -1,3 +1,4 @@
+import { SiteHeader } from "../../shared/SiteHeader";
 import { useEffect, useState } from "react";
 import { ApplyModal } from "./ApplyModal";
 import { MockWalletPopup } from "./MockWalletPopup";
@@ -11,19 +12,6 @@ import { sessionKey, uuid } from "./session";
 import { getTracker } from "./track";
 import type { DecisionPoint, ProbePlan, Project } from "./types";
 import { connectWallet, type Wallet, type WalletAttempt } from "./wallet";
-
-// Same tabs and order as the landing and console headers.
-const NAVIGATION = [
-  ["Home", "/"],
-  ["Demo", "/seed/"],
-  ["Try the App", "/try/"],
-  ["Segments", "/report/#segments"],
-  ["Workflow Map", "/report/#workflow"],
-  ["Report", "/report/"],
-  ["ENS", "/ens/"],
-  ["Install", "/install/"],
-  ["About", "/about/"],
-] as const;
 
 const projects: Project[] = projectData;
 const projectFromUrl = () =>
@@ -196,32 +184,7 @@ export default function App() {
 
   return (
     <>
-      <header className="site-header">
-        <a
-          className="wordmark"
-          href="#/"
-          onClick={(event) => {
-            event.preventDefault();
-            if (project) back();
-          }}
-        >
-          <span className="brand-mark" aria-hidden="true">
-            c.
-          </span>
-          common ground
-        </a>
-        <nav className="main-navigation" aria-label="Main navigation">
-          {NAVIGATION.map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              aria-current={href === "/try/" ? "page" : undefined}
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <SiteHeader />
       {consent === null ? (
         <main className="consent-page">
           <span className="consent-symbol" aria-hidden="true">
