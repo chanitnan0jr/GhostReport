@@ -82,6 +82,8 @@ export interface Report {
     source: "llm" | "template";
     text: string;
     facts: Record<string, unknown>;
+    facts_sha256?: string;
+    rejected?: unknown[];
   };
   run: {
     run_id: string;

@@ -1,18 +1,17 @@
 import { expect, test } from "@playwright/test";
 import sample from "../../fixtures/report.sample.json" with { type: "json" };
 
-test("renders the shared sample with all panels and keeps the seed banner visible when scrolling", async ({
+test("renders the investigation document, opens a citation and keeps the seed label in view", async ({
   page,
 }) => {
   await page.goto("/report/");
-  await expect(page.locator("[data-panel]")).toHaveCount(9);
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Investigating wallet onboarding drop-off",
+    }),
+  ).toBeVisible();
   await expect(page.getByText("SEED DATA", { exact: true })).toBeVisible();
-  await expect(
-    page.locator(".matrix .hypothesis-id").filter({ hasText: "H_other" }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".matrix").getByText("2 of 3 respondents", { exact: true }),
-  ).toBeVisible();
   await expect(page.getByLabel("Digest held outside the system")).toHaveCount(
     0,
   );
@@ -22,13 +21,27 @@ test("renders the shared sample with all panels and keeps the seed banner visibl
   await page.screenshot({
     path: `/tmp/ghostreport-console-${test.info().project.name}.png`,
   });
-  await page.locator("#hypotheses").scrollIntoViewIfNeeded();
+  const contents = page.getByRole("navigation", { name: "Report contents" });
+  await contents.getByRole("link", { name: "3. Hypothesis Findings" }).click();
+  await expect(page.getByRole("heading", { name: "H_other" })).toBeVisible();
+  await page
+    .getByRole("button", { name: /^Evidence \d+: H1 at DP1$/ })
+    .first()
+    .click();
+  const inspector = page.getByRole("complementary", {
+    name: "Evidence inspector",
+  });
+  await expect(inspector).toContainText("2 of 3 respondents");
   await page.screenshot({
     path: `/tmp/ghostreport-console-matrix-${test.info().project.name}.png`,
   });
-  await page.locator("#limitations").scrollIntoViewIfNeeded();
+  await page.keyboard.press("Escape");
+  await expect(inspector).toHaveCount(0);
+  await contents.getByRole("link", { name: "6. Limitations" }).click();
   await expect(page.getByText("SEED DATA", { exact: true })).toBeInViewport();
-  expect(await page.locator("#limitations details").count()).toBe(0);
+  await expect(
+    page.getByRole("complementary", { name: "Limitations" }),
+  ).toContainText("Commit: uncommitted.");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -55,17 +68,13 @@ test("does not auto-fill the digest; a mismatch shows 409 and an operator-suppli
   await expect(input).toHaveValue("");
 });
 
-test("switches the matrix population without pooling cohorts", async ({
+test("keeps each decision point's population separate under a hypothesis", async ({
   page,
 }) => {
-  await page.goto("/report/");
-  await page
-    .getByLabel("Evidence population")
-    .selectOption("DP2|no_gate_event|dp2.v1");
-  await expect(
-    page.locator(".matrix").getByText("2 of 3 respondents"),
-  ).toHaveCount(0);
-  await expect(
-    page.locator(".matrix").getByText("0 of 0 respondents"),
-  ).toHaveCount(8);
+  await page.goto("/report/#findings");
+  const items = page.locator("#h1 + p + ul > li");
+  // One line per question population: DP1 and DP2 are never pooled.
+  await expect(items.filter({ hasText: /^Self-reported at/ })).toHaveText([
+    /^Self-reported at DP1\. 2 of 3 respondents selected this answer \(seed 2 of 3\)\./,
+  ]);
 });

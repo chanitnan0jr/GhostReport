@@ -1,32 +1,13 @@
 import { lazy, Suspense, useEffect } from "react";
 import { ConsoleHeader, useConsoleHash } from "./ConsoleHeader";
-import { NarrativeSummary } from "./NarrativeSummary";
+import { InvestigationDocument } from "./InvestigationDocument";
 import { Segments } from "./Segments";
 import { OperatorBar } from "./OperatorBar";
 import { OperatorGate } from "./OperatorGate";
-import { ReportPanels } from "./ReportPanels";
-import { RunBanner } from "./RunBanner";
 import { reportWarnings, safeText, time } from "./format";
 import { useReport } from "./useReport";
-import { Population } from "./Sources";
 
 const WorkflowMap = lazy(() => import("./WorkflowMap"));
-const EvidenceMap = lazy(() => import("./EvidenceMap"));
-
-const navigation = [
-  ["summary", "Summary"],
-  ["hypotheses", "Hypotheses"],
-  ["findings", "Findings"],
-  ["coverage", "Coverage"],
-  ["gaps", "Evidence gaps"],
-  ["limitations", "Limitations"],
-  ["evidence", "Hypothesis evidence"],
-  ["segments", "Segments"],
-  ["workflow", "Workflow Map"],
-  ["funnel", "Funnel"],
-  ["trace", "Decision trace"],
-  ["next-action", "Next action"],
-];
 
 export default function App() {
   const { report, error, updatedAt, refresh } = useReport();
@@ -53,47 +34,53 @@ export default function App() {
     <>
       <ConsoleHeader hash={hash} />
       <div className="console-shell">
-        <main id="top" className="workspace">
-          <header className="workspace-top">
-            <span>
-              {new URLSearchParams(location.search).get("operator") === "1"
-                ? "Operator console"
-                : page === "segments"
-                  ? "User journeys and segments"
-                  : page === "workflow"
-                    ? "App workflow and instrumentation"
-                    : "Wallet step investigation report"}
-            </span>
-            <div className="refresh-status">
-              <span
-                className={error ? "status-dot warning-dot" : "status-dot"}
-              />
-              {error ? "Refresh interrupted" : "Polls every 3 s"}
-              {updatedAt && (
-                <span className="last-updated">
-                  Last received {time(updatedAt)}
-                </span>
-              )}
-            </div>
-          </header>
-          {(mode === "seed" || mode === "replay" || mode === "demo") && (
-            <div className={`mode-banner ${mode}`} role="status">
-              <strong>
-                {mode === "replay"
-                  ? "REPLAY"
-                  : mode === "demo"
-                    ? "DEMO"
-                    : "SEED DATA"}
-              </strong>
+        <main
+          id="top"
+          className={`workspace${page === "segments" ? " segments-workspace" : page === "report" ? " report-workspace" : ""}`}
+        >
+          {page !== "report" && (
+            <header className="workspace-top">
               <span>
-                {mode === "replay"
-                  ? "Recorded run. This is not a live investigation."
-                  : mode === "demo"
-                    ? "Prepared investigation + recorded activity"
-                    : "Demonstration dataset. These are not live participant results."}
+                {new URLSearchParams(location.search).get("operator") === "1"
+                  ? "Operator console"
+                  : page === "segments"
+                    ? "User journeys and segments"
+                    : page === "workflow"
+                      ? "App workflow and instrumentation"
+                      : "Wallet step investigation report"}
               </span>
-            </div>
+              <div className="refresh-status">
+                <span
+                  className={error ? "status-dot warning-dot" : "status-dot"}
+                />
+                {error ? "Refresh interrupted" : "Polls every 3 s"}
+                {updatedAt && (
+                  <span className="last-updated">
+                    Last received {time(updatedAt)}
+                  </span>
+                )}
+              </div>
+            </header>
           )}
+          {page !== "report" &&
+            (mode === "seed" || mode === "replay" || mode === "demo") && (
+              <div className={`mode-banner ${mode}`} role="status">
+                <strong>
+                  {mode === "replay"
+                    ? "REPLAY"
+                    : mode === "demo"
+                      ? "DEMO"
+                      : "SEED DATA"}
+                </strong>
+                <span>
+                  {mode === "replay"
+                    ? "Recorded run. This is not a live investigation."
+                    : mode === "demo"
+                      ? "Prepared investigation + recorded activity"
+                      : "Demonstration dataset. These are not live participant results."}
+                </span>
+              </div>
+            )}
           {error && (
             <div className="warning" role="alert">
               <strong>Report refresh unavailable</strong>
@@ -136,52 +123,11 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <>
-              <NarrativeSummary report={report} />
-              <Population report={report} />
-              <nav className="report-section-nav" aria-label="Report panels">
-                {navigation.map(([id, label]) => (
-                  <a key={id} href={`#${id}`}>
-                    {label}
-                  </a>
-                ))}
-              </nav>
-              <ReportPanels report={report} />
-              <Suspense
-                fallback={
-                  <section id="evidence" className="panel" role="status">
-                    Opening hypothesis evidence…
-                  </section>
-                }
-              >
-                <EvidenceMap
-                  revision={report.current.data_cutoff}
-                  findings={report.current.findings}
-                />
-              </Suspense>
-              <Suspense
-                fallback={
-                  <section id="workflow" className="panel" role="status">
-                    Opening Workflow Map…
-                  </section>
-                }
-              >
-                <WorkflowMap revision={report.workflow.version} />
-              </Suspense>
-              <div className="investigation-title">
-                <div>
-                  <p className="section-kicker">Wallet onboarding</p>
-                  <h2>Investigation metadata</h2>
-                  <p className="muted">
-                    An investigation into sessions that did not start
-                    connecting.
-                  </p>
-                </div>
-                <code className="investigation-id">
-                  {safeText(report.investigation_id)}
-                </code>
-              </div>
-              <RunBanner run={report.run} />
+            <InvestigationDocument
+              report={report}
+              updatedAt={updatedAt}
+              refreshError={Boolean(error)}
+            >
               <OperatorGate key={report.run.run_id}>
                 <OperatorBar
                   key={report.run.run_id}
@@ -189,36 +135,7 @@ export default function App() {
                   refresh={refresh}
                 />
               </OperatorGate>
-              <div className="snapshot-context">
-                <div>
-                  <span>v1 baseline</span>
-                  <strong>
-                    {report.v1
-                      ? "Locked before probe evidence"
-                      : "Awaiting lock"}
-                  </strong>
-                </div>
-                <div>
-                  <span>Current evidence</span>
-                  <strong>{time(report.current.data_cutoff)}</strong>
-                </div>
-                <div>
-                  <span>Last written snapshot</span>
-                  <strong>
-                    {report.snapshots.length
-                      ? `v${report.snapshots.at(-1)!.version} · ${time(report.snapshots.at(-1)!.data_cutoff)}`
-                      : "None written"}
-                  </strong>
-                </div>
-              </div>
-
-              <footer className="report-footer">
-                Policy <code>{safeText(report.run.policy_version)}</code> ·
-                Catalog <code>{safeText(report.run.catalog_version)}</code> ·
-                Build <code>{safeText(report.run.app_build)}</code> · Commit{" "}
-                <code>{safeText(report.run.code_commit)}</code>
-              </footer>
-            </>
+            </InvestigationDocument>
           )}
         </main>
       </div>

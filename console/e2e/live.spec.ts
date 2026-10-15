@@ -20,8 +20,8 @@ test("a real answer reaches the public report within three seconds", async ({
     (sid) => localStorage.setItem("ghost:judge_sid", sid),
     sessionId,
   );
-  await page.goto("/report/");
-  await page.getByRole("heading", { name: "Hypothesis Matrix" }).waitFor();
+  await page.goto("/report/#findings");
+  await page.getByRole("heading", { name: "H_other", exact: true }).waitFor();
   await expect(
     page.getByRole("button", { name: "Write v2 snapshot" }),
   ).toHaveCount(0);
@@ -71,17 +71,17 @@ test("a real answer reaches the public report within three seconds", async ({
     event_seq_at_shown: 4,
   });
   const started = Date.now();
+  // The document is re-read when the evidence snapshot changes.
   const liveGroup = page
-    .locator("#findings .finding-group")
-    .filter({ has: page.getByRole("heading", { name: /^DP1/ }) });
-  await expect(
-    liveGroup.getByText(new RegExp(`^${expectedText}(?: \\(|$)`)),
-  ).toBeVisible({
+    .locator("#h-other + p + ul > li")
+    .filter({ hasText: /^Self-reported at DP1\./ });
+  await expect(liveGroup).toContainText(`${expectedText} selected`, {
     timeout: 3000,
   });
   const latency = Date.now() - started;
   expect(latency).toBeLessThan(3000);
   console.log(`Response → public report: ${latency} ms`);
+  await page.goto("/report/#coverage");
   await expect(
     page.getByRole("complementary", { name: "Your session" }),
   ).toContainText("Gate shown, no attempt");

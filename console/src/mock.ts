@@ -1,4 +1,5 @@
 import sample from "../../fixtures/report.sample.json";
+import document from "../../fixtures/report.document.sample.json";
 import type { Report } from "./types";
 import { mockJourneys, mockWorkflow } from "./mockViews";
 import type { JourneySource } from "./journeys";
@@ -48,6 +49,7 @@ export function installMockBackend() {
         headers: { "Content-Type": "application/json" },
       });
     if (url.pathname === "/api/report") return json(state);
+    if (url.pathname === "/api/report/document") return json(document);
     if (url.pathname === "/api/evidence") return json(mockEvidence(state));
     if (url.pathname.startsWith("/api/journeys/session/")) {
       const sid = decodeURIComponent(
