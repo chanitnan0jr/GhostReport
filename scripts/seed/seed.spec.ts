@@ -173,6 +173,12 @@ async function clipLog(
   const body = await response.json();
   const base = ms(body.events[0].received_at);
   const at = (iso: string | null) => (iso ? firstAckMs + ms(iso) - base : null);
+  // The probe beacon leaves at once while events flush after 250 ms, so the server can
+  // receive the exposure first; never show it before the event it followed.
+  const exit = body.probe
+    ? at(body.events.find((e: { seq: number }) => e.seq === body.probe.after_seq)?.received_at ?? null)
+    : null;
+  const notBefore = (t: number | null) => (t === null || exit === null ? t : Math.max(t, exit));
   return {
     session_id: sid,
     persona,
@@ -188,8 +194,8 @@ async function clipLog(
       decision_point: body.probe.decision_point,
       status: body.probe.status,
       selected: body.probe.selected,
-      shown_t_ms: at(body.probe.shown_received_at),
-      responded_t_ms: at(body.probe.responded_received_at),
+      shown_t_ms: notBefore(at(body.probe.shown_received_at)),
+      responded_t_ms: notBefore(at(body.probe.responded_received_at)),
     },
   };
 }

@@ -233,6 +233,7 @@ def seed_session(
                   if plan else {})
         probe = {
             "decision_point": exposure.decision_point,
+            "after_seq": exposure.event_seq_at_shown,  # shown after this event
             "status": ("shown_no_response" if response is None
                        else "skipped" if response.skipped else "answered"),
             "selected": [labels.get(i, i) for i in response.option_ids] if response else [],
