@@ -6,6 +6,9 @@ import { OperatorBar } from "./OperatorBar";
 import { OperatorGate } from "./OperatorGate";
 import { reportWarnings, safeText, time } from "./format";
 import { useReport } from "./useReport";
+import { sandboxId } from "./api";
+import { SandboxPanel } from "./sandbox/SandboxPanel";
+import { SANDBOX_BANNER } from "./sandbox/types";
 
 const WorkflowMap = lazy(() => import("./WorkflowMap"));
 
@@ -14,6 +17,7 @@ export default function App() {
   const warnings = report ? reportWarnings(report) : [];
   const mode = report?.run.mode;
   const hash = useConsoleHash();
+  const sandbox = sandboxId();
   const ready = report !== null;
   const page =
     hash === "#segments"
@@ -23,13 +27,19 @@ export default function App() {
         : "report";
   useEffect(() => {
     if ((page === "report" && !ready) || !hash) return;
-    const frame = requestAnimationFrame(() =>
-      document
-        .getElementById(hash.startsWith("#fact-") ? "workflow" : hash.slice(1))
-        ?.scrollIntoView(),
-    );
+    const frame = requestAnimationFrame(() => {
+      // A sandbox opens each page at the top, so its controls come first.
+      if (sandbox && (hash === "#segments" || hash === "#workflow"))
+        window.scrollTo({ top: 0 });
+      else
+        document
+          .getElementById(
+            hash.startsWith("#fact-") ? "workflow" : hash.slice(1),
+          )
+          ?.scrollIntoView();
+    });
     return () => cancelAnimationFrame(frame);
-  }, [hash, ready, page]);
+  }, [hash, ready, page, sandbox]);
   return (
     <>
       <ConsoleHeader hash={hash} />
@@ -38,6 +48,19 @@ export default function App() {
           id="top"
           className={`workspace${page === "segments" ? " segments-workspace" : page === "report" ? " report-workspace" : ""}`}
         >
+          {sandbox && (
+            <>
+              <div className="mode-banner sandbox" role="status">
+                <strong>SANDBOX</strong>
+                <span>{SANDBOX_BANNER}</span>
+              </div>
+              <SandboxPanel
+                sandboxId={sandbox}
+                report={report}
+                refresh={refresh}
+              />
+            </>
+          )}
           {page !== "report" && (
             <header className="workspace-top">
               <span>
@@ -128,13 +151,15 @@ export default function App() {
               updatedAt={updatedAt}
               refreshError={Boolean(error)}
             >
-              <OperatorGate key={report.run.run_id}>
-                <OperatorBar
-                  key={report.run.run_id}
-                  report={report}
-                  refresh={refresh}
-                />
-              </OperatorGate>
+              {!sandbox && (
+                <OperatorGate key={report.run.run_id}>
+                  <OperatorBar
+                    key={report.run.run_id}
+                    report={report}
+                    refresh={refresh}
+                  />
+                </OperatorGate>
+              )}
             </InvestigationDocument>
           )}
         </main>

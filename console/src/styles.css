@@ -186,6 +186,13 @@ pre code {
 .mode-banner.replay strong {
   color: var(--gr-seg-browsers);
 }
+.mode-banner.sandbox {
+  background: var(--gr-seg-browsers-soft);
+  border-left-color: var(--gr-seg-browsers);
+}
+.mode-banner.sandbox strong {
+  color: var(--gr-seg-browsers);
+}
 .workspace [id] {
   scroll-margin-top: 96px;
 }
