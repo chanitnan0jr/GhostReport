@@ -28,7 +28,7 @@ const columns = [
 const definitions = [
   {
     segment: "browsers",
-    label: "Browsers",
+    label: "Left before the wallet gate",
     cohorts: ["no_gate_event"],
     probe: "DP2",
     definition:

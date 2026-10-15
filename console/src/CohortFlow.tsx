@@ -101,7 +101,7 @@ const STATIC: Omit<FlowNode, "members">[] = [
   {
     id: "seg:browsers",
     column: 4,
-    label: "Browsers",
+    label: "Left before the wallet gate",
     status: "segment",
     segment: "browsers",
     rule: null,

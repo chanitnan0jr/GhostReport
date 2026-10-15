@@ -13,7 +13,7 @@ export function mockEvidence(report: Report): EvidenceGraph {
     if (!nodes.has(node.id)) nodes.set(node.id, node);
   };
   const segmentOf = {
-    no_gate_event: ["browsers", "Browsers"],
+    no_gate_event: ["browsers", "Left before the wallet gate"],
     gate_event_no_attempt: ["stalled_at_wallet", "Stopped at the wallet"],
     attempted_no_success: ["stalled_at_wallet", "Stopped at the wallet"],
     connected: ["connected", "Connected"],

@@ -7,7 +7,7 @@ Each session's events, in `seq` order, are placed on fixed columns:
 
 A session skips the columns it never reached, so its edge jumps ahead. Its segment is
 one of three groups of the report's cohorts (from `build_cohorts`, unchanged), so
-every count here matches the report: Browsers, Stopped at the wallet, Connected.
+every count here matches the report: Left before the wallet gate, Stopped at the wallet, Connected.
 Only counts leave this module, never session IDs, and each node and edge is split by
 source (seed / test / visitor).
 """
@@ -40,7 +40,7 @@ NODES: dict[tuple[int, str], str] = {
     (6, "back"): "Back to projects",
     (6, "inactive"): "Went quiet (10 min)",
     (6, "open"): "Still on the page",
-    (7, "browsers"): "Browsers",
+    (7, "browsers"): "Left before the wallet gate",
     (7, "stalled_at_wallet"): "Stopped at the wallet",
     (7, "connected"): "Connected",
     (8, "answered"): "Probe answered",
@@ -206,8 +206,9 @@ def journeys(
         "notes": [
             "Rejecting the wallet is not instrumented, so a rejection shows as "
             "'No result recorded'.",
-            "Segments group the report's cohorts (Browsers = no_gate_event; Stopped at "
-            "the wallet = gate_event_no_attempt + attempted_no_success; Connected = "
+            "Segments group the report's cohorts (Left before the wallet gate = "
+            "no_gate_event; Stopped at the wallet = gate_event_no_attempt + "
+            "attempted_no_success; Connected = "
             "connected). Coverage 'unknown' sessions are counted but cannot support "
             "absence claims.",
         ],

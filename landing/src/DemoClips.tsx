@@ -41,7 +41,7 @@ const COHORTS: Record<string, string> = {
   connected: "Connected",
   attempted_no_success: "Stopped at the wallet",
   gate_event_no_attempt: "Stopped at the wallet",
-  no_gate_event: "Browsers",
+  no_gate_event: "Left before the wallet gate",
 };
 const PROBE_STATUS: Record<string, string> = {
   answered: "answered",

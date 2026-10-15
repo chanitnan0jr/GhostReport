@@ -12,7 +12,7 @@ export const cohortInfo: Record<
 > = {
   no_gate_event: {
     label: "No gate event recorded",
-    segment: "Browsers",
+    segment: "Left before the wallet gate",
     tone: "browsers",
     description:
       "No wallet gate event or connection attempt was recorded. Sessions may leave early, or events may be missing.",
