@@ -535,3 +535,45 @@ def test_narrative_retries_after_an_llm_outage(tmp_path: Path) -> None:
             if narrative["source"] == "llm":
                 break
         assert narrative["source"] == "llm" and replies == []
+
+
+def test_report_document_is_written_once_per_snapshot_and_logged(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+    from engine.llm import LLM
+    from engine.report_doc import check
+
+    sent: list[str] = []
+    documents: list[str] = []
+
+    def complete(messages: list[Any], model: str, thinking: bool) -> tuple[str, dict[str, Any]]:
+        prompt = messages[-1]["content"]
+        sent.append(prompt)
+        if '"outline"' not in prompt:
+            return json.dumps({"paragraph": "Population: seed 20 + visitors 0 sessions, all of "
+                                            "them simulated users (seed)."}), {}
+        return json.dumps({"markdown": documents[0]}), {}
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, narrative="llm",
+                        narrative_interval=0, **VERIFIED,
+                        llm=lambda: LLM(cache_path=tmp_path / "llm.sqlite", complete=complete))
+    with TestClient(create_app(settings)) as client:
+        first = client.get("/api/report/document").json()
+        assert first["source"] == "template" and first["pending"]
+        facts = {"title": first["title"], "investigation_id": first["investigation_id"],
+                 "facts": first["facts"]}
+        assert check(first["markdown"], facts) == []
+        documents.append(first["markdown"].replace("# Investigating", "# Reviewing"))
+        for _ in range(100):
+            done = client.get("/api/report/document").json()
+            if done["source"] == "llm":
+                break
+        assert done["source"] == "llm" and done["markdown"].startswith("# Reviewing")
+        assert done["context_sha256"] == first["context_sha256"] and done["generated_at"]
+        assert sum('"outline"' in p for p in sent) == 1  # once per snapshot, not per request
+    logged = [json.loads(line) for line in
+              (tmp_path / "judging.documents.jsonl").read_text().splitlines()]
+    assert [r["context_sha256"] for r in logged] == [first["context_sha256"]]
+    with TestClient(create_app(settings)) as client:  # served from the log after a restart
+        again = client.get("/api/report/document").json()
+        assert again["source"] == "llm" and again["generated_at"] == done["generated_at"]

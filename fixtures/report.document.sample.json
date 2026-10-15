@@ -1,0 +1,928 @@
+{
+  "markdown": "# Investigating wallet onboarding drop-off\n\n## Executive Summary\n\n- **What was investigated.** 6 recorded sessions in investigation `inv-never-attempted` were grouped by the events the application recorded. [fact:population]\n- **What was observed.** 4 of 6 sessions reached the wallet gate without a recorded attempt, and 0 of 6 sessions recorded a connection. [fact:cohort_gate_event_no_attempt] [fact:cohort_connected]\n- **What participants reported.** At DP1, H1 was selected by 2 of 3 respondents. [fact:finding_dp1_h1]\n- **What participants reported.** At DP1, H2 was selected by 1 of 3 respondents. [fact:finding_dp1_h2]\n- **What remains unknown.** 1 of 6 sessions have unknown coverage, and 0 workflow outcomes have unresolved instrumentation. [fact:coverage] [fact:instrumentation]\n\n> [!NOTE]\n> These observations describe what the application recorded. They do not establish why a participant did or did not connect a wallet.\n\n## 1. Investigation Scope\n\n### Population and snapshot\n\nThe snapshot holds 6 recorded sessions (seed 6). [fact:population] Seed sessions are simulated users, not participants.\n\nHypotheses were locked in snapshot v1 (digest `7d12bb3756c4`) before answers were read. [fact:lock_v1]\n\n### Cohort definitions\n\n| Cohort | Recorded rule | Sessions |\n| --- | --- | --- |\n| No gate event recorded | No wallet gate event was recorded. | 2 of 6 sessions [fact:cohort_no_gate_event] |\n| Gate shown, no attempt | The wallet gate was recorded; no connection attempt followed. | 4 of 6 sessions [fact:cohort_gate_event_no_attempt] |\n| Attempted, no success recorded | A connection attempt was recorded without a recorded success. | 0 of 6 sessions [fact:cohort_attempted_no_success] |\n| Connected | A wallet connection was recorded. | 0 of 6 sessions [fact:cohort_connected] |\n\nEach session belongs to exactly one cohort, decided by recorded events only.\n\n### Locked hypotheses\n\n- **H1** “Did not know a wallet was required before applying” [fact:hypothesis_h1]\n- **H2** “Concerned about the permissions shown in the wallet gate” [fact:hypothesis_h2]\n- **H3** “Browsing projects without intending to apply yet” [fact:hypothesis_h3]\n- **H_other** “A reason not yet proposed” [fact:hypothesis_h_other]\n\n## 2. Observed User Behavior\n\n### Recorded journeys\n\n| Cohort | Sessions | Recorded exits |\n| --- | --- | --- |\n| No gate event recorded | 2 of 6 sessions | `back` 1, `open` 1 [fact:cohort_no_gate_event] |\n| Gate shown, no attempt | 4 of 6 sessions | `not_now` 4 [fact:cohort_gate_event_no_attempt] |\n| Attempted, no success recorded | 0 of 6 sessions | None [fact:cohort_attempted_no_success] |\n| Connected | 0 of 6 sessions | None [fact:cohort_connected] |\n\n### Coverage\n\n5 of 6 sessions have complete coverage and 1 of 6 sessions have unknown coverage. [fact:coverage] An event that is not recorded in an unknown-coverage session is not evidence that the step did not happen.\n\n### Instrumentation\n\nOf 2 workflow outcomes, 0 have a tracking call in the searched code, 2 were not found in the searched files, and 0 are unknown. [fact:instrumentation]\n\n## 3. Hypothesis Findings\n\nAt DP1 the exit question was shown in 4 sessions: 3 of 4 sessions answered and 1 of 4 sessions skipped. [fact:probe_dp1]\n\nAt DP2 the exit question was shown in 0 sessions: 0 of 0 sessions answered and 0 of 0 sessions skipped. [fact:probe_dp2]\n\n### H1\n\n*“Did not know a wallet was required before applying”* [fact:hypothesis_h1]\n\n- **Self-reported at DP1.** 2 of 3 respondents selected this answer (seed 2 of 3). [fact:finding_dp1_h1] Evidence status: evidence available.\n- **Contradiction rule.** R2 does not apply to this hypothesis.\n\n### H2\n\n*“Concerned about the permissions shown in the wallet gate”* [fact:hypothesis_h2]\n\n- **Self-reported at DP1.** 1 of 3 respondents selected this answer (seed 1 of 3). [fact:finding_dp1_h2] Evidence status: evidence available.\n- **Contradiction rule.** R2 applies to this hypothesis and contradicted it in complete-coverage sessions only. [fact:rule_r2]\n\n### H3\n\n*“Browsing projects without intending to apply yet”* [fact:hypothesis_h3]\n\n- **Self-reported at DP1.** 1 of 3 respondents selected this answer (seed 1 of 3). [fact:finding_dp1_h3] Evidence status: evidence available.\n- **Contradiction rule.** R2 does not apply to this hypothesis.\n\n### H_other\n\n*“A reason not yet proposed”* [fact:hypothesis_h_other]\n\n- **Self-reported at DP1.** 0 of 3 respondents selected this answer (seed 0 of 3). [fact:finding_dp1_h_other] Evidence status: not selected.\n- **Contradiction rule.** R2 does not apply to this hypothesis.\n\nAnswers are self-reports from the people who responded. They are kept apart from what the application recorded.\n\n## 4. Evidence Gaps\n\n### Unresolved search scopes\n\n- No outcome has unknown instrumentation.\n\n### Missing instrumentation candidates\n\n- `wallet_rejected` `src/wallet.ts:31-37`: no tracking call was found in the searched files; a candidate for review. [fact:outcome_wallet_rejected]\n- `wallet_errored` `src/wallet.ts:42-48`: no tracking call was found in the searched files; a candidate for review. [fact:outcome_wallet_errored]\n\nThe search covered 3 files with 0 unresolved imports. [fact:code_scope]\n\n## 5. Recommended Actions\n\n1. Review the 2 candidates not found in the searched files; where the code has an outcome without a tracking call, add the event and rerun the investigation. [fact:instrumentation]\n2. Check that connection events carry their attempt context before relying on `attempt_id` to join attempts and outcomes.\n3. Rerun from a committed, verified build, then verify the gate event against that build. [fact:limit_build]\n\n## 6. Limitations\n\n> [!WARNING]\n> - **Commit:** uncommitted. [fact:limit_commit]\n> - **Simulated sessions:** 6 of 6 sessions are seed sessions from simulated users. [fact:population]\n> - **Non-response at DP1:** 1 of 4 sessions skipped and 0 of 4 sessions gave no response; their reasons are unknown. [fact:probe_dp1]\n> - **Non-response at DP2:** 0 of 0 sessions skipped and 0 of 0 sessions gave no response; their reasons are unknown. [fact:probe_dp2]\n> - **Unknown coverage:** 1 of 6 sessions have unknown coverage, so an event not recorded there is not evidence of absent behaviour. [fact:coverage]\n> - **Self-reports:** answers describe the people who responded; they do not establish why others left.\n\n## Appendix\n\n### v1 digest\n\n`7d12bb3756c494a5d8279b1c9f2c35971c61fd7e7ec7bc09bb4d0c59c9d47688` [fact:lock_v1]\n\n### Source references\n\n- `src/wallet.ts:31-37` `wallet_rejected` [fact:outcome_wallet_rejected]\n- `src/wallet.ts:42-48` `wallet_errored` [fact:outcome_wallet_errored]\n\n### Raw facts\n\nEvery fact cited above, with its source in `/api/report`, is published with this document and opens in the evidence inspector.\n",
+  "source": "template",
+  "rejected": [],
+  "pending": false,
+  "context_sha256": "4f23ecda0ca4f3368eea5b31aaf6d903c6cf89ba7997168d1e9b2bd98d9e5542",
+  "snapshot_id": "4f23ecda0ca4f336",
+  "generated_at": null,
+  "prompt": null,
+  "title": "Investigating wallet onboarding drop-off",
+  "investigation_id": "inv-never-attempted",
+  "outline": [
+    "Executive Summary",
+    "1. Investigation Scope",
+    "2. Observed User Behavior",
+    "3. Hypothesis Findings",
+    "4. Evidence Gaps",
+    "5. Recommended Actions",
+    "6. Limitations",
+    "Appendix"
+  ],
+  "facts": [
+    {
+      "id": "population",
+      "kind": "population",
+      "evidence": "observed",
+      "label": "Recorded sessions",
+      "statement": "6 recorded sessions (seed 6 + visitors 0).",
+      "source": "/api/report current.sessions, current.sources",
+      "numbers": [
+        0,
+        6
+      ],
+      "pairs": [
+        [
+          6,
+          6,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "sessions": 6,
+        "sources": {
+          "seed": 6,
+          "test": 0,
+          "visitor": 0
+        },
+        "population": "seed 6 + visitors 0"
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "cohort_no_gate_event",
+      "kind": "cohort",
+      "evidence": "observed",
+      "label": "No gate event recorded",
+      "statement": "No gate event recorded: 2 of 6 sessions. No wallet gate event was recorded.",
+      "source": "/api/report current.cohorts[cohort=no_gate_event]",
+      "numbers": [
+        1,
+        2,
+        6
+      ],
+      "pairs": [
+        [
+          2,
+          6,
+          "sessions"
+        ],
+        [
+          1,
+          2,
+          "sessions"
+        ],
+        [
+          1,
+          2,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "cohort": "no_gate_event",
+        "rule": "No wallet gate event was recorded.",
+        "sessions": 2,
+        "coverage_complete": 1,
+        "coverage_unknown": 1,
+        "exit_types": {
+          "back": 1,
+          "open": 1
+        },
+        "session_ids": [
+          "s5",
+          "s6"
+        ]
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "cohort_gate_event_no_attempt",
+      "kind": "cohort",
+      "evidence": "observed",
+      "label": "Gate shown, no attempt",
+      "statement": "Gate shown, no attempt: 4 of 6 sessions. The wallet gate was recorded; no connection attempt followed.",
+      "source": "/api/report current.cohorts[cohort=gate_event_no_attempt]",
+      "numbers": [
+        0,
+        4,
+        6
+      ],
+      "pairs": [
+        [
+          4,
+          6,
+          "sessions"
+        ],
+        [
+          4,
+          4,
+          "sessions"
+        ],
+        [
+          0,
+          4,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "cohort": "gate_event_no_attempt",
+        "rule": "The wallet gate was recorded; no connection attempt followed.",
+        "sessions": 4,
+        "coverage_complete": 4,
+        "coverage_unknown": 0,
+        "exit_types": {
+          "not_now": 4
+        },
+        "session_ids": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ]
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "cohort_attempted_no_success",
+      "kind": "cohort",
+      "evidence": "observed",
+      "label": "Attempted, no success recorded",
+      "statement": "Attempted, no success recorded: 0 of 6 sessions. A connection attempt was recorded without a recorded success.",
+      "source": "/api/report current.cohorts[cohort=attempted_no_success]",
+      "numbers": [
+        0,
+        6
+      ],
+      "pairs": [
+        [
+          0,
+          6,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "cohort": "attempted_no_success",
+        "rule": "A connection attempt was recorded without a recorded success.",
+        "sessions": 0,
+        "coverage_complete": 0,
+        "coverage_unknown": 0,
+        "exit_types": {},
+        "session_ids": []
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "cohort_connected",
+      "kind": "cohort",
+      "evidence": "observed",
+      "label": "Connected",
+      "statement": "Connected: 0 of 6 sessions. A wallet connection was recorded.",
+      "source": "/api/report current.cohorts[cohort=connected]",
+      "numbers": [
+        0,
+        6
+      ],
+      "pairs": [
+        [
+          0,
+          6,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "cohort": "connected",
+        "rule": "A wallet connection was recorded.",
+        "sessions": 0,
+        "coverage_complete": 0,
+        "coverage_unknown": 0,
+        "exit_types": {},
+        "session_ids": []
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "coverage",
+      "kind": "coverage",
+      "evidence": "observed",
+      "label": "Session coverage",
+      "statement": "5 of 6 sessions have complete coverage; 1 of 6 sessions have unknown coverage.",
+      "source": "/api/report current.sessions[].coverage",
+      "numbers": [
+        1,
+        5,
+        6
+      ],
+      "pairs": [
+        [
+          5,
+          6,
+          "sessions"
+        ],
+        [
+          1,
+          6,
+          "sessions"
+        ],
+        [
+          1,
+          6,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "complete": 5,
+        "unknown": 1,
+        "reasons": {
+          "missing_exit": 1
+        }
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "probe_dp1",
+      "kind": "probe",
+      "evidence": "probe",
+      "label": "Exit question at DP1",
+      "statement": "At DP1 the question was shown in 4 sessions: 3 answered, 1 skipped, 0 gave no response.",
+      "source": "/api/report current.probes[decision_point=DP1]",
+      "numbers": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "pairs": [
+        [
+          3,
+          4,
+          "sessions"
+        ],
+        [
+          1,
+          4,
+          "sessions"
+        ],
+        [
+          0,
+          4,
+          "sessions"
+        ],
+        [
+          4,
+          4,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "decision_point": "DP1",
+        "stem": "What best describes your decision not to connect right now?",
+        "target_cohorts": [
+          "gate_event_no_attempt"
+        ],
+        "shown": 4,
+        "answered": 3,
+        "skipped": 1,
+        "shown_no_response": 0
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "probe_dp2",
+      "kind": "probe",
+      "evidence": "probe",
+      "label": "Exit question at DP2",
+      "statement": "At DP2 the question was shown in 0 sessions: 0 answered, 0 skipped, 0 gave no response.",
+      "source": "/api/report current.probes[decision_point=DP2]",
+      "numbers": [
+        0,
+        2
+      ],
+      "pairs": [
+        [
+          0,
+          0,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ],
+        [
+          0,
+          0,
+          "sessions"
+        ],
+        [
+          0,
+          2,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "decision_point": "DP2",
+        "stem": "What were you hoping to do on this page?",
+        "target_cohorts": [
+          "no_gate_event"
+        ],
+        "shown": 0,
+        "answered": 0,
+        "skipped": 0,
+        "shown_no_response": 0
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "finding_dp1_h1",
+      "kind": "finding",
+      "evidence": "self_report",
+      "label": "H1 at DP1",
+      "statement": "H1 was selected by 2 of 3 respondents at DP1 (seed 2 of 3).",
+      "source": "/api/report current.findings[decision_point=DP1, hypothesis_id=H1]",
+      "numbers": [
+        2,
+        3
+      ],
+      "pairs": [
+        [
+          2,
+          3,
+          "respondents"
+        ],
+        [
+          2,
+          3,
+          "respondents"
+        ]
+      ],
+      "data": {
+        "hypothesis_id": "H1",
+        "decision_point": "DP1",
+        "cohort": "gate_event_no_attempt",
+        "selected": 2,
+        "respondents": 3,
+        "by_source": {
+          "seed": {
+            "selected": 2,
+            "respondents": 3
+          }
+        },
+        "status": "Evidence available",
+        "self_report": "Selected by ≥ 50%",
+        "observation": "No contradiction",
+        "evidence_conflict": false
+      },
+      "refs": [],
+      "related": [
+        "hypothesis_h1",
+        "probe_dp1"
+      ]
+    },
+    {
+      "id": "finding_dp1_h2",
+      "kind": "finding",
+      "evidence": "self_report",
+      "label": "H2 at DP1",
+      "statement": "H2 was selected by 1 of 3 respondents at DP1 (seed 1 of 3).",
+      "source": "/api/report current.findings[decision_point=DP1, hypothesis_id=H2]",
+      "numbers": [
+        1,
+        3
+      ],
+      "pairs": [
+        [
+          1,
+          3,
+          "respondents"
+        ],
+        [
+          1,
+          3,
+          "respondents"
+        ]
+      ],
+      "data": {
+        "hypothesis_id": "H2",
+        "decision_point": "DP1",
+        "cohort": "gate_event_no_attempt",
+        "selected": 1,
+        "respondents": 3,
+        "by_source": {
+          "seed": {
+            "selected": 1,
+            "respondents": 3
+          }
+        },
+        "status": "Evidence available",
+        "self_report": "Selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false
+      },
+      "refs": [],
+      "related": [
+        "hypothesis_h2",
+        "probe_dp1"
+      ]
+    },
+    {
+      "id": "finding_dp1_h3",
+      "kind": "finding",
+      "evidence": "self_report",
+      "label": "H3 at DP1",
+      "statement": "H3 was selected by 1 of 3 respondents at DP1 (seed 1 of 3).",
+      "source": "/api/report current.findings[decision_point=DP1, hypothesis_id=H3]",
+      "numbers": [
+        1,
+        3
+      ],
+      "pairs": [
+        [
+          1,
+          3,
+          "respondents"
+        ],
+        [
+          1,
+          3,
+          "respondents"
+        ]
+      ],
+      "data": {
+        "hypothesis_id": "H3",
+        "decision_point": "DP1",
+        "cohort": "gate_event_no_attempt",
+        "selected": 1,
+        "respondents": 3,
+        "by_source": {
+          "seed": {
+            "selected": 1,
+            "respondents": 3
+          }
+        },
+        "status": "Evidence available",
+        "self_report": "Selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false
+      },
+      "refs": [],
+      "related": [
+        "hypothesis_h3",
+        "probe_dp1"
+      ]
+    },
+    {
+      "id": "finding_dp1_h_other",
+      "kind": "finding",
+      "evidence": "self_report",
+      "label": "H_other at DP1",
+      "statement": "H_other was selected by 0 of 3 respondents at DP1 (seed 0 of 3).",
+      "source": "/api/report current.findings[decision_point=DP1, hypothesis_id=H_other]",
+      "numbers": [
+        0,
+        3
+      ],
+      "pairs": [
+        [
+          0,
+          3,
+          "respondents"
+        ],
+        [
+          0,
+          3,
+          "respondents"
+        ]
+      ],
+      "data": {
+        "hypothesis_id": "H_other",
+        "decision_point": "DP1",
+        "cohort": "gate_event_no_attempt",
+        "selected": 0,
+        "respondents": 3,
+        "by_source": {
+          "seed": {
+            "selected": 0,
+            "respondents": 3
+          }
+        },
+        "status": "Not selected",
+        "self_report": "Not selected",
+        "observation": "No contradiction",
+        "evidence_conflict": false
+      },
+      "refs": [],
+      "related": [
+        "hypothesis_h_other",
+        "probe_dp1"
+      ]
+    },
+    {
+      "id": "hypothesis_h1",
+      "kind": "hypothesis",
+      "evidence": "plan",
+      "label": "H1",
+      "statement": "H1: “Did not know a wallet was required before applying”",
+      "source": "/api/report hypotheses[id=H1]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "statement": "Did not know a wallet was required before applying",
+        "class_id": "HC-unaware-requirement",
+        "r2_applies": false,
+        "locked": true
+      },
+      "refs": [
+        {
+          "file": "src/ProjectPage.tsx",
+          "lines": [
+            31,
+            31
+          ],
+          "quote": "onClick={onApply}>Apply</button>"
+        },
+        {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            28,
+            28
+          ],
+          "quote": "if (!wallet) return requireWallet();"
+        }
+      ],
+      "related": [
+        "code_no_requirement_copy",
+        "code_apply_gated"
+      ]
+    },
+    {
+      "id": "hypothesis_h2",
+      "kind": "hypothesis",
+      "evidence": "plan",
+      "label": "H2",
+      "statement": "H2: “Concerned about the permissions shown in the wallet gate”",
+      "source": "/api/report hypotheses[id=H2]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "statement": "Concerned about the permissions shown in the wallet gate",
+        "class_id": "HC-gate-permission",
+        "r2_applies": true,
+        "locked": true
+      },
+      "refs": [
+        {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "What you’re allowing"
+        }
+      ],
+      "related": [
+        "code_gate_permission_copy"
+      ]
+    },
+    {
+      "id": "hypothesis_h3",
+      "kind": "hypothesis",
+      "evidence": "plan",
+      "label": "H3",
+      "statement": "H3: “Browsing projects without intending to apply yet”",
+      "source": "/api/report hypotheses[id=H3]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "statement": "Browsing projects without intending to apply yet",
+        "class_id": "HC-browsing",
+        "r2_applies": false,
+        "locked": true
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "hypothesis_h_other",
+      "kind": "hypothesis",
+      "evidence": "plan",
+      "label": "H_other",
+      "statement": "H_other: “A reason not yet proposed”",
+      "source": "/api/report hypotheses[id=H_other]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "statement": "A reason not yet proposed",
+        "class_id": null,
+        "r2_applies": false,
+        "locked": true
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "rule_r2",
+      "kind": "rule",
+      "evidence": "observed",
+      "label": "Contradiction rule R2",
+      "statement": "R2 checked 6 sessions in the two no-attempt cohorts: 4 recorded a gate event, 1 had complete coverage and no gate event, 1 had unknown coverage. R2 contradicted H2 in complete-coverage sessions only.",
+      "source": "/api/report current.decisions[action_id=check_gate:no_attempt:R2]",
+      "numbers": [
+        1,
+        2,
+        4,
+        6
+      ],
+      "pairs": [
+        [
+          4,
+          6,
+          "sessions"
+        ],
+        [
+          1,
+          6,
+          "sessions"
+        ],
+        [
+          1,
+          6,
+          "sessions"
+        ]
+      ],
+      "data": {
+        "evaluated": true,
+        "observed": 4,
+        "not_observed": 1,
+        "unknown_coverage": 1,
+        "checked": 6,
+        "cohorts_checked": 2,
+        "contradicted_hypotheses": [
+          "H2"
+        ],
+        "scope": "Complete-coverage sessions that meet R2 only; it does not refute a cohort or establish why sessions stopped."
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "code_apply_gated",
+      "kind": "code",
+      "evidence": "code",
+      "label": "apply_gated",
+      "statement": "ApplyModal requires a connected wallet before the application form",
+      "source": "/api/report workflow[id=apply_gated]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "instrumentation": "found_in_code"
+      },
+      "refs": [
+        {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            28,
+            28
+          ],
+          "quote": "if (!wallet) return requireWallet();"
+        }
+      ],
+      "related": []
+    },
+    {
+      "id": "code_no_requirement_copy",
+      "kind": "code",
+      "evidence": "code",
+      "label": "no_requirement_copy",
+      "statement": "ProjectPage does not say a wallet is required before applying",
+      "source": "/api/report workflow[id=no_requirement_copy]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "instrumentation": "unknown"
+      },
+      "refs": [
+        {
+          "file": "src/ProjectPage.tsx",
+          "lines": [
+            31,
+            31
+          ],
+          "quote": "onClick={onApply}>Apply</button>"
+        }
+      ],
+      "related": []
+    },
+    {
+      "id": "code_gate_permission_copy",
+      "kind": "code",
+      "evidence": "code",
+      "label": "gate_permission_copy",
+      "statement": "The gate shows what connecting allows",
+      "source": "/api/report workflow[id=gate_permission_copy]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "instrumentation": "unknown"
+      },
+      "refs": [
+        {
+          "file": "src/ApplyModal.tsx",
+          "lines": [
+            40,
+            40
+          ],
+          "quote": "What you’re allowing"
+        }
+      ],
+      "related": []
+    },
+    {
+      "id": "outcome_wallet_rejected",
+      "kind": "outcome",
+      "evidence": "code",
+      "label": "wallet_rejected",
+      "statement": "User rejects the connection in the wallet popup No tracking call was found in the searched files; a candidate for review.",
+      "source": "/api/report workflow.outcomes[id=wallet_rejected]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "instrumentation": "not_found_in_scope",
+        "desc": "User rejects the connection in the wallet popup"
+      },
+      "refs": [
+        {
+          "file": "src/wallet.ts",
+          "lines": [
+            31,
+            37
+          ],
+          "quote": "function onReject(error: Error): void {"
+        }
+      ],
+      "related": []
+    },
+    {
+      "id": "outcome_wallet_errored",
+      "kind": "outcome",
+      "evidence": "code",
+      "label": "wallet_errored",
+      "statement": "Simulated RPC error after approval No tracking call was found in the searched files; a candidate for review.",
+      "source": "/api/report workflow.outcomes[id=wallet_errored]",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "instrumentation": "not_found_in_scope",
+        "desc": "Simulated RPC error after approval"
+      },
+      "refs": [
+        {
+          "file": "src/wallet.ts",
+          "lines": [
+            42,
+            48
+          ],
+          "quote": "if (random() < RPC_ERROR_RATE) {"
+        }
+      ],
+      "related": []
+    },
+    {
+      "id": "instrumentation",
+      "kind": "instrumentation",
+      "evidence": "code",
+      "label": "Outcome instrumentation",
+      "statement": "2 workflow outcomes: 0 tracked in code, 2 not found in the searched files, 0 unknown.",
+      "source": "/api/report workflow.outcomes[].instrumentation",
+      "numbers": [
+        0,
+        2
+      ],
+      "pairs": [],
+      "data": {
+        "outcomes": 2,
+        "found_in_code": 0,
+        "not_found_in_scope": 2,
+        "unknown": 0
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "code_scope",
+      "kind": "scope",
+      "evidence": "code",
+      "label": "Code search scope",
+      "statement": "3 files searched at commit fixture; 0 unresolved imports.",
+      "source": "/api/report workflow.scope",
+      "numbers": [
+        0,
+        3
+      ],
+      "pairs": [],
+      "data": {
+        "commit_sha": "fixture",
+        "searched_files": [
+          "src/ApplyModal.tsx",
+          "src/wallet.ts",
+          "src/ProjectPage.tsx"
+        ],
+        "unresolved_imports": [],
+        "truncated": false
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "limit_commit",
+      "kind": "limit",
+      "evidence": "run",
+      "label": "Commit",
+      "statement": "Commit: uncommitted.",
+      "source": "/api/report run.code_commit",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "value": "uncommitted",
+        "ok": false
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "limit_build",
+      "kind": "limit",
+      "evidence": "run",
+      "label": "Build",
+      "statement": "Build: verified.",
+      "source": "/api/report run.build_verified",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "value": "verified",
+        "ok": true
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "lock_v1",
+      "kind": "lock",
+      "evidence": "plan",
+      "label": "Hypothesis lock (v1)",
+      "statement": "Hypotheses locked in snapshot v1, digest 7d12bb3756c494a5d8279b1c9f2c35971c61fd7e7ec7bc09bb4d0c59c9d47688.",
+      "source": "/api/report v1",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "locked": true,
+        "digest": "7d12bb3756c494a5d8279b1c9f2c35971c61fd7e7ec7bc09bb4d0c59c9d47688",
+        "data_cutoff": "2026-10-16T03:00:00+00:00"
+      },
+      "refs": [],
+      "related": []
+    },
+    {
+      "id": "run_mode",
+      "kind": "run",
+      "evidence": "run",
+      "label": "Run mode",
+      "statement": "Seed run: a demonstration dataset of simulated sessions.",
+      "source": "/api/report run.mode",
+      "numbers": [],
+      "pairs": [],
+      "data": {
+        "mode": "seed"
+      },
+      "refs": [],
+      "related": []
+    }
+  ]
+}

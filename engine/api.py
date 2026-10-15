@@ -25,6 +25,7 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
+from engine import report_doc
 from engine.cohorts import build_cohorts
 from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
@@ -304,13 +305,68 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         public = {k: v for k, v in result.items() if k != "llm_text"}  # unchecked text
         return {**public, "facts_sha256": digest, "facts": value}
 
+    # Investigation document: one checked Markdown document per evidence snapshot (context
+    # digest), appended to a JSONL log so a served document can be checked again later.
+    documents_path = settings.db_dir / f"{settings.run_id}.documents.jsonl"
+    documents: dict[str, dict[str, Any]] = {}
+    if documents_path.exists():
+        for line in documents_path.read_text(encoding="utf-8").splitlines():
+            record = json.loads(line)
+            documents[record["context_sha256"]] = record
+    doc_writer: dict[str, Any] = {"task": None, "last": float("-inf")}
+
+    def document_context(body: dict[str, Any]) -> dict[str, Any]:
+        return report_doc.context(jsonable_encoder(body))
+
+    def write_document(value: dict[str, Any]) -> None:
+        """Start one background LLM write for this snapshot, if allowed and not throttled."""
+        digest = report_doc.digest(value)
+        task = doc_writer["task"]
+        if (settings.narrative != "llm" or digest in documents
+                or (task is not None and not task.done())
+                or time.monotonic() - doc_writer["last"] < settings.narrative_interval):
+            return
+        doc_writer["last"] = time.monotonic()
+
+        async def run() -> None:
+            result = await asyncio.to_thread(lambda: report_doc.generate(settings.llm(), value))
+            if any(reason.startswith("llm:") for reason in result["rejected"]):
+                log.warning("document LLM unavailable for snapshot %s: %s", digest[:12],
+                            result["rejected"][0])
+                return
+            record = {**result, "context_sha256": digest, "snapshot_id": digest[:16],
+                      "generated_at": settings.clock().isoformat(),
+                      "prompt": "{}.v{}".format(*report_doc.DOCUMENT)}
+            documents[digest] = record
+            documents_path.parent.mkdir(parents=True, exist_ok=True)
+            with documents_path.open("a", encoding="utf-8") as log_file:
+                log_file.write(json.dumps(record, ensure_ascii=False) + "\n")
+            log.warning("document %s for snapshot %s (%d rejected)", result["source"],
+                        digest[:12], len(result["rejected"]))
+
+        doc_writer["task"] = asyncio.create_task(run())
+
+    def document_view(body: dict[str, Any]) -> dict[str, Any]:
+        value = document_context(body)
+        digest = report_doc.digest(value)
+        record = documents.get(digest)
+        if record is None:
+            write_document(value)
+            record = {"markdown": report_doc.template(value), "source": "template",
+                      "rejected": [], "pending": settings.narrative == "llm",
+                      "context_sha256": digest, "snapshot_id": digest[:16],
+                      "generated_at": None, "prompt": None}
+        return {**record, "title": value["title"], "investigation_id": value["investigation_id"],
+                "outline": list(report_doc.OUTLINE), "facts": value["facts"]}
+
     async def dp0_loop() -> None:
         while True:
             await asyncio.sleep(settings.dp0_seconds)
             try:
                 run_dp0(store(), records(), inv(), now=settings.clock())
-                write_narrative(report_facts(build_report(
-                    store(), records(), inv(), now=settings.clock())))
+                body = build_report(store(), records(), inv(), now=settings.clock())
+                write_narrative(report_facts(body))
+                write_document(document_context(body))
             except Exception:  # noqa: BLE001 - keep the loop alive; the trace shows gaps
                 log.exception("DP0 evaluation failed")
 
@@ -549,6 +605,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def report() -> Any:
         body = build_report(store(), records(), inv(), now=settings.clock())
         return jsonable_encoder({**body, "narrative": narrative_view(body)})
+
+    @app.get("/api/report/document")
+    async def report_document() -> Any:
+        """The investigation as one Markdown document, its facts and their snapshot digest."""
+        body = build_report(store(), records(), inv(), now=settings.clock())
+        return jsonable_encoder(document_view(body))
 
     @app.get("/api/seed-sessions/{session_id}")
     async def seed_session_view(session_id: str) -> Any:
