@@ -1,5 +1,7 @@
 import { OperatorBar } from "./OperatorBar";
+import { OperatorGate } from "./OperatorGate";
 import { ReportPanels } from "./ReportPanels";
+import { RunBanner } from "./RunBanner";
 import { reportWarnings, safeText, time } from "./format";
 import { useReport } from "./useReport";
 
@@ -43,7 +45,11 @@ export default function App() {
       </aside>
       <main id="top" className="workspace">
         <header className="workspace-top">
-          <span>Operator console</span>
+          <span>
+            {new URLSearchParams(location.search).get("operator") === "1"
+              ? "Operator console"
+              : "Investigation report"}
+          </span>
           <div className="refresh-status">
             <span className={error ? "status-dot warning-dot" : "status-dot"} />
             {error ? "Refresh interrupted" : "Polls every 3 s"}
@@ -54,13 +60,21 @@ export default function App() {
             )}
           </div>
         </header>
-        {(mode === "seed" || mode === "replay") && (
+        {(mode === "seed" || mode === "replay" || mode === "demo") && (
           <div className={`mode-banner ${mode}`} role="status">
-            <strong>{mode === "replay" ? "REPLAY" : "SEED DATA"}</strong>
+            <strong>
+              {mode === "replay"
+                ? "REPLAY"
+                : mode === "demo"
+                  ? "DEMO"
+                  : "SEED DATA"}
+            </strong>
             <span>
               {mode === "replay"
                 ? "Recorded run. This is not a live investigation."
-                : "Demonstration dataset. These are not live participant results."}
+                : mode === "demo"
+                  ? "20 seeded sessions + live visitors"
+                  : "Demonstration dataset. These are not live participant results."}
             </span>
           </div>
         )}
@@ -71,7 +85,7 @@ export default function App() {
             <span>
               {report
                 ? "The last received report is shown below."
-                : "Start the backend or use VITE_MOCK=1."}
+                : "Please try again in a moment."}
             </span>
           </div>
         )}
@@ -97,11 +111,19 @@ export default function App() {
                 {safeText(report.investigation_id)}
               </code>
             </div>
-            <OperatorBar
-              key={report.run.run_id}
-              report={report}
-              refresh={refresh}
-            />
+            <RunBanner run={report.run} />
+            <OperatorGate key={report.run.run_id}>
+              <OperatorBar
+                key={report.run.run_id}
+                report={report}
+                refresh={refresh}
+              />
+            </OperatorGate>
+            <nav className="mobile-report-nav" aria-label="Jump to report">
+              <a href="#coverage">Your session & coverage</a>
+              <a href="#findings">Findings</a>
+              <a href="#limitations">Limitations</a>
+            </nav>
             {warnings.length > 0 && (
               <div className="warning report-errors" role="alert">
                 <strong>Report requires attention</strong>

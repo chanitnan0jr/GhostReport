@@ -7,6 +7,8 @@ import {
 } from "./components";
 import { cohortNames, groupKey, safeText, sessions, time } from "./format";
 import type { Finding, Hypothesis, Report } from "./types";
+import { useJudgeSession } from "./useJudgeSession";
+import { YourSession } from "./YourSession";
 
 function hypothesesFor(report: Report): Hypothesis[] {
   return report.hypotheses.some((h) => h.id === "H_other")
@@ -364,6 +366,8 @@ function Trace({ report }: { report: Report }) {
 }
 
 function Coverage({ report }: { report: Report }) {
+  const sid = useJudgeSession();
+  const own = report.current.sessions.find((s) => s.session_id === sid);
   const countLabels = [
     ["shown", "Shown"],
     ["answered", "Answered"],
@@ -380,6 +384,7 @@ function Coverage({ report }: { report: Report }) {
       label="Observed"
       description="Delivery, response and telemetry coverage are reported separately."
     >
+      <YourSession report={report} sid={sid} />
       <div className="probe-coverage">
         {report.current.probes.map((probe) => (
           <article key={probe.plan_id}>
@@ -422,8 +427,16 @@ function Coverage({ report }: { report: Report }) {
           </thead>
           <tbody>
             {report.current.cohorts.map((cohort) => (
-              <tr key={cohort.cohort}>
-                <th scope="row">{cohortNames[cohort.cohort]}</th>
+              <tr
+                key={cohort.cohort}
+                className={own?.cohort === cohort.cohort ? "your-cohort" : ""}
+              >
+                <th scope="row">
+                  {cohortNames[cohort.cohort]}
+                  {own?.cohort === cohort.cohort && (
+                    <span className="your-session-label">Your session</span>
+                  )}
+                </th>
                 <td>
                   {sessions(cohort.sessions, report.current.sessions.length)}
                 </td>

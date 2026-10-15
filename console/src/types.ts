@@ -81,6 +81,15 @@ export interface Report {
     app_build: string;
     policy_version: string;
     catalog_version: string;
+    verification?: Record<
+      string,
+      {
+        verified: boolean;
+        commit: string | null;
+        test: string | null;
+        passed_at?: string | null;
+      }
+    >;
   };
   investigation_id: string;
   workflow: {
@@ -140,4 +149,14 @@ export interface SnapshotResult {
   version: number;
   digest: string;
   data_cutoff: string;
+}
+
+export interface InvestigationDraft {
+  workflow: Report["workflow"];
+  hypotheses: { hypotheses: Hypothesis[] };
+  probe_options: Record<
+    string,
+    { id: string; label: string; hypothesis_ids: string[] }[]
+  >;
+  rejected?: Record<string, string[]>;
 }

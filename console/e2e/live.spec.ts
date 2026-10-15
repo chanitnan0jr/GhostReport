@@ -1,56 +1,64 @@
 import { expect, test } from "@playwright/test";
 import type { Report } from "../src/types";
 
-test("real pilot API: lost exposure beacon is recovered from the answer and the console polls the change within 3 seconds", async ({
+test("a real answer reaches the public report within three seconds", async ({
   page,
   context,
 }) => {
-  const initialResponse = await context.request.get(
-    "http://127.0.0.1:5184/api/report",
+  const getReport = async (): Promise<Report> => {
+    const response = await context.request.get(
+      "http://127.0.0.1:5184/api/report",
+    );
+    expect(response.ok()).toBe(true);
+    return response.json();
+  };
+  const initial = await getReport();
+  expect(initial.locked, "Use an isolated, prelocked E2E run").toBe(true);
+  expect(["pilot", "demo"]).toContain(initial.run.mode);
+  const sessionId = `e2e-console-${crypto.randomUUID()}`;
+  await context.addInitScript(
+    (sid) => localStorage.setItem("ghost:judge_sid", sid),
+    sessionId,
   );
-  expect(initialResponse.ok()).toBe(true);
-  const initial = (await initialResponse.json()) as Report;
-  expect(initial.run.mode, "Use an isolated pilot run for this test").toBe(
-    "pilot",
-  );
-  await page.goto("/");
+  await page.goto("/report/");
   await page.getByRole("heading", { name: "Hypothesis Matrix" }).waitFor();
-  if (!initial.locked)
-    await page.getByRole("button", { name: "Lock v1", exact: true }).click();
-  await expect(page.getByLabel("v1 digest")).toBeVisible();
-  await expect(page.getByLabel("Digest held outside the system")).toHaveValue(
-    "",
-  );
-
+  await expect(
+    page.getByRole("button", { name: "Write v2 snapshot" }),
+  ).toHaveCount(0);
   const app = await context.newPage();
-  const sessionId = `ui-${Date.now()}`;
-  await app.goto(`http://127.0.0.1:5183/?sid=${sessionId}`);
+  await app.goto(`http://127.0.0.1:5183/app/?sid=${sessionId}`);
   await app
     .getByRole("button", { name: "Continue with optional feedback" })
     .click();
-  const planResponses = [
-    app.waitForResponse((r) => r.url().includes("decision_point=DP1")),
-    app.waitForResponse((r) => r.url().includes("decision_point=DP2")),
-  ];
+  const planPromise = app.waitForResponse((r) =>
+    r.url().includes("decision_point=DP1"),
+  );
   await app.getByRole("button", { name: /Open Source Commons/ }).click();
-  for (const pending of planResponses)
-    expect(await (await pending).json()).not.toBeNull();
+  const plan = await (await planPromise).json();
+  expect(plan).not.toBeNull();
   await app.getByRole("button", { name: "Apply", exact: true }).click();
-  // Emulate a beacon accepted by the browser but lost before reaching the API.
   await app.evaluate(() => {
     navigator.sendBeacon = () => true;
   });
   await app.getByRole("button", { name: "Not now", exact: true }).click();
   await expect(app.getByRole("dialog")).toHaveCount(0);
-  await app.getByLabel("Just browsing", { exact: true }).check();
-  const priorResponse = await context.request.get(
-    "http://127.0.0.1:5184/api/report",
+  const option = plan.options.find(
+    (o: { label: string }) => o.label === "Something else",
   );
-  const prior = (await priorResponse.json()) as Report;
-  const priorFinding = prior.current.findings.find(
-    (f) => f.hypothesis_id === "H3" && f.decision_point === "DP1",
+  expect(option).toBeDefined();
+  await app.getByLabel(option.label, { exact: true }).check();
+  const prior = await getReport();
+  const hypothesis = prior.hypotheses.find((h) => h.id === "H_other")!;
+  expect(hypothesis).toBeDefined();
+  const previous = prior.current.findings.find(
+    (f) =>
+      f.hypothesis_id === hypothesis.id &&
+      f.decision_point === "DP1" &&
+      f.question_version === plan.question_version &&
+      f.cohort === plan.target_cohort,
   )!;
-  const expectedText = `${priorFinding.selected + 1} of ${priorFinding.respondents + 1} respondents`;
+  expect(previous).toBeDefined();
+  const expectedText = `${previous.selected + 1} of ${previous.respondents + 1} respondents`;
   const answerPromise = app.waitForResponse((r) =>
     r.url().endsWith("/api/probe/response"),
   );
@@ -58,9 +66,10 @@ test("real pilot API: lost exposure beacon is recovered from the answer and the 
   const answer = await answerPromise;
   expect(answer.ok()).toBe(true);
   expect((await answer.json()).status).toBe("recorded_inferred");
-  const submitted = answer.request().postDataJSON();
-  expect(submitted.event_seq_at_shown).toBe(4);
-  expect(submitted.session_id).toBe(sessionId);
+  expect(answer.request().postDataJSON()).toMatchObject({
+    session_id: sessionId,
+    event_seq_at_shown: 4,
+  });
   const started = Date.now();
   const liveGroup = page
     .locator("#findings .finding-group")
@@ -70,18 +79,23 @@ test("real pilot API: lost exposure beacon is recovered from the answer and the 
   });
   const latency = Date.now() - started;
   expect(latency).toBeLessThan(3000);
-  console.log(`Live response → console update: ${latency} ms`);
-  const final = (await (
-    await context.request.get("http://127.0.0.1:5184/api/report")
-  ).json()) as Report;
-  const counts = final.current.probes.find(
-    (p) => p.decision_point === "DP1",
-  )!.counts;
-  expect(counts.inferred_from_response).toBe(
-    prior.current.probes.find((p) => p.decision_point === "DP1")!.counts
+  console.log(`Response → public report: ${latency} ms`);
+  await expect(
+    page.getByRole("complementary", { name: "Your session" }),
+  ).toContainText("Gate shown, no attempt");
+  const final = await getReport();
+  expect(final.current.errors).toEqual([]);
+  expect(
+    final.current.probes.find((p) => p.plan_id === plan.plan_id)!.counts
+      .inferred_from_response,
+  ).toBe(
+    prior.current.probes.find((p) => p.plan_id === plan.plan_id)!.counts
       .inferred_from_response + 1,
   );
-  expect(final.current.errors).toEqual([]);
-  await page.screenshot({ path: "/tmp/ghostreport-console-live.png" });
-  await app.screenshot({ path: "/tmp/ghostreport-app-live.png" });
+  await page.screenshot({
+    path: `/tmp/ghostreport-console-live-${test.info().project.name}.png`,
+  });
+  await app.screenshot({
+    path: `/tmp/ghostreport-app-live-${test.info().project.name}.png`,
+  });
 });

@@ -5,12 +5,13 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import sample from "../../fixtures/report.sample.json";
 import App from "./App";
 import { OperatorBar } from "./OperatorBar";
 import { findingLabel, findingText, safeText } from "./format";
 import type { Report } from "./types";
+import { setOperatorToken } from "./api";
 
 const fixture = () => structuredClone(sample) as Report;
 const json = (value: unknown, status = 200) =>
@@ -35,9 +36,9 @@ describe("sample report", () => {
       within(matrix as HTMLElement).getByText("2 of 3 respondents"),
     ).toBeVisible();
     expect(container.querySelectorAll(".generic")).toHaveLength(2);
-    expect(screen.getByLabelText("Digest held outside the system")).toHaveValue(
-      "",
-    );
+    expect(
+      screen.queryByLabelText("Digest held outside the system"),
+    ).not.toBeInTheDocument();
     expect(container.textContent).not.toMatch(
       /\b(?:confirmed|root cause|cause|proved)\b/i,
     );
@@ -101,6 +102,7 @@ describe("sample report", () => {
 });
 
 describe("operator actions", () => {
+  beforeEach(() => setOperatorToken("test-operator-token"));
   it("locks v1, displays the returned digest and never fills the external input", async () => {
     const report = fixture();
     report.locked = false;
@@ -110,7 +112,11 @@ describe("operator actions", () => {
       digest: sample.v1.digest,
       data_cutoff: sample.v1.data_cutoff,
     };
-    const fetchMock = vi.fn().mockResolvedValue(json(result));
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (path: string) =>
+        json(path === "/api/draft" ? null : result),
+      );
     vi.stubGlobal("fetch", fetchMock);
     render(
       <OperatorBar
@@ -123,6 +129,12 @@ describe("operator actions", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lock",
       expect.objectContaining({ method: "POST" }),
+    );
+    const lockCall = fetchMock.mock.calls.find(
+      (call) => call[0] === "/api/lock",
+    );
+    expect(lockCall?.[1].headers.get("Authorization")).toBe(
+      "Bearer test-operator-token",
     );
     expect(screen.getByLabelText("Digest held outside the system")).toHaveValue(
       "",
@@ -163,10 +175,89 @@ describe("operator actions", () => {
   });
 });
 
+it("hides all operator tools from public visitors and asks once on operator entry", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async () => json(fixture())),
+  );
+  const first = render(<App />);
+  await screen.findByRole("heading", { name: "Hypothesis Matrix" });
+  expect(screen.queryByLabelText("Operator token")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Write v2 snapshot" }),
+  ).not.toBeInTheDocument();
+  first.unmount();
+  history.replaceState(null, "", "/report/?operator=1");
+  render(<App />);
+  const input = await screen.findByLabelText("Operator token");
+  fireEvent.change(input, { target: { value: "memory-only-token" } });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Unlock operator tools" }),
+  );
+  expect(
+    await screen.findByRole("button", { name: "Write v2 snapshot" }),
+  ).toBeVisible();
+  expect(screen.queryByLabelText("Operator token")).not.toBeInTheDocument();
+  expect(localStorage.length).toBe(0);
+  expect(sessionStorage.length).toBe(0);
+});
+
+it("highlights the visitor session and renders the supplied event verification", async () => {
+  localStorage.setItem("ghost:judge_sid", "s2");
+  const value = fixture();
+  value.run.mode = "demo";
+  value.run.verification = {
+    wallet_gate_shown: {
+      verified: true,
+      test: "gate renders once",
+      commit: "abc123",
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async () => json(value)),
+  );
+  const { container } = render(<App />);
+  await screen.findByRole("heading", { name: "Coverage" });
+  expect(screen.getByText("20 seeded sessions + live visitors")).toBeVisible();
+  expect(screen.getByText("gate renders once")).toBeVisible();
+  expect(container.querySelector(".your-cohort")).toHaveTextContent(
+    "Your session",
+  );
+  expect(
+    screen.getByRole("complementary", { name: "Your session" }),
+  ).toHaveTextContent("Gate shown, no attempt");
+});
+
 it("guards finding text and wording without reclassifying observations", () => {
   const finding = fixture().current.findings[0];
   expect(findingText(finding)).toBe("2 of 3 respondents");
   expect(findingLabel({ ...finding, respondents: 2 })).toBe("Unresolved");
   expect(findingText({ ...finding, selected: 4 })).toBeNull();
   expect(safeText("Confirmed")).toBe("Text withheld by wording guard");
+});
+
+it("shows an explicitly unverified event and preserves a dirty commit verbatim", async () => {
+  const value = fixture();
+  value.run.build_verified = false;
+  value.run.code_commit = "abc123-dirty.c5b82c63";
+  value.run.verification = {
+    wallet_gate_shown: {
+      verified: false,
+      test: null,
+      commit: null,
+      passed_at: null,
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async () => json(value)),
+  );
+  render(<App />);
+  await screen.findByRole("heading", { name: "Coverage" });
+  const banner = screen.getByLabelText("Run information");
+  expect(banner).toHaveTextContent("Build unverified");
+  expect(banner).toHaveTextContent("wallet_gate_shown unverified");
+  expect(banner).toHaveTextContent("abc123-dirty.c5b82c63");
+  expect(banner).not.toHaveTextContent("verified by");
 });

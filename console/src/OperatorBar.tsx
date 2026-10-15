@@ -1,7 +1,14 @@
-import { useState, type FormEvent } from "react";
-import { ApiError, lockV1, writeSnapshot } from "./api";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  ApiError,
+  analyzeRepository,
+  approveInvestigation,
+  fetchDraft,
+  lockV1,
+  writeSnapshot,
+} from "./api";
 import { safeText, time } from "./format";
-import type { Report } from "./types";
+import type { InvestigationDraft, Report } from "./types";
 
 export function OperatorBar({
   report,
@@ -12,12 +19,60 @@ export function OperatorBar({
 }) {
   const [externalDigest, setExternalDigest] = useState("");
   const [returnedDigest, setReturnedDigest] = useState("");
-  const [busy, setBusy] = useState<"lock" | "snapshot" | null>(null);
+  const [busy, setBusy] = useState<
+    "lock" | "snapshot" | "analyze" | "approve" | null
+  >(null);
+  const [draft, setDraft] = useState<InvestigationDraft | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
   const digest = report.v1?.digest ?? returnedDigest;
   const locked = report.locked || Boolean(returnedDigest);
+
+  useEffect(() => {
+    if (locked) return;
+    let active = true;
+    void fetchDraft()
+      .then((value) => {
+        if (active) setDraft(value);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [locked]);
+
+  async function analyze() {
+    setBusy("analyze");
+    setError("");
+    setMessage("");
+    try {
+      setDraft(await analyzeRepository());
+      setMessage("Draft ready for operator review.");
+    } catch (error) {
+      failure(error);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function approve() {
+    setBusy("approve");
+    setError("");
+    setMessage("");
+    try {
+      await approveInvestigation();
+      setDraft(null);
+      setMessage(
+        "Investigation approved. Review the report before locking v1.",
+      );
+      await refresh();
+    } catch (error) {
+      failure(error);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   function failure(error: unknown) {
     setError(
@@ -84,15 +139,51 @@ export function OperatorBar({
             Run <code>{safeText(report.run.run_id)}</code>
           </span>
           <span>
-            Mode <strong>{report.run.mode}</strong>
-          </span>
-          <span
-            className={report.run.build_verified ? "verified" : "unverified"}
-          >
-            Build {report.run.build_verified ? "verified" : "unverified"}
+            Mode <strong>{safeText(report.run.mode)}</strong>
           </span>
         </div>
       </div>
+      {!locked && (
+        <div className="operator-stages">
+          <div className="operator-stage-actions">
+            <button
+              className="secondary"
+              disabled={busy !== null}
+              onClick={() => void analyze()}
+            >
+              {busy === "analyze" ? "Reading repository…" : "Analyze"}
+            </button>
+            <button
+              className="secondary"
+              disabled={busy !== null || !draft}
+              onClick={() => void approve()}
+            >
+              {busy === "approve" ? "Approving…" : "Approve"}
+            </button>
+          </div>
+          {draft && (
+            <details className="draft-review" open>
+              <summary>
+                Review the proposed investigation before approving
+              </summary>
+              <pre>
+                {safeText(
+                  JSON.stringify(
+                    {
+                      workflow: draft.workflow,
+                      hypotheses: draft.hypotheses,
+                      probe_options: draft.probe_options,
+                      rejected: draft.rejected,
+                    },
+                    null,
+                    2,
+                  ),
+                )}
+              </pre>
+            </details>
+          )}
+        </div>
+      )}
       <div className="operator-grid">
         <div className="lock-controls">
           {locked ? (
@@ -158,7 +249,7 @@ export function OperatorBar({
       </div>
       {error && (
         <div className="warning" role="alert">
-          <strong>Snapshot action did not complete</strong>
+          <strong>Operator action did not complete</strong>
           <span>{error}</span>
         </div>
       )}
