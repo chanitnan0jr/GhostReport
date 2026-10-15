@@ -281,6 +281,8 @@ def test_static_frontends_share_one_origin(tmp_path: Path) -> None:
         assert "landing" in client.get("/").text
         assert "wallet app" in client.get("/app/").text
         assert "report" in client.get("/report/").text
+        assert client.get("/report", follow_redirects=False).headers["location"] == "/report/"
+        assert "wallet app" in client.get("/app").text
         assert client.get("/api/health").json()["ok"] is True
 
 

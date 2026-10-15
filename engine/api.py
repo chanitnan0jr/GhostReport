@@ -20,6 +20,7 @@ from typing import Annotated, Any
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
@@ -443,6 +444,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     if settings.static_dir is not None:
         # One origin for judges: landing at /, the target app at /app/, the report at /report/.
+        for prefix in ("/app", "/report"):
+            # Judges type "/report"; the mounted apps live under the trailing slash.
+            app.add_api_route(prefix, lambda prefix=prefix: RedirectResponse(f"{prefix}/"),
+                              include_in_schema=False)
         for prefix, folder in (("/app", "app"), ("/report", "console"), ("/", "landing")):
             directory = settings.static_dir / folder
             if directory.is_dir():
