@@ -4,8 +4,8 @@
   --home-blue: #2055ff;
   min-height: 100vh;
   padding-top: 0.1px;
-  background: #eef1f4 url("/images/ink-mountains.png") center top / cover fixed
-    no-repeat;
+  background: #eef1f4 url("../../shared/assets/ink-mountains.png") center top /
+    cover fixed no-repeat;
   color: var(--home-ink);
 }
 .home-site .ink-home {
