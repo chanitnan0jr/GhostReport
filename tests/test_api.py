@@ -301,3 +301,21 @@ def test_after_retry_counts_unsuccessful_earlier_attempts(tmp_path: Path, clock:
         assert session["cohort"] == "connected"
         assert session["attempt_states"] == ["no_outcome_observed", "connected"]
         assert session["after_retry"] is True
+
+
+def test_seeded_demo_run_reports_and_is_idempotent(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        report = client.get("/api/report").json()
+        current = report["current"]
+        assert report["locked"] and current["seeded_sessions"] == 20
+        assert current["errors"] == []
+        assert current["funnel"]["visitors"] == 20 and current["funnel"]["connected"] == 4
+        dp1 = next(p for p in current["probes"] if p["decision_point"] == "DP1")["counts"]
+        assert (dp1["shown"], dp1["answered"], dp1["skipped"]) == (7, 6, 1)
+        assert any(f["respondents"] >= 3 for f in current["findings"])
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/api/report").json()["current"]["seeded_sessions"] == 20

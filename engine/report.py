@@ -20,6 +20,7 @@ from engine.policy import select_dp0
 from engine.probe import resolve_exposure
 from engine.reconcile import exposure_counts, reconcile
 from engine.records import ProbeRecords
+from engine.seed import SEED_PREFIX
 from engine.storage import Store
 
 NO_ATTEMPT = frozenset({"no_gate_event", "gate_event_no_attempt"})
@@ -166,6 +167,7 @@ def evaluate(
         "probes": probes,
         "findings": findings,
         "orphan_responses": orphans,
+        "seeded_sessions": sum(s.session_id.startswith(SEED_PREFIX) for s in sessions),
         "errors": errors,
     }
 

@@ -46,6 +46,7 @@ from engine.report import (
     run_dp0,
     snapshots,
 )
+from engine.seed import seed_run
 from engine.stages import InvestigationDraft, approve, run_stage_a, run_stage_b
 from engine.storage import Store
 
@@ -80,6 +81,7 @@ class Settings:
         os.getenv("GHOST_ENDS_AT", "2026-10-16T18:00:00+07:00")))
     dp0_seconds: float = 30.0
     autolock: bool = False
+    seed: bool = False  # add ~20 synthetic seed-* sessions once, after the lock
     operator_token: str | None = field(default_factory=lambda: os.getenv("GHOST_OPERATOR_TOKEN"))
     static_dir: Path | None = field(default_factory=lambda: (
         Path(d) if (d := os.getenv("GHOST_STATIC_DIR")) else None))
@@ -240,6 +242,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         chain = snapshots(state["store"], inv().investigation_id)
         if chain:
             serve_locked(chain[0][0])
+            if settings.seed:
+                seeded = seed_run(state["store"], state["records"], inv(), settings.clock)
+                if seeded:
+                    log.warning("seeded %d synthetic sessions (seed-*)", seeded)
         task = asyncio.create_task(dp0_loop()) if settings.dp0_seconds > 0 else None
         try:
             yield
