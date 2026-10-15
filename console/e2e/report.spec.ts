@@ -124,3 +124,33 @@ test("selects ENS across tabs without leaking mock sessions or operator controls
   ).toBeVisible();
   await page.screenshot({ path: "/tmp/ghostreport-journeys-comparison.png" });
 });
+
+test("previews synthetic ENS feedback without presenting it as visitor data", async ({
+  page,
+}) => {
+  await page.goto("/report/?project=ens");
+  await page.getByRole("button", { name: "Preview synthetic report" }).click();
+  await expect(
+    page.getByRole("heading", { name: "ENS simulation report" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("20 of 20 sessions are synthetic; no visitor data."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Hypotheses v1 vs current" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Limitations" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Add simulated load + feedback" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "View simulated segments →" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Simulated segments", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Project data" })
+    .selectOption("app");
+  await expect(page).not.toHaveURL(/simulation=/);
+});

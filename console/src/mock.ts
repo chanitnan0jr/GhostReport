@@ -4,6 +4,7 @@ import type { Report } from "./types";
 import { mockJourneys, mockWorkflow } from "./mockViews";
 import type { JourneySource } from "./journeys";
 import { mockEvidence } from "./mockEvidence";
+import ensSimulationSample from "./mocks/ensSimulation.sample.json";
 
 /** The shared report fixture is read directly; it is never rewritten. */
 export function installMockBackend() {
@@ -48,6 +49,28 @@ export function installMockBackend() {
         status,
         headers: { "Content-Type": "application/json" },
       });
+    if (url.pathname === "/api/ens/simulations" && init?.method === "POST")
+      return json(
+        {
+          simulation_id: ensSimulationSample.simulation_id,
+          token: "",
+          report: ensSimulationSample,
+        },
+        201,
+      );
+    if (
+      url.pathname ===
+      `/api/ens/simulations/${ensSimulationSample.simulation_id}`
+    )
+      return json(ensSimulationSample);
+    if (url.pathname.startsWith("/api/ens/simulations/"))
+      return json(
+        {
+          detail:
+            "Static simulation preview. Use the real backend to add load.",
+        },
+        409,
+      );
     if (url.pathname === "/api/report") return json(state);
     if (url.pathname === "/api/report/document") return json(document);
     if (url.pathname === "/api/evidence") return json(mockEvidence(state));

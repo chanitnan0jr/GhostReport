@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { GeneratedJourneys } from "./GeneratedJourneys";
 import { activeSite } from "../../shared/navigation";
 import { ConsoleHeader, useConsoleHash } from "./ConsoleHeader";
@@ -13,6 +13,7 @@ import { SandboxPanel } from "./sandbox/SandboxPanel";
 import { SANDBOX_BANNER } from "./sandbox/types";
 
 const WorkflowMap = lazy(() => import("./WorkflowMap"));
+const EnsSimulation = lazy(() => import("./EnsSimulation"));
 
 export default function App() {
   const project = activeSite(new URL(location.href));
@@ -21,6 +22,9 @@ export default function App() {
   const mode = report?.run.mode;
   const hash = useConsoleHash();
   const sandbox = sandboxId();
+  const [simulation, setSimulation] = useState(
+    new URLSearchParams(location.search).get("simulation"),
+  );
   const ready = report !== null;
   const page =
     hash === "#segments"
@@ -50,33 +54,33 @@ export default function App() {
         <div className="console-shell">
           <main className="workspace">
             <p className="mode-banner">
-              ENS data · code_only · read-only · nothing deployed
+              {simulation
+                ? "ENS simulation · synthetic events and feedback · separate from visitor data"
+                : "ENS data · code_only · read-only · nothing deployed"}
             </p>
             {page === "workflow" ? (
               <Suspense fallback={<p>Opening Workflow Map…</p>}>
                 <WorkflowMap target="ens" />
               </Suspense>
             ) : page === "segments" ? (
-              <div id="segments">
-                <GeneratedJourneys project="ens" />
-              </div>
+              simulation ? (
+                <Suspense fallback={<p>Opening simulation…</p>}>
+                  <EnsSimulation page="segments" />
+                </Suspense>
+              ) : (
+                <div id="segments">
+                  <GeneratedJourneys project="ens" />
+                  <p>
+                    <a href="/report/?project=ens">
+                      Test the report with simulated events and feedback →
+                    </a>
+                  </p>
+                </div>
+              )
             ) : (
-              <section className="panel" id="top">
-                <h1>ENS code-only project</h1>
-                <p>
-                  ENS has no recorded sessions or behavioural report. Explore
-                  its code evidence and the journeys proposed from its Workflow
-                  Map.
-                </p>
-                <a className="primary" href="/report/?project=ens#segments">
-                  View generated ENS journeys →
-                </a>
-                <p>
-                  <a href="/ens/?project=ens">
-                    Read the code evidence and manual reference review →
-                  </a>
-                </p>
-              </section>
+              <Suspense fallback={<p>Opening simulation…</p>}>
+                <EnsSimulation onCreated={setSimulation} />
+              </Suspense>
             )}
           </main>
         </div>

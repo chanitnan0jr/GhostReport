@@ -1,0 +1,130 @@
+.ens-simulation {
+  display: grid;
+  gap: 20px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.ens-simulation .panel {
+  padding: 24px;
+}
+.ens-simulation h1 {
+  font-size: 30px;
+  margin-block: 12px;
+}
+.ens-simulation h2 {
+  font-size: 22px;
+  margin-block: 12px;
+}
+.ens-simulation h3 {
+  font-size: 17px;
+}
+.ens-simulation p {
+  color: var(--gr-muted);
+}
+.ens-simulation a {
+  display: inline-block;
+}
+.ens-simulation-intro > a {
+  margin-left: 18px;
+}
+.ens-simulation code {
+  overflow-wrap: anywhere;
+}
+.ens-simulation-population {
+  font-weight: 600;
+  color: var(--gr-ink) !important;
+}
+.ens-load-form {
+  display: grid;
+  grid-template-columns: 150px 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin-block: 20px;
+}
+.ens-load-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.ens-load-form select {
+  min-height: 44px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--gr-line);
+  border-radius: 8px;
+  background: var(--gr-surface);
+  color: var(--gr-ink);
+  font: inherit;
+}
+.ens-simulation-links {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.ens-segment-grid,
+.ens-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ens-segment-grid article,
+.ens-coverage-grid article {
+  border: 1px solid var(--gr-line);
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--gr-bg);
+}
+.ens-coverage-grid strong {
+  display: block;
+}
+.ens-segment-grid h3 {
+  margin-top: 0;
+}
+.ens-table-scroll {
+  overflow-x: auto;
+}
+.ens-simulation table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ens-simulation th,
+.ens-simulation td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--gr-line);
+  vertical-align: top;
+}
+.ens-simulation th {
+  background: var(--gr-bg);
+}
+.ens-event-path code {
+  display: inline-block;
+  background: var(--gr-accent-soft);
+  padding: 3px 6px;
+  border-radius: 5px;
+  margin-block: 3px;
+}
+.ens-findings-group {
+  margin-top: 28px;
+}
+.ens-neutral {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--gr-bg);
+  color: var(--gr-muted);
+}
+.ens-simulation pre {
+  max-height: 500px;
+  overflow: auto;
+  background: var(--gr-bg);
+  padding: 16px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ens-simulation summary {
+  cursor: pointer;
+  min-height: 36px;
+}

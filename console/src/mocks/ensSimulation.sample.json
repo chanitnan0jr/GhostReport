@@ -1,0 +1,1187 @@
+{
+  "simulation_id": "ens-sim-preview",
+  "mode": "synthetic",
+  "source": "synthetic",
+  "project": "ens",
+  "created_at": "2026-10-16T07:00:00+00:00",
+  "data_version": "1468c05988a8d4783b7a542647aedb2aca3185cffad3aed511562e5f84226edf",
+  "v1_digest": "94bb102151bb68904beed8be969c4eec07882b2097286e3d06d3a9b48bb65db9",
+  "journey_digest": "596704bcf58ce8a5b4821198506633960101777ad730f75e1fee453c969a7f16",
+  "question": {
+    "version": "ens-synthetic-v1",
+    "stem": "What best describes why you stopped this simulated registration flow?",
+    "source": "Authored simulation fixture, not an ENS research question",
+    "options": [
+      {
+        "id": "details",
+        "hypothesis_id": "H_sim_details",
+        "label": "I wanted to explore registration details"
+      },
+      {
+        "id": "permission",
+        "hypothesis_id": "H_sim_permission",
+        "label": "I wanted to understand the wallet request"
+      },
+      {
+        "id": "cost",
+        "hypothesis_id": "H_sim_cost",
+        "label": "I wanted to review the transaction cost"
+      },
+      {
+        "id": "other",
+        "hypothesis_id": "H_other",
+        "label": "Something else"
+      }
+    ]
+  },
+  "population": {
+    "synthetic": 20,
+    "visitor": 0,
+    "text": "20 of 20 sessions are synthetic; no visitor data."
+  },
+  "summary": "Synthetic ENS report exercise. 20 of 20 sessions were generated. 6 of 8 sessions answered the simulated question. No ENS application was executed.",
+  "segments": [
+    {
+      "id": "registration_outcome",
+      "label": "Registration completion recorded",
+      "sessions": 4,
+      "total_sessions": 20,
+      "text": "4 of 20 sessions"
+    },
+    {
+      "id": "registration_override",
+      "label": "Registration override recorded",
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    },
+    {
+      "id": "commit_failed",
+      "label": "Commit failure recorded",
+      "sessions": 0,
+      "total_sessions": 20,
+      "text": "0 of 20 sessions"
+    },
+    {
+      "id": "commit_outcome",
+      "label": "Commit send recorded",
+      "sessions": 7,
+      "total_sessions": 20,
+      "text": "7 of 20 sessions"
+    },
+    {
+      "id": "profile_submitted",
+      "label": "Profile submission recorded",
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    },
+    {
+      "id": "info_submitted",
+      "label": "Info submission recorded",
+      "sessions": 3,
+      "total_sessions": 20,
+      "text": "3 of 20 sessions"
+    },
+    {
+      "id": "no_match",
+      "label": "No rule matched",
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    }
+  ],
+  "coverage": {
+    "eligible": 11,
+    "shown": 8,
+    "answered": 6,
+    "skipped": 0,
+    "shown_no_response": 2,
+    "inactive": 6,
+    "not_shown": 3,
+    "not_asked": 12,
+    "total_sessions": 20,
+    "instrumentation": "unverified"
+  },
+  "v1": {
+    "status": "Unresolved",
+    "findings": [],
+    "digest": "94bb102151bb68904beed8be969c4eec07882b2097286e3d06d3a9b48bb65db9"
+  },
+  "findings": [
+    {
+      "segment": "registration_outcome",
+      "segment_label": "Registration completion recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_outcome",
+      "segment_label": "Registration completion recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_outcome",
+      "segment_label": "Registration completion recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_outcome",
+      "segment_label": "Registration completion recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_override",
+      "segment_label": "Registration override recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_override",
+      "segment_label": "Registration override recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_override",
+      "segment_label": "Registration override recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "registration_override",
+      "segment_label": "Registration override recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_failed",
+      "segment_label": "Commit failure recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_failed",
+      "segment_label": "Commit failure recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_failed",
+      "segment_label": "Commit failure recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_failed",
+      "segment_label": "Commit failure recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_outcome",
+      "segment_label": "Commit send recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 1,
+      "respondents": 4,
+      "status": "Selected (synthetic)",
+      "text": "1 of 4 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_outcome",
+      "segment_label": "Commit send recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 1,
+      "respondents": 4,
+      "status": "Selected (synthetic)",
+      "text": "1 of 4 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_outcome",
+      "segment_label": "Commit send recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 2,
+      "respondents": 4,
+      "status": "Selected by at least half (synthetic)",
+      "text": "2 of 4 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "commit_outcome",
+      "segment_label": "Commit send recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 4,
+      "status": "Not selected (synthetic)",
+      "text": "0 of 4 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "profile_submitted",
+      "segment_label": "Profile submission recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "profile_submitted",
+      "segment_label": "Profile submission recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "profile_submitted",
+      "segment_label": "Profile submission recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "profile_submitted",
+      "segment_label": "Profile submission recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "info_submitted",
+      "segment_label": "Info submission recorded",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 2,
+      "status": "Unresolved",
+      "text": "0 of 2 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "info_submitted",
+      "segment_label": "Info submission recorded",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 1,
+      "respondents": 2,
+      "status": "Unresolved",
+      "text": "1 of 2 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "info_submitted",
+      "segment_label": "Info submission recorded",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 1,
+      "respondents": 2,
+      "status": "Unresolved",
+      "text": "1 of 2 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "info_submitted",
+      "segment_label": "Info submission recorded",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 2,
+      "status": "Unresolved",
+      "text": "0 of 2 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "no_match",
+      "segment_label": "No rule matched",
+      "hypothesis_id": "H_sim_details",
+      "option_id": "details",
+      "label": "I wanted to explore registration details",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "no_match",
+      "segment_label": "No rule matched",
+      "hypothesis_id": "H_sim_permission",
+      "option_id": "permission",
+      "label": "I wanted to understand the wallet request",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "no_match",
+      "segment_label": "No rule matched",
+      "hypothesis_id": "H_sim_cost",
+      "option_id": "cost",
+      "label": "I wanted to review the transaction cost",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    },
+    {
+      "segment": "no_match",
+      "segment_label": "No rule matched",
+      "hypothesis_id": "H_other",
+      "option_id": "other",
+      "label": "Something else",
+      "selected": 0,
+      "respondents": 0,
+      "status": "Unresolved",
+      "text": "0 of 0 respondents selected this simulated option.",
+      "source": "synthetic",
+      "evidence_conflict": false,
+      "observation": "Not assessed: no verified ENS instrumentation"
+    }
+  ],
+  "paths": [
+    {
+      "events": [
+        "register:info",
+        "register:profile",
+        "transaction:commit:send"
+      ],
+      "sessions": 6,
+      "total_sessions": 20,
+      "text": "6 of 20 sessions"
+    },
+    {
+      "events": [
+        "register:info",
+        "register:profile",
+        "transaction:commit:send",
+        "transaction:commit:complete",
+        "transaction:register:send",
+        "transaction:register:complete",
+        "register:complete"
+      ],
+      "sessions": 4,
+      "total_sessions": 20,
+      "text": "4 of 20 sessions"
+    },
+    {
+      "events": ["register:info"],
+      "sessions": 3,
+      "total_sessions": 20,
+      "text": "3 of 20 sessions"
+    },
+    {
+      "events": ["register:info", "register:profile"],
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    },
+    {
+      "events": [
+        "register:info",
+        "transaction:commit:send",
+        "transaction:register:override",
+        "transaction:register:send"
+      ],
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    },
+    {
+      "events": ["register:transaction_reset"],
+      "sessions": 2,
+      "total_sessions": 20,
+      "text": "2 of 20 sessions"
+    },
+    {
+      "events": [
+        "register:info",
+        "register:profile",
+        "transaction:commit:send",
+        "transaction:commit:complete",
+        "transaction:register:send",
+        "transaction:register:fail"
+      ],
+      "sessions": 1,
+      "total_sessions": 20,
+      "text": "1 of 20 sessions"
+    }
+  ],
+  "examples": [
+    {
+      "session_id": "synthetic-ens-4cb00df421944f25824d55df41d7bb70",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Commit sent",
+      "events": [
+        {
+          "event_id": "e3cf6701-ce3f-4b17-9272-e6d80a5b9928",
+          "session_id": "synthetic-ens-4cb00df421944f25824d55df41d7bb70",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:21+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "ccfd2cb1-d746-4170-91ae-87c5fe4b7615",
+          "session_id": "synthetic-ens-4cb00df421944f25824d55df41d7bb70",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:22+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "a5f79ad0-62bf-4227-9ca2-4944a7f4aadd",
+          "session_id": "synthetic-ens-4cb00df421944f25824d55df41d7bb70",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:23+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": {
+        "exposure_id": "7796932f-0eb6-48f1-957b-5b87a4c3bbca",
+        "question_version": "ens-synthetic-v1",
+        "shown_at": "2026-10-16T06:59:24+00:00",
+        "event_seq_at_shown": 3,
+        "options_shown": ["details", "cost", "permission", "other"],
+        "source": "synthetic",
+        "synthetic": true
+      },
+      "response": {
+        "exposure_id": "7796932f-0eb6-48f1-957b-5b87a4c3bbca",
+        "option_ids": ["cost"],
+        "skipped": false,
+        "responded_at": "2026-10-16T06:59:25+00:00",
+        "source": "synthetic",
+        "synthetic": true
+      }
+    },
+    {
+      "session_id": "synthetic-ens-ce4e02cfedf14b278b981050cb2106d4",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Commit sent",
+      "events": [
+        {
+          "event_id": "870af4c1-072a-4a81-b9e4-2326e89b0026",
+          "session_id": "synthetic-ens-ce4e02cfedf14b278b981050cb2106d4",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:20+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "44526c7b-1d77-4af6-bbfa-27a95f12a7b7",
+          "session_id": "synthetic-ens-ce4e02cfedf14b278b981050cb2106d4",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:21+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "925cb834-4911-4c51-8cdf-b49b22bc2d1e",
+          "session_id": "synthetic-ens-ce4e02cfedf14b278b981050cb2106d4",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:22+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": {
+        "exposure_id": "048bb36d-a62c-4da4-9b88-acb16f7c25cd",
+        "question_version": "ens-synthetic-v1",
+        "shown_at": "2026-10-16T06:59:23+00:00",
+        "event_seq_at_shown": 3,
+        "options_shown": ["permission", "details", "cost", "other"],
+        "source": "synthetic",
+        "synthetic": true
+      },
+      "response": {
+        "exposure_id": "048bb36d-a62c-4da4-9b88-acb16f7c25cd",
+        "option_ids": ["permission"],
+        "skipped": false,
+        "responded_at": "2026-10-16T06:59:24+00:00",
+        "source": "synthetic",
+        "synthetic": true
+      }
+    },
+    {
+      "session_id": "synthetic-ens-7290547dac474598ad998bd2421383db",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Commit sent",
+      "events": [
+        {
+          "event_id": "3b437392-e214-4d76-b104-6c5c3a60c5b6",
+          "session_id": "synthetic-ens-7290547dac474598ad998bd2421383db",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:19+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "a2a87dab-3e6e-4d0a-9c15-466f8b90815b",
+          "session_id": "synthetic-ens-7290547dac474598ad998bd2421383db",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:20+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "cc60f2ad-6838-49d5-8e74-ed95e1e8e0fc",
+          "session_id": "synthetic-ens-7290547dac474598ad998bd2421383db",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:21+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "inactive",
+      "eligible": false,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-6386d08f68804e12af0728ea26711d50",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Registration override",
+      "events": [
+        {
+          "event_id": "2fc7bc95-cd12-41a0-ad01-fbdd4c4dbf5f",
+          "session_id": "synthetic-ens-6386d08f68804e12af0728ea26711d50",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:18+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "740ecebd-fa16-483a-b46d-07e39dcfc888",
+          "session_id": "synthetic-ens-6386d08f68804e12af0728ea26711d50",
+          "seq": 2,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:19+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "0d00bf0a-e339-4a98-bd98-167c5346d1df",
+          "session_id": "synthetic-ens-6386d08f68804e12af0728ea26711d50",
+          "seq": 3,
+          "event": "transaction:register:override",
+          "occurred_at": "2026-10-16T06:59:20+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "88a02968-4354-4549-b8e2-620fe177c0e3",
+          "session_id": "synthetic-ens-6386d08f68804e12af0728ea26711d50",
+          "seq": 4,
+          "event": "transaction:register:send",
+          "occurred_at": "2026-10-16T06:59:21+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-e64fb5db00b1458893ebf35fea2ffe16",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Commit sent",
+      "events": [
+        {
+          "event_id": "caa756b4-e72c-4724-9396-557ab899eb41",
+          "session_id": "synthetic-ens-e64fb5db00b1458893ebf35fea2ffe16",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:17+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "09ce5fd5-7af1-4fff-ab80-19dfb24dbe87",
+          "session_id": "synthetic-ens-e64fb5db00b1458893ebf35fea2ffe16",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:18+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "68e0667a-8e2e-4fea-b6e9-b853e8a28433",
+          "session_id": "synthetic-ens-e64fb5db00b1458893ebf35fea2ffe16",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:19+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": {
+        "exposure_id": "a4249446-2d58-45aa-b174-82f12d4ad4b8",
+        "question_version": "ens-synthetic-v1",
+        "shown_at": "2026-10-16T06:59:20+00:00",
+        "event_seq_at_shown": 3,
+        "options_shown": ["permission", "cost", "details", "other"],
+        "source": "synthetic",
+        "synthetic": true
+      },
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Registration completed",
+      "events": [
+        {
+          "event_id": "f5d11d0f-cd50-492a-b8e8-d7e9f68d6a19",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:16+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "6819a1a7-65dc-4b22-b942-bda47b06c543",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:17+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "2be5c8d6-b1ba-4c8a-95e1-58c3469503d3",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:18+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "51fcaddd-8c34-46b1-a76e-0809d2c3ec38",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 4,
+          "event": "transaction:commit:complete",
+          "occurred_at": "2026-10-16T06:59:19+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "69781d72-0498-4cdf-b906-f9e74611bdc9",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 5,
+          "event": "transaction:register:send",
+          "occurred_at": "2026-10-16T06:59:20+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "9e385292-8e48-4560-9b14-fbaf0d449754",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 6,
+          "event": "transaction:register:complete",
+          "occurred_at": "2026-10-16T06:59:21+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "d4a22d88-540f-4fae-87d5-b5308e1d9e11",
+          "session_id": "synthetic-ens-8007a4774d5b4421abb4f11d72deca94",
+          "seq": 7,
+          "event": "register:complete",
+          "occurred_at": "2026-10-16T06:59:22+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": false,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-5a07e52536114cb9b36a9192ab61d61f",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Profile submitted",
+      "events": [
+        {
+          "event_id": "f805fe68-6774-4812-8123-432eafa269ec",
+          "session_id": "synthetic-ens-5a07e52536114cb9b36a9192ab61d61f",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:15+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "056b0b56-81cd-4f1b-9c39-7a7b889e3d2c",
+          "session_id": "synthetic-ens-5a07e52536114cb9b36a9192ab61d61f",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:16+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Registration completed",
+      "events": [
+        {
+          "event_id": "b50d59ba-b798-4cb3-93ae-ba3aa5d6a78e",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 1,
+          "event": "register:info",
+          "occurred_at": "2026-10-16T06:59:14+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "7c4e8c24-a64a-4a16-804d-77731811c181",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 2,
+          "event": "register:profile",
+          "occurred_at": "2026-10-16T06:59:15+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "27d4e9dc-e706-4b4d-96c2-a586f1add1d5",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 3,
+          "event": "transaction:commit:send",
+          "occurred_at": "2026-10-16T06:59:16+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "62c87440-ba36-4cec-be8e-f2ef281b7b09",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 4,
+          "event": "transaction:commit:complete",
+          "occurred_at": "2026-10-16T06:59:17+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "5c6728b5-0d04-4aa2-8dcb-4a6c2f39fdef",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 5,
+          "event": "transaction:register:send",
+          "occurred_at": "2026-10-16T06:59:18+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "ef2016fc-8748-4a4c-b1c3-9a621d8f76ad",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 6,
+          "event": "transaction:register:complete",
+          "occurred_at": "2026-10-16T06:59:19+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        },
+        {
+          "event_id": "4f2ffbc7-72d2-4703-9797-38d9a03dd7ee",
+          "session_id": "synthetic-ens-a609c2b9f59d4a92bd64e1cb2c46025b",
+          "seq": 7,
+          "event": "register:complete",
+          "occurred_at": "2026-10-16T06:59:20+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": false,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-0f081b65cb3a4a65a2b71db5e28ff7e5",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Registration reset",
+      "events": [
+        {
+          "event_id": "b1608ecd-10d5-4340-af71-3efcb1ac20a9",
+          "session_id": "synthetic-ens-0f081b65cb3a4a65a2b71db5e28ff7e5",
+          "seq": 1,
+          "event": "register:transaction_reset",
+          "occurred_at": "2026-10-16T06:59:13+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "explicit_exit",
+      "eligible": true,
+      "exposure": null,
+      "response": null
+    },
+    {
+      "session_id": "synthetic-ens-b1e6e8d111d148c5b419eff59f494f04",
+      "source": "synthetic",
+      "synthetic": true,
+      "scenario": "Registration reset",
+      "events": [
+        {
+          "event_id": "fce95b7f-80f3-481f-a9dc-6d005110178d",
+          "session_id": "synthetic-ens-b1e6e8d111d148c5b419eff59f494f04",
+          "seq": 1,
+          "event": "register:transaction_reset",
+          "occurred_at": "2026-10-16T06:59:12+00:00",
+          "source": "synthetic",
+          "synthetic": true,
+          "received_at": "2026-10-16T07:00:00+00:00",
+          "schema_version": 1,
+          "page": "ENS simulation",
+          "props": {}
+        }
+      ],
+      "exit_type": "inactive",
+      "eligible": false,
+      "exposure": null,
+      "response": null
+    }
+  ],
+  "limit": 1000,
+  "remaining": 980,
+  "limitations": [
+    "Events and feedback are generated fixtures, not ENS visitor observations.",
+    "No ENS application or Playwright browser is executed by this mode.",
+    "Feedback options are authored simulation presets, not approved ENS hypotheses.",
+    "Feedback is sampled independently of journey classification.",
+    "No causal or instrumentation-absence conclusions can be drawn from this dataset.",
+    "Inactive and completed sessions are not asked; skips and nonresponse are excluded from respondent denominators.",
+    "There is no generalization to real ENS users or wallets."
+  ],
+  "errors": []
+}
