@@ -1,5 +1,7 @@
+@import "../../shared/tokens.css";
+
 :root {
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: var(--gr-font);
   color: #ecf1e9;
   background: #101b20;
   font-synthesis: none;
@@ -110,7 +112,7 @@ h1 span {
   border-top: 1px solid var(--line);
 }
 .step-number {
-  font-family: Georgia, serif;
+  font-family: var(--gr-font);
   font-size: 42px;
   line-height: 1.2;
   color: #829d88;

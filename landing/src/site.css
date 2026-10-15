@@ -14,6 +14,10 @@
 .gr-site a {
   color: var(--gr-accent-ink);
 }
+.gr-site h2,
+.gr-site h3 {
+  font-weight: 600;
+}
 .gr-site .gr-nav a,
 .gr-site .gr-brand {
   color: inherit;
@@ -58,6 +62,7 @@
   font-size: 44px;
   line-height: 1.1;
   letter-spacing: -1px;
+  font-weight: 500;
 }
 .gr-lead {
   max-width: 760px;

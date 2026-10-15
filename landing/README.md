@@ -16,7 +16,7 @@ The GhostReport guide is at `/about/`; integration levels and the System Design 
 
 ## Home + demo
 
-Home follows the approved ink-mountain reference: serif headings, a floating shared
+Home follows the approved ink-mountain layout with the DAO Mock font stack, a floating shared
 header, four horizontal process cards, the featured Common Ground DAO app,
 real Playwright recordings, and ENS/installation links. Home styling lives in `src/home.css`;
 other landing routes keep the light page shell.
