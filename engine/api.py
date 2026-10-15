@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import time
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -37,6 +38,7 @@ from engine.models import (
     Run,
     Verification,
 )
+from engine.narrative import facts, facts_digest, generate, template
 from engine.partb import load_partb
 from engine.probe import plan_probe
 from engine.records import ProbeRecords
@@ -92,6 +94,10 @@ class Settings:
     collection_minutes: float | None = field(default_factory=lambda: (
         float(m) if (m := os.getenv("GHOST_COLLECTION_MINUTES")) else None))
     llm: Callable[[], LLM] = LLM
+    # Report narrative: "llm" writes it from the facts JSON (claim-checked), at most once per
+    # data change and per interval, never per request; "template" never calls the LLM.
+    narrative: str = field(default_factory=lambda: os.getenv("GHOST_NARRATIVE", "llm"))
+    narrative_interval: float = 60.0
     cors_origins: tuple[str, ...] = field(default_factory=lambda: tuple(
         os.getenv("GHOST_CORS", "http://localhost:5173,http://localhost:5174").split(",")))
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
@@ -227,11 +233,49 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         log.warning("v1 LOCKED  digest=%s  cutoff=%s", digest, snapshot.data_cutoff.isoformat())
         return snapshot, digest
 
+    narratives: dict[str, dict[str, Any]] = {}  # facts digest → checked result
+    writer: dict[str, Any] = {"task": None, "last": float("-inf")}
+
+    def report_facts(body: dict[str, Any]) -> dict[str, Any]:
+        return facts(body["current"], inv().hypotheses.hypotheses, locked=body["locked"])
+
+    def write_narrative(value: dict[str, Any]) -> None:
+        """Start one background LLM write for these facts, if allowed and not throttled."""
+        digest = facts_digest(value)
+        task = writer["task"]
+        if (settings.narrative != "llm" or digest in narratives
+                or (task is not None and not task.done())
+                or time.monotonic() - writer["last"] < settings.narrative_interval):
+            return
+        writer["last"] = time.monotonic()
+
+        async def run() -> None:
+            # The LLM's sqlite cache is thread-bound: create it in the worker thread.
+            result = await asyncio.to_thread(lambda: generate(settings.llm(), value))
+            narratives[digest] = result
+            log.warning("narrative %s for facts %s (%d rejected)", result["source"],
+                        digest[:12], len(result["rejected"]))
+
+        writer["task"] = asyncio.create_task(run())
+
+    def narrative_view(body: dict[str, Any]) -> dict[str, Any]:
+        value = report_facts(body)
+        digest = facts_digest(value)
+        result = narratives.get(digest)
+        if result is None:
+            write_narrative(value)
+            result = {"text": template(value), "source": "template", "rejected": [],
+                      "pending": settings.narrative == "llm"}
+        public = {k: v for k, v in result.items() if k != "llm_text"}  # unchecked text
+        return {**public, "facts_sha256": digest, "facts": value}
+
     async def dp0_loop() -> None:
         while True:
             await asyncio.sleep(settings.dp0_seconds)
             try:
                 run_dp0(store(), records(), inv(), now=settings.clock())
+                write_narrative(report_facts(build_report(
+                    store(), records(), inv(), now=settings.clock())))
             except Exception:  # noqa: BLE001 - keep the loop alive; the trace shows gaps
                 log.exception("DP0 evaluation failed")
 
@@ -441,9 +485,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/report")
     async def report() -> Any:
-        return jsonable_encoder(build_report(
-            store(), records(), inv(), now=settings.clock(),
-        ))
+        body = build_report(store(), records(), inv(), now=settings.clock())
+        return jsonable_encoder({**body, "narrative": narrative_view(body)})
 
     @app.get("/api/seed-sessions/{session_id}")
     async def seed_session_view(session_id: str) -> Any:

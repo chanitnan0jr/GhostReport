@@ -382,3 +382,26 @@ def test_seed_session_view_serves_only_simulated_sessions(tmp_path: Path) -> Non
         assert body["probe"]["status"] == "answered" and body["probe"]["selected"]
         assert client.get("/api/seed-sessions/a-visitor").status_code == 404
         assert client.get("/api/seed-sessions/seed-99").status_code == 404
+
+
+def test_report_narrative_is_written_once_per_data_change_and_checked(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+    from engine.llm import LLM
+    from tests.test_stages import Script
+
+    calls = Script([{"paragraph": "Population: seed 20 + visitors 0 sessions, all of them "
+                                  "simulated users (seed). Nothing else is claimed here."}])
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, narrative="llm",
+                        narrative_interval=0, **VERIFIED,
+                        llm=lambda: LLM(cache_path=tmp_path / "llm.sqlite", complete=calls))
+    with TestClient(create_app(settings)) as client:
+        first = client.get("/api/report").json()["narrative"]
+        assert first["source"] == "template" and first["pending"]
+        assert "seed 20 + visitors 0" in first["text"]
+        for _ in range(50):
+            done = client.get("/api/report").json()["narrative"]
+            if done["source"] == "llm":
+                break
+        assert done["source"] == "llm" and done["facts_sha256"] == first["facts_sha256"]
+        assert len(calls.sent) == 1  # one write per facts digest, not per request

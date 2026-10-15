@@ -88,13 +88,14 @@ class LLM:
 
     def call(
         self, stage: str, version: int, schema: type[T], *, context: str, instructions: str,
+        system: tuple[str, int] = ("system", 1),
     ) -> T:
         """Validate against `schema`; send the error back once, then fail."""
-        system = load_prompt("system", 1)
+        system_prompt = load_prompt(*system)
         task = load_prompt(stage, version)
         schema_text = json.dumps(schema.model_json_schema(), ensure_ascii=False)
         messages: list[Message] = [
-            {"role": "system", "content": system},
+            {"role": "system", "content": system_prompt},
             # One user turn: DeepSeek keeps only one of consecutive user messages.
             {"role": "user", "content": f"{context}\n\n{task}\n\n## Input\n{instructions}"
                                         f"\n\n## Output JSON schema\n{schema_text}"},
