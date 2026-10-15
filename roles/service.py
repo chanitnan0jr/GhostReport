@@ -3,6 +3,9 @@
 Run as its own process (never imported by engine/):
     ROLES_SEED=<secret> uv run uvicorn roles.service:app --port 18100
 
+Env: ROLES_SEED (secret), REVEAL_TOKEN (guards /roles/reveal; only on this service),
+ROLES_ALLOWED_ORIGINS (comma-separated; the api origin), ROLES_DB.
+
 Assignment is 50/50 by permuted blocks of 4 (AABB shuffled per block), derived
 from a secret seed. Only sha256(seed) is published, before collection starts,
 so the sequence can be audited afterwards without being predictable during it.
@@ -20,6 +23,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 BLOCK = ("A", "A", "B", "B")
@@ -43,10 +47,13 @@ class AssignOut(BaseModel):
 
 
 def create_app(db_path: Path | None = None, seed: str | None = None,
-               admin_token: str | None = None) -> FastAPI:
+               reveal_token: str | None = None,
+               allowed_origins: tuple[str, ...] | None = None) -> FastAPI:
     db_path = db_path or Path(os.getenv("ROLES_DB", "runs/roles.sqlite"))
     seed = seed or os.getenv("ROLES_SEED") or secrets.token_hex(16)
-    admin_token = admin_token or os.getenv("ROLES_ADMIN_TOKEN")
+    reveal_token = reveal_token or os.getenv("REVEAL_TOKEN")
+    if allowed_origins is None:
+        allowed_origins = tuple(o for o in os.getenv("ROLES_ALLOWED_ORIGINS", "").split(",") if o)
     seed_hash = hashlib.sha256(seed.encode()).hexdigest()
     state: dict[str, sqlite3.Connection] = {}
 
@@ -72,7 +79,10 @@ def create_app(db_path: Path | None = None, seed: str | None = None,
         yield
         db.close()
 
-    app = FastAPI(title="GhostReport roles", lifespan=lifespan)
+    app = FastAPI(title="GhostReport roles", lifespan=lifespan, docs_url=None, redoc_url=None,
+                  openapi_url=None)
+    app.add_middleware(CORSMiddleware, allow_origins=list(allowed_origins),
+                       allow_methods=["POST"], allow_headers=["Content-Type"])
 
     @app.post("/roles/assign")
     async def assign(body: AssignIn) -> AssignOut:
@@ -95,13 +105,13 @@ def create_app(db_path: Path | None = None, seed: str | None = None,
         count = state["db"].execute("SELECT COUNT(*) FROM assignments").fetchone()[0]
         return {"ok": True, "seed_hash": seed_hash, "assigned": count}
 
-    @app.get("/roles/export")
-    async def export(
+    @app.get("/roles/reveal")
+    async def reveal(
         authorization: Annotated[str | None, Header()] = None,
     ) -> list[dict[str, object]]:
-        """For E3 after collection closes; requires ROLES_ADMIN_TOKEN."""
-        if not admin_token or authorization != f"Bearer {admin_token}":
-            raise HTTPException(401, "admin token required")
+        """For E3 after collection closes; requires REVEAL_TOKEN."""
+        if not reveal_token or authorization != f"Bearer {reveal_token}":
+            raise HTTPException(401, "reveal token required")
         rows = state["db"].execute(
             "SELECT n, session_id, role, assigned_at FROM assignments ORDER BY n")
         return [{"n": n, "session_id": s, "role": r, "assigned_at": a} for n, s, r, a in rows]

@@ -35,24 +35,47 @@ EVENT_TESTS = {
 }
 
 
-def verify(app_dir: Path, out: Path) -> list[Verification]:
-    """Run each rule event's test on the current code; record only passing ones."""
+def _passed(report: dict[str, object], name: str) -> bool:
+    """At least one assertion named `name` passed and nothing in the report failed."""
+    results = [a for f in report.get("testResults", []) or []  # type: ignore[attr-defined]
+               for a in f.get("assertionResults", [])]
+    return (report.get("numFailedTests", 1) == 0
+            and any(name in a.get("fullName", "") and a.get("status") == "passed"
+                    for a in results))
+
+
+def verify(app_dir: Path, out: Path, from_report: Path | None = None) -> list[Verification]:
+    """Run (or read) each rule event's test on the current code; record only passing ones.
+
+    `from_report` reads a vitest JSON report produced earlier in the same build
+    (Docker), where GHOST_COMMIT names the commit being deployed.
+    """
     commit = git_commit(app_dir)
     results: list[Verification] = []
+    if commit in ("uncommitted", ""):
+        print("no commit identity (set GHOST_COMMIT); recording no verification")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("[]\n")
+        return results
     for event, (file, name) in EVENT_TESTS.items():
-        with tempfile.TemporaryDirectory() as tmp:
-            output = Path(tmp) / "vitest.json"
-            run = subprocess.run(
-                ["npx", "vitest", "run", file, "-t", name, "--reporter=json",
-                 f"--outputFile={output}"], cwd=app_dir,
-                capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=300,
-            )
+        if from_report is not None:
             try:
-                report = json.loads(output.read_text(encoding="utf-8"))
+                report = json.loads(from_report.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 report = {}
-        passed = (run.returncode == 0 and report.get("numPassedTests", 0) >= 1
-                  and report.get("numFailedTests", 1) == 0)
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                output = Path(tmp) / "vitest.json"
+                subprocess.run(
+                    ["npx", "vitest", "run", file, "-t", name, "--reporter=json",
+                     f"--outputFile={output}"], cwd=app_dir,
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=300,
+                )
+                try:
+                    report = json.loads(output.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    report = {}
+        passed = _passed(report, name)
         print(f"{event}: {'PASS' if passed else 'FAIL'}  {file} › {name}  @ {commit}")
         if passed:
             results.append(Verification(event=event, test=f"app/{file} › {name}",
@@ -110,6 +133,7 @@ def main() -> None:
     v = commands.add_parser("verify", help="run rule-event instrumentation tests")
     v.add_argument("--app", type=Path, default=APP)
     v.add_argument("--out", type=Path, default=VERIFICATION)
+    v.add_argument("--from-report", type=Path, help="vitest JSON report from this build")
     p = commands.add_parser("prepare", help="approve a draft into fixtures/")
     p.add_argument("--draft", type=Path, default=RUNS / "draft.app.json")
     p.add_argument("--out", type=Path, default=INVESTIGATION)
@@ -130,7 +154,7 @@ def main() -> None:
                    help="live run: close every plan this long after the lock (e.g. 12)")
     args = parser.parse_args()
     if args.command == "verify":
-        verify(args.app, args.out)
+        verify(args.app, args.out, args.from_report)
     elif args.command == "prepare":
         prepare(args.draft, args.out, args.approved_by, args.ends_at)
     else:

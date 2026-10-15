@@ -5,6 +5,7 @@ so every request and the DP0 loop share the event-loop thread.
 """
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -16,9 +17,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
 from engine.config import RepoConfig, TargetConfig, load_config
@@ -78,6 +80,9 @@ class Settings:
         os.getenv("GHOST_ENDS_AT", "2026-10-16T18:00:00+07:00")))
     dp0_seconds: float = 30.0
     autolock: bool = False
+    operator_token: str | None = field(default_factory=lambda: os.getenv("GHOST_OPERATOR_TOKEN"))
+    static_dir: Path | None = field(default_factory=lambda: (
+        Path(d) if (d := os.getenv("GHOST_STATIC_DIR")) else None))
     # Live run: every plan closes this many minutes after the lock (None = plan's own ends_at).
     collection_minutes: float | None = field(default_factory=lambda: (
         float(m) if (m := os.getenv("GHOST_COLLECTION_MINUTES")) else None))
@@ -192,6 +197,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     def records() -> ProbeRecords:
         return state["records"]  # type: ignore[no-any-return]
+
+    def operator(authorization: Annotated[str | None, Header()] = None) -> None:
+        """Operator-only routes. Public modes (demo, live) require GHOST_OPERATOR_TOKEN."""
+        token = settings.operator_token
+        if token is None:
+            if settings.mode in ("demo", "live"):
+                raise HTTPException(403, "operator routes are disabled on public runs")
+            return
+        if not hmac.compare_digest(authorization or "", f"Bearer {token}"):
+            raise HTTPException(401, "operator token required")
 
     def serve_locked(v1: InvestigationState) -> None:
         """After the lock, serve what v1 locked; a later edit of the approved file is ignored."""
@@ -333,13 +348,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         status = "duplicate" if not recorded else "recorded_inferred" if inferred else "recorded"
         return {"status": status}
 
-    @app.post("/api/lock")
+    @app.post("/api/lock", dependencies=[Depends(operator)])
     async def lock() -> dict[str, Any]:
         """Show this digest outside the system (mentor/judge) before the first probe."""
         snapshot, digest = do_lock()
         return {"version": 1, "digest": digest, "data_cutoff": snapshot.data_cutoff}
 
-    @app.post("/api/snapshot")
+    @app.post("/api/snapshot", dependencies=[Depends(operator)])
     async def snapshot(body: SnapshotIn) -> dict[str, Any]:
         try:
             state_, digest = append_successor(
@@ -353,7 +368,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def locked() -> bool:
         return bool(snapshots(store(), inv().investigation_id))
 
-    @app.post("/api/analyze")
+    @app.post("/api/analyze", dependencies=[Depends(operator)])
     async def analyze() -> Any:
         """Stage A + B on the configured target repo; the result is a draft, not approved."""
         if locked():
@@ -385,7 +400,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return None
         return json.loads(draft_path.read_text(encoding="utf-8"))
 
-    @app.post("/api/approve")
+    @app.post("/api/approve", dependencies=[Depends(operator)])
     async def approve_draft(body: ApproveIn) -> dict[str, Any]:
         """Operator approves class mappings and probe questions together, before the lock."""
         if locked():
@@ -420,6 +435,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             store(), records(), inv(), now=settings.clock(),
         ))
 
+    if settings.static_dir is not None:
+        # One origin for judges: landing at /, the target app at /app/, the report at /report/.
+        for prefix, folder in (("/app", "app"), ("/report", "console"), ("/", "landing")):
+            directory = settings.static_dir / folder
+            if directory.is_dir():
+                app.mount(prefix, StaticFiles(directory=directory, html=True), name=folder)
     return app
 
 

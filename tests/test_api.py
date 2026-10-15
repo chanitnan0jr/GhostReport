@@ -252,10 +252,33 @@ def test_locked_probes_are_served_from_v1_not_the_file(tmp_path: Path, clock: Cl
 
 def test_live_run_closes_collection_after_lock(tmp_path: Path, clock: Clock) -> None:
     settings = Settings(run_id="live", mode="live", db_dir=tmp_path, dp0_seconds=0, clock=clock,
-                        collection_minutes=12, **VERIFIED)
+                        collection_minutes=12, operator_token="op", **VERIFIED)
     with TestClient(create_app(settings)) as client:
-        client.post("/api/lock")
+        assert client.post("/api/lock").status_code == 401
+        client.post("/api/lock", headers={"Authorization": "Bearer op"})
         plan = client.get("/api/probe-plan", params={"session_id": "s1"}).json()
         assert plan["ends_at"] == (T0 + timedelta(minutes=12)).isoformat()
         clock.now = T0 + timedelta(minutes=13)
         assert client.get("/api/probe-plan", params={"session_id": "s1"}).json() is None
+
+
+def test_public_runs_disable_operator_routes_without_a_token(tmp_path: Path) -> None:
+    settings = Settings(run_id="pub", mode="demo", db_dir=tmp_path, dp0_seconds=0,
+                        operator_token=None, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        for route in ("/api/lock", "/api/analyze", "/api/snapshot", "/api/approve"):
+            assert client.post(route, json={}).status_code == 403, route
+        assert client.get("/api/report").status_code == 200
+
+
+def test_static_frontends_share_one_origin(tmp_path: Path) -> None:
+    for folder, text in (("landing", "landing"), ("app", "wallet app"), ("console", "report")):
+        (tmp_path / "static" / folder).mkdir(parents=True)
+        (tmp_path / "static" / folder / "index.html").write_text(f"<p>{text}</p>")
+    settings = Settings(run_id="s", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        static_dir=tmp_path / "static", **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        assert "landing" in client.get("/").text
+        assert "wallet app" in client.get("/app/").text
+        assert "report" in client.get("/report/").text
+        assert client.get("/api/health").json()["ok"] is True

@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_blocks_are_balanced_and_assignment_is_idempotent(tmp_path: Path) -> None:
-    app = create_app(db_path=tmp_path / "roles.sqlite", seed="s3cret", admin_token="t")
+    app = create_app(db_path=tmp_path / "roles.sqlite", seed="s3cret", reveal_token="t",
+                     allowed_origins=("https://api.example",))
     with TestClient(app) as client:
         roles = [client.post("/roles/assign", json={"session_id": f"sess-{i:04d}"}).json()["role"]
                  for i in range(12)]
@@ -23,10 +24,17 @@ def test_blocks_are_balanced_and_assignment_is_idempotent(tmp_path: Path) -> Non
         assert again == roles[5]
         health = client.get("/roles/health").json()
         assert health["assigned"] == 12 and "s3cret" not in str(health)
-        assert client.get("/roles/export").status_code == 401
-        rows = client.get("/roles/export", headers={"Authorization": "Bearer t"}).json()
+        assert client.get("/roles/reveal").status_code == 401
+        rows = client.get("/roles/reveal", headers={"Authorization": "Bearer t"}).json()
         assert [r["role"] for r in rows] == roles
         assert client.post("/roles/assign", json={"session_id": "x"}).status_code == 422
+        allowed = client.options("/roles/assign", headers={
+            "Origin": "https://api.example", "Access-Control-Request-Method": "POST"})
+        assert allowed.headers.get("access-control-allow-origin") == "https://api.example"
+        other = client.options("/roles/assign", headers={
+            "Origin": "https://evil.example", "Access-Control-Request-Method": "POST"})
+        assert "access-control-allow-origin" not in other.headers
+        assert client.get("/docs").status_code == 404
 
 
 def test_engine_never_touches_roles() -> None:
