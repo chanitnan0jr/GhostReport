@@ -455,3 +455,34 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
         assert client.get("/api/journeys?source=visitor").json()["sessions"] == 0
         chart = client.get("/api/journeys?format=mermaid").text
         assert chart.startswith("flowchart LR") and "c7_stalled_at_wallet" in chart
+
+
+def test_evidence_map_links_each_hypothesis_to_its_own_evidence(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        graph = client.get("/api/evidence").json()
+        findings = client.get("/api/report").json()["current"]["findings"]
+    nodes = {n["id"]: n for n in graph["nodes"]}
+    for edge in graph["edges"]:
+        assert nodes[edge["source"]]["column"] < nodes[edge["target"]]["column"]
+    assert "cause" not in str(graph).lower().replace("neither establishes a cause", "")
+    for finding in findings:
+        node = nodes.get(f"f:{finding['decision_point']}:{finding['hypothesis_id']}")
+        if node is None:  # hypothesis had no option at that point
+            assert finding["respondents"] == 0 or finding["selected"] == 0
+            continue
+        assert (node["selected"], node["respondents"]) == (
+            finding["selected"], finding["respondents"])
+    for node in (n for n in nodes.values() if n["kind"] == "finding"):
+        options = [e for e in graph["edges"]
+                   if e["target"] == node["id"] and e["relation"] == "counted in"]
+        assert options, f"{node['id']} has no answer option behind it"
+    for hid, linked in graph["highlight"].items():
+        assert hid in linked
+        assert all(not n.startswith("h:") or n == hid for n in linked)
+        assert all(n.endswith(f":{hid[2:]}") for n in linked if n.startswith("f:"))
+    r2 = [h for h, linked in graph["highlight"].items() if "rule:R2" in linked]
+    assert r2 and all(nodes[h]["approved_class"] == "HC-gate-permission" for h in r2)

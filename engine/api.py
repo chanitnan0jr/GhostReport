@@ -28,6 +28,7 @@ from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 from engine.cohorts import build_cohorts
 from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
+from engine.evidence import evidence_graph
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
 from engine.journeys import journeys, mermaid
 from engine.llm import LLM, LLMError
@@ -513,6 +514,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if format == "mermaid":
             return PlainTextResponse(mermaid(graph))
         return graph
+
+    @app.get("/api/evidence")
+    async def evidence() -> Any:
+        """Hypothesis evidence map: code → hypotheses → options / R2 → findings → segment."""
+        current = evaluate(store(), records(), inv(), now=settings.clock())
+        return jsonable_encoder(evidence_graph(inv(), current["findings"]))
 
     @app.get("/api/workflow")
     async def workflow(target: Literal["app", "ens"] = "app") -> Any:
