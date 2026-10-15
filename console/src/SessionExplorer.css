@@ -1,0 +1,474 @@
+.console-shell .explorer {
+  --ex-muted: #526177;
+  --ex-line: #dfe6f0;
+  font-family: var(--gr-font);
+  font-size: 15px;
+  line-height: 1.55;
+  scroll-margin-top: 112px;
+}
+
+.explorer .explorer-heading {
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.explorer .explorer-heading p {
+  font-size: 16px;
+}
+
+.explorer .explorer-snapshot {
+  padding: 12px 16px;
+  border: 1px solid var(--ex-line);
+  border-radius: 12px;
+  background: #fff;
+  gap: 8px 0;
+}
+
+.explorer .explorer-snapshot small {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.explorer .explorer-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.explorer .explorer-card {
+  min-width: 0;
+  border-radius: 18px;
+  box-shadow: 0 3px 12px #172d4f05;
+}
+
+.explorer .explorer-card h3 {
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.explorer .explorer-list {
+  padding-top: 24px;
+}
+
+.explorer .explorer-list-head {
+  align-items: center;
+  gap: 16px;
+  padding-inline: 24px;
+}
+
+.explorer .explorer-list-head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.explorer .explorer-list-head p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.explorer .explorer-search {
+  flex: 0 1 230px;
+  min-height: 44px;
+  background: #f8fafc;
+}
+
+.explorer .explorer-search input {
+  font-size: 14px;
+}
+
+.explorer .explorer-pills {
+  padding: 20px 24px;
+  gap: 8px;
+}
+
+.explorer .explorer-pills button {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--ex-line);
+  background: #f8fafc;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.explorer .explorer-pills button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--cohort-color, var(--ex-blue));
+}
+
+.explorer .explorer-table {
+  margin-inline: 16px;
+  border-color: var(--ex-line);
+  border-radius: 12px;
+}
+
+.explorer .explorer-table table {
+  table-layout: fixed;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.explorer .explorer-table thead th {
+  padding: 14px 10px;
+  color: #44536b;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.explorer .explorer-table tr > :nth-child(1) {
+  width: 19%;
+}
+.explorer .explorer-table tr > :nth-child(2) {
+  width: 14%;
+}
+.explorer .explorer-table tr > :nth-child(3) {
+  width: 28%;
+}
+.explorer .explorer-table tr > :nth-child(4) {
+  width: 14%;
+}
+.explorer .explorer-table tr > :nth-child(5) {
+  width: 10%;
+}
+.explorer .explorer-table tr > :nth-child(6) {
+  width: 12%;
+}
+.explorer .explorer-table tr > :nth-child(7) {
+  width: 3%;
+}
+
+.explorer .explorer-table tbody :is(th, td) {
+  height: 76px;
+  padding: 16px 10px;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.explorer .explorer-table tbody tr[aria-selected="true"] {
+  background: #eef4ff;
+}
+
+.explorer .explorer-table tbody tr[aria-selected="true"] > th {
+  box-shadow: inset 3px 0 var(--ex-blue);
+}
+
+.explorer .explorer-table tr > :last-child {
+  padding-inline: 4px;
+}
+
+.explorer .explorer-id {
+  max-width: 100%;
+  min-height: 44px;
+  overflow: hidden;
+  color: var(--gr-accent-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer .explorer-path,
+.explorer .explorer-reported {
+  flex-wrap: wrap;
+  gap: 6px;
+  line-height: 1.55;
+}
+
+.explorer .explorer-path > span {
+  max-width: 100%;
+}
+
+.explorer .explorer-path code {
+  padding: 3px 6px;
+  color: #34445e;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.explorer .explorer-rule {
+  min-width: 28px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.explorer .explorer-coverage {
+  display: inline-flex;
+  padding: 4px 7px;
+  color: #526177;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.explorer .explorer-coverage.is-complete {
+  color: #166534;
+}
+
+.explorer .explorer-list-foot {
+  padding: 20px 24px;
+  font-size: 14px;
+}
+
+.explorer .explorer-pages button,
+.explorer .explorer-icon-button {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ex-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.explorer .explorer-detail {
+  padding: 24px;
+}
+
+.explorer .explorer-pages button[aria-current="page"] {
+  border-color: var(--ex-blue);
+  background: var(--ex-blue);
+  color: #fff;
+}
+
+.explorer .explorer-detail-head {
+  gap: 16px;
+}
+
+.explorer .explorer-detail-head > div:first-child {
+  min-width: 0;
+}
+
+.explorer .explorer-detail-id {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.explorer .explorer-detail-id code {
+  font-size: 16px;
+}
+
+.explorer .explorer-outline-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.explorer .explorer-stepper {
+  gap: 8px;
+  font-size: 14px;
+}
+
+.explorer .explorer-badges {
+  margin: 20px 0;
+  gap: 10px;
+}
+
+.explorer .explorer-badge {
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.explorer .explorer-badge-cohort {
+  order: -1;
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.explorer .explorer-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.explorer .explorer-facts > div {
+  display: block;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #e7ecf4;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.explorer .explorer-facts > div:nth-child(odd) {
+  padding-right: 14px;
+  border-right: 1px solid #e7ecf4;
+}
+
+.explorer .explorer-facts dt {
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.explorer .explorer-facts dd {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.explorer .explorer-facts small {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.explorer .explorer-timeline {
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.explorer :is(.explorer-timeline, .explorer-classified) h4 {
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.explorer .explorer-empty {
+  justify-items: start;
+  gap: 12px;
+  padding: 16px 0 0;
+  text-align: left;
+}
+
+.explorer .explorer-empty strong {
+  font-size: 16px;
+}
+
+.explorer .explorer-empty p {
+  max-width: none;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.explorer .explorer-empty a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.explorer .explorer-empty .explorer-info {
+  margin-top: 0;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.explorer .explorer-detail.explorer-empty {
+  padding: 24px;
+}
+
+.explorer .explorer-events {
+  position: relative;
+}
+
+.explorer .explorer-events::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 42px;
+  left: 13px;
+  border-left: 1px solid var(--ex-line);
+}
+
+.explorer .explorer-events li {
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.explorer .explorer-seq {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.explorer .explorer-events code {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.explorer .explorer-page {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: 12px;
+}
+
+.explorer .explorer-events time {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+}
+
+.explorer .explorer-tag {
+  grid-column: 2 / -1;
+  grid-row: 3;
+  font-size: 12px;
+}
+
+.explorer .explorer-events li + li::before {
+  content: none;
+}
+
+.explorer .explorer-probe {
+  gap: 10px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--ex-line);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.explorer .explorer-classified {
+  margin-top: 24px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--ex-line);
+}
+
+.explorer .explorer-classified p {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+@media (max-width: 1599px) {
+  .explorer .explorer-table tr > :nth-child(6) {
+    display: none;
+  }
+  .explorer .explorer-table tr > :nth-child(1) {
+    width: 24%;
+  }
+  .explorer .explorer-table tr > :nth-child(2) {
+    width: 15%;
+  }
+  .explorer .explorer-table tr > :nth-child(3) {
+    width: 29%;
+  }
+  .explorer .explorer-table tr > :nth-child(4) {
+    width: 16%;
+  }
+  .explorer .explorer-table tr > :nth-child(5) {
+    width: 12%;
+  }
+  .explorer .explorer-table tr > :nth-child(7) {
+    width: 4%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explorer .explorer-table tbody tr {
+    transition: none;
+  }
+}

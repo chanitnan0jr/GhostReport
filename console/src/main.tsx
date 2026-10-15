@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 import "./typography.css";
+import "./SessionExplorer.css";
 
 async function main() {
   if (import.meta.env.VITE_MOCK === "1") {
