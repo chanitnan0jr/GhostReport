@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
           ens: "ens/index.html",
           about: "about/index.html",
           install: "install/index.html",
+          sandbox: "sandbox/index.html",
           try: "try/index.html",
         },
       },

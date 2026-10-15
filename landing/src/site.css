@@ -308,3 +308,58 @@ body {
 .gr-site summary:focus-visible {
   outline-color: var(--gr-accent);
 }
+
+/* /sandbox/: the entry to a visitor's own simulated run. */
+.sandbox-steps {
+  display: grid;
+  gap: 2px;
+  max-width: 760px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: sandbox-step;
+}
+.sandbox-steps li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 2px 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gr-line);
+  counter-increment: sandbox-step;
+}
+.sandbox-steps li::before {
+  content: counter(sandbox-step);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gr-accent-soft);
+  color: var(--gr-accent-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.sandbox-steps strong {
+  font-size: 15px;
+}
+.sandbox-steps span {
+  color: var(--gr-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.sandbox-note {
+  max-width: 760px;
+  margin: 20px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.sandbox-error {
+  max-width: 760px;
+  margin-top: 16px;
+}
+@media (max-width: 760px) {
+  .sandbox-page .gr-actions {
+    flex-wrap: wrap;
+  }
+}

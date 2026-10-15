@@ -294,6 +294,10 @@ export function HomeDemo() {
             the moment they arrived.
           </p>
         </div>
+        <a href="/sandbox/">
+          Generate your own sessions in the sandbox{" "}
+          <span aria-hidden="true">→</span>
+        </a>
       </header>
       {error ? (
         <p className="hm-session-error" role="alert">

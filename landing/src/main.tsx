@@ -4,6 +4,7 @@ import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";
 import { InstallPage } from "./InstallPage";
 import { PartBPage } from "./PartBPage";
+import { SandboxPage } from "./SandboxPage";
 import "./styles.css";
 import "./site.css";
 import "./explore-cards.css";
@@ -13,6 +14,7 @@ const PAGES: Record<string, () => React.ReactElement> = {
   "/ens": () => <PartBPage />,
   "/install": () => <InstallPage />,
   "/about": () => <AboutPage />,
+  "/sandbox": () => <SandboxPage />,
 };
 
 async function main() {
