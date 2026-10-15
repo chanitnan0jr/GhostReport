@@ -1,16 +1,13 @@
 import { REPO_URL } from "./content";
 
-// Pitch order; console/ and app/ use the same tabs (shared/tokens.css .gr-header).
+// The demo lives on Home; detailed recordings remain available at /seed/.
 export const links = [
   ["Home", "/"],
-  ["Demo", "/seed/"],
   ["Try the App", "/try/"],
   ["Segments", "/report/#segments"],
   ["Workflow Map", "/report/#workflow"],
   ["Report", "/report/"],
-  ["ENS", "/ens/"],
   ["Install", "/install/"],
-  ["About", "/about/"],
 ] as const;
 
 export function SiteHeader() {

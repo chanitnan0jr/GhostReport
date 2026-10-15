@@ -1,6 +1,6 @@
 # GhostReport landing
 
-Public entry point at `/`: the Common Ground mock DAO. Requires Node 22.13 or newer.
+Public entry point at `/`: GhostReport, with the recorded demo embedded on Home. Requires Node 22.13 or newer.
 
 ```sh
 cd landing
@@ -13,6 +13,33 @@ npm run test:browser
 ```
 
 The GhostReport guide at `/about/` has three steps: try the grant app, view the investigation, and inspect the four integration levels plus the System Design §10 config example. L3 is explicitly a roadmap item. Role card copy is exactly the approved English text in System Design §7.
+
+## Home + demo
+
+Home follows the approved light blue reference: explanation and four-step loop,
+Common Ground DAO card, four real Playwright recordings, ENS and installation links.
+**Watch the demo** and **Watch simulated users** scroll to `/#demo` on the same page.
+`/seed/` remains the detailed recording/session explorer; `/try/` assigns a role.
+The landing header uses Home, Try the App, Segments, Workflow Map, Report, Install.
+ENS and About remain accessible from Home.
+
+`useHomePopulation` reads `/api/report` every three seconds and derives source counts
+from `current.sessions` plus `current.session_sources`. It never assumes 20 sessions,
+never treats seed/test sessions as visitors, and withholds counts if source metadata
+is missing. Mock mode uses the existing sample population, which may differ from
+recordings. Counts describe the current run; clips are saved seed run artifacts.
+
+The four `.webm` recordings and matching `.json` logs are static files in
+`public/demo/`. Each card plays independently with native controls after starting;
+its optional **Recorded events** disclosure shows actual recorded event names and
+separate question records. Portrait recordings use `object-fit: contain`; there
+are no people illustrations or invented reject events. Posters were extracted
+from those recordings with ffmpeg, without changing the videos.
+
+`public/images/hero-mountains.png` is decorative AI-generated artwork. The loop,
+brand and landscape illustration use native SVG. No generated text or data appears
+inside the UI. Desktop visual review used local mock mode at 1240 and 1280 px;
+this redesign did not run unit or E2E suites or validate a live API.
 
 ## Roles and session boundary
 
