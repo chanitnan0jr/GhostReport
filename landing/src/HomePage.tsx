@@ -100,25 +100,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Ghost() {
-  return (
-    <svg viewBox="0 0 64 72" aria-hidden="true">
-      <defs>
-        <linearGradient id="home-ghost" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#dbe6ff" />
-          <stop offset="1" stopColor="#c3d4fb" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M32 4C17 4 8 15 8 30v38l8-7 8 7 8-7 8 7 8-7 8 7V30C56 15 47 4 32 4z"
-        fill="url(#home-ghost)"
-      />
-      <circle cx="24" cy="31" r="3.5" fill="#fff" />
-      <circle cx="40" cy="31" r="3.5" fill="#fff" />
-    </svg>
-  );
-}
-
 function Mountains() {
   return (
     <img className="home-mountains" src="/images/hero-mountains.png" alt="" />
@@ -243,7 +224,12 @@ export function HomePage() {
                 ))}
               </ol>
               <div className="home-loop-center" aria-hidden="true">
-                <Ghost />
+                <img
+                  src="/images/ghostreport-mark.png"
+                  width="60"
+                  height="68"
+                  alt=""
+                />
                 GhostReport
               </div>
             </div>

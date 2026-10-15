@@ -274,8 +274,10 @@
   font-size: 18px;
   font-weight: 500;
 }
-.home-loop-center svg {
+.home-loop-center img {
   width: 60px;
+  height: 68px;
+  object-fit: contain;
 }
 .home-mountains {
   position: absolute;
