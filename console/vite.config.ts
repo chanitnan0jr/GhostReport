@@ -5,6 +5,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig(({ mode }) => ({
   base: "/report/",
   plugins: [react()],
+  resolve: { dedupe: ["react", "react-dom"] },
   server: {
     port: 5174,
     strictPort: true,
