@@ -1,3 +1,5 @@
+import { apiUrl } from "./api";
+
 export type Instrumentation =
   "found_in_code" | "not_found_in_scope" | "unknown";
 export type WorkflowTarget = "app" | "ens";
@@ -61,7 +63,9 @@ export async function fetchWorkflow(
   target: WorkflowTarget,
   signal: AbortSignal,
 ): Promise<WorkflowView> {
-  const response = await fetch(`/api/workflow?target=${target}`, { signal });
+  const response = await fetch(apiUrl(`/api/workflow?target=${target}`), {
+    signal,
+  });
   if (!response.ok)
     throw new Error(`Workflow Map unavailable (${response.status})`);
   const value: WorkflowView = await response.json();

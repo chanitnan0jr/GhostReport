@@ -1,5 +1,18 @@
 import type { InvestigationDraft, Report, SnapshotResult } from "./types";
 
+// ?sandbox=<id> points every read at that sandbox's own run (engine/sandbox.py).
+const SANDBOX_ID = /^sbx-[0-9a-f]{16}$/;
+export function sandboxId(search = location.search): string | null {
+  const id = new URLSearchParams(search).get("sandbox");
+  return id && SANDBOX_ID.test(id) ? id : null;
+}
+export function apiUrl(path: string): string {
+  const id = sandboxId();
+  return id && path.startsWith("/api/")
+    ? `/api/sandbox/${id}/${path.slice("/api/".length)}`
+    : path;
+}
+
 let operatorToken = "";
 export function setOperatorToken(value: string): void {
   operatorToken = value.trim();
@@ -28,7 +41,8 @@ async function request(
       throw new ApiError(401, "Enter an operator token first");
     headers.set("Authorization", `Bearer ${operatorToken}`);
   }
-  const response = await fetch(path, {
+  // Operator routes belong to the judging run only; sandboxes have their own controls.
+  const response = await fetch(authorized ? path : apiUrl(path), {
     ...init,
     headers,
     signal: init?.signal ?? AbortSignal.timeout(5000),

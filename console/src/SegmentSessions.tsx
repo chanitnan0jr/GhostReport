@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Cohort, Report, Session, SessionSource } from "./types";
+import { apiUrl, sandboxId } from "./api";
 import { safeText, time } from "./format";
 import { cohortInfo, cohortOrder, sourceOf } from "./segmentView";
 import { SourceIcon } from "./sourceIcons";
@@ -92,7 +93,8 @@ function SessionDetail({
   const info = cohortInfo[session.cohort];
   const verified = report.run.verification?.wallet_gate_shown?.verified;
   const events = detail?.events ?? [];
-  const reportHref = `/report/?sid=${encodeURIComponent(session.session_id)}#coverage`;
+  const sandbox = sandboxId();
+  const reportHref = `/report/?${sandbox ? `sandbox=${sandbox}&` : ""}sid=${encodeURIComponent(session.session_id)}#coverage`;
   const has = (name: string) => events.some((e) => e.event === name);
   return (
     <aside
@@ -136,7 +138,9 @@ function SessionDetail({
             className="explorer-outline-link"
             href={
               source === "seed" && detail
-                ? `/api/seed-sessions/${encodeURIComponent(session.session_id)}`
+                ? apiUrl(
+                    `/api/seed-sessions/${encodeURIComponent(session.session_id)}`,
+                  )
                 : reportHref
             }
             target="_blank"

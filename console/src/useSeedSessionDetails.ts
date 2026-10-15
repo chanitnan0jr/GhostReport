@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Cohort, Session } from "./types";
+import { apiUrl } from "./api";
 
 export interface SeedSessionDetail {
   session_id: string;
@@ -43,7 +44,7 @@ export function useSeedSessionDetails(runId: string, ids: string[]) {
           const sid = requested[cursor++];
           try {
             const response = await fetch(
-              `/api/seed-sessions/${encodeURIComponent(sid)}`,
+              apiUrl(`/api/seed-sessions/${encodeURIComponent(sid)}`),
               {
                 signal: AbortSignal.any([
                   controller.signal,

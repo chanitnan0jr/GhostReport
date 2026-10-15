@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { JourneySource, JourneySegment } from "./journeys";
+import { apiUrl } from "./api";
 
 export interface SessionJourney {
   source: JourneySource;
@@ -45,7 +46,7 @@ export function useSessionJourney(sid: string | null) {
     async function refresh() {
       try {
         const response = await fetch(
-          `/api/journeys/session/${encodeURIComponent(sid!)}`,
+          apiUrl(`/api/journeys/session/${encodeURIComponent(sid!)}`),
           {
             signal: AbortSignal.any([
               controller.signal,

@@ -1,5 +1,6 @@
 import type { Finding } from "./types";
 import { findingText } from "./format";
+import { apiUrl } from "./api";
 
 interface Base {
   id: string;
@@ -59,7 +60,7 @@ export function evidenceSourceLink(value: string | null): string | null {
 export async function fetchEvidence(
   signal: AbortSignal,
 ): Promise<EvidenceGraph> {
-  const response = await fetch("/api/evidence", { signal });
+  const response = await fetch(apiUrl("/api/evidence"), { signal });
   if (!response.ok)
     throw new Error(`Hypothesis evidence map unavailable (${response.status})`);
   const value: EvidenceGraph = await response.json();

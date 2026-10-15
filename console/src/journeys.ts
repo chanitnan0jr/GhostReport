@@ -1,4 +1,5 @@
 import type { Cohort } from "./types";
+import { apiUrl } from "./api";
 export type JourneySource = "seed" | "test" | "visitor";
 export type SourceCounts = Record<JourneySource, number>;
 
@@ -230,7 +231,7 @@ export async function fetchJourneys(
   signal: AbortSignal,
 ): Promise<JourneyGraph> {
   const response = await fetch(
-    `/api/journeys${source ? `?source=${source}` : ""}`,
+    apiUrl(`/api/journeys${source ? `?source=${source}` : ""}`),
     { signal },
   );
   if (!response.ok)
