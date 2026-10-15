@@ -92,9 +92,7 @@ const LOOP = [
 export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="gr-site">
-      <div className="gr-header-bar">
-        <SiteHeader />
-      </div>
+      <SiteHeader />
       {children}
     </div>
   );
