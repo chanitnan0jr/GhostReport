@@ -21,13 +21,15 @@ from typing import Annotated, Any, Literal
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
+from engine.cohorts import build_cohorts
 from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
+from engine.journeys import journeys, mermaid
 from engine.llm import LLM, LLMError
 from engine.models import (
     DecisionPoint,
@@ -496,6 +498,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if body is None:
             raise HTTPException(404, "only existing seed sessions are served")
         return jsonable_encoder(body)
+
+    @app.get("/api/journeys", response_model=None)
+    async def journey_graph(
+        source: Literal["seed", "test", "visitor"] | None = None,
+        format: Literal["json", "mermaid"] = "json",  # noqa: A002 - query parameter name
+    ) -> Any:
+        """Sessions → segments as a left-to-right flowchart; counts only, no session IDs."""
+        events = store().events()
+        sessions = build_cohorts(events, settings.clock(),
+                                 build_verified=store().run.build_verified)
+        graph = journeys(events, sessions, records().exposures(), records().responses(),
+                         only=source)
+        if format == "mermaid":
+            return PlainTextResponse(mermaid(graph))
+        return graph
 
     @app.get("/api/workflow")
     async def workflow(target: Literal["app", "ens"] = "app") -> Any:

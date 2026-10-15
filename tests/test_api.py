@@ -418,3 +418,31 @@ def test_workflow_map_serves_nodes_without_layout(client: TestClient) -> None:
     assert app["target"] == "app" and {n["kind"] for n in app["nodes"]} <= {
         "state", "outcome", "ui_fact"}
     assert client.get("/api/workflow?target=other").status_code == 422
+
+
+def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path) -> None:
+    from engine.demo import INVESTIGATION
+
+    settings = Settings(run_id="judging", mode="seed", db_dir=tmp_path, dp0_seconds=0,
+                        fixture=INVESTIGATION, autolock=True, seed=True, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        graph = client.get("/api/journeys").json()
+        report = client.get("/api/report").json()["current"]
+        nodes = {n["id"]: n for n in graph["nodes"]}
+        assert graph["direction"] == "LR" and graph["sessions"] == 20
+        # Segments partition the sessions and agree with the report's cohorts.
+        assert sum(s["sessions"] for s in graph["segments"]) == 20
+        assert {s["cohort"]: s["sessions"] for s in graph["segments"] if s["sessions"]} == {
+            row["cohort"]: row["sessions"] for row in report["cohorts"]}
+        # Edges only go left to right, and flow is conserved at every inner node.
+        for edge in graph["edges"]:
+            assert nodes[edge["source"]]["column"] < nodes[edge["target"]]["column"]
+        for node in graph["nodes"]:
+            into = sum(e["count"] for e in graph["edges"] if e["target"] == node["id"])
+            assert node["column"] == 0 or into == node["count"]
+        assert nodes["c4:errored"]["count"] == 1 and nodes["c5:retry_connected"]["count"] == 1
+        assert nodes["c8:answered"]["count"] == 10  # 6 at DP1 + 4 at DP2
+        assert "seed-" not in str(graph)  # counts only, never session IDs
+        assert client.get("/api/journeys?source=visitor").json()["sessions"] == 0
+        chart = client.get("/api/journeys?format=mermaid").text
+        assert chart.startswith("flowchart LR") and "c7_connected" in chart
