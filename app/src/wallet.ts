@@ -1,11 +1,10 @@
 import { getTracker, type Tracker } from "./track";
 import { uuid } from "./session";
 
-export const INSTRUMENT_REJECT = false;
-const configuredRate = Number(import.meta.env.VITE_RPC_ERROR_RATE ?? "0.15");
+const configuredRate = Number(import.meta.env.VITE_RPC_ERROR_RATE ?? "0.10");
 export const RPC_ERROR_RATE = Number.isFinite(configuredRate)
   ? Math.min(1, Math.max(0, configuredRate))
-  : 0.15;
+  : 0.1;
 
 export interface Wallet {
   kind: "mock";
@@ -27,6 +26,7 @@ export function connectWallet(
   tracker: Tracker = getTracker(),
   random: () => number = Math.random,
 ): WalletAttempt {
+  const firstAttempt = !tracker.hasAttempted();
   const attempt_id = uuid();
   const { track } = tracker;
   track(
@@ -38,30 +38,20 @@ export function connectWallet(
   let settled = false;
 
   function onReject(error: Error): void {
-    if (INSTRUMENT_REJECT) {
-      track(
-        "wallet_rejected",
-        "MockWalletPopup",
-        { project_id: projectId },
-        attempt_id,
-      );
-    }
     callbacks.onFailure(error.message);
   }
 
   function approve(): void {
     if (settled) return;
     settled = true;
-    if (random() < RPC_ERROR_RATE) {
-      if (INSTRUMENT_REJECT) {
-        track(
-          "wallet_errored",
-          "MockWalletPopup",
-          { project_id: projectId },
-          attempt_id,
-        );
-      }
-      callbacks.onFailure("Simulated RPC error. You can try connecting again.");
+    if (firstAttempt && random() < RPC_ERROR_RATE) {
+      track(
+        "wallet_errored",
+        "MockWalletPopup",
+        { project_id: projectId },
+        attempt_id,
+      );
+      callbacks.onFailure("Simulated network error (demo) — please try again");
       return;
     }
     track(
@@ -81,7 +71,7 @@ export function connectWallet(
       settled = true;
       onReject(
         new Error(
-          "Connection rejected. You can try again whenever you’re ready.",
+          "You chose not to connect. You can try again whenever you’re ready.",
         ),
       );
     },

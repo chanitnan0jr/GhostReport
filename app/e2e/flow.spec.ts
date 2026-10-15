@@ -1,11 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function enter(page: Page, query = "") {
-  await page.goto(`/?sid=e2e${query}`);
+  await page.goto(`/app/?sid=e2e${query}`);
   await page
     .getByRole("button", { name: "Continue with optional feedback" })
     .click();
   await page.getByRole("button", { name: /Open Source Commons/ }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.__GHOST_MOCK__?.planRequests))
+    .toEqual(expect.arrayContaining(["DP1", "DP2"]));
 }
 
 test("Not now exits immediately and optional answers reach the mock backend", async ({
@@ -61,7 +64,9 @@ test("reject and retry preserve the deliberate gap; approve reaches the applicat
   await page.getByRole("button", { name: "Apply", exact: true }).click();
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await page.getByRole("button", { name: "Reject", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("Connection rejected");
+  await expect(page.getByRole("status")).toContainText(
+    "You chose not to connect",
+  );
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await page.getByRole("button", { name: "Approve", exact: true }).click();
   await expect(page.getByText("Connected · Mock wallet")).toBeVisible();
@@ -170,7 +175,7 @@ test("Not now and Back remain usable when optional probe delivery never complete
 test("declining optional feedback keeps the app usable and never shows a probe", async ({
   page,
 }) => {
-  await page.goto("/?sid=no-feedback");
+  await page.goto("/app/?sid=no-feedback");
   await page.getByRole("button", { name: "Continue without feedback" }).click();
   await page.getByRole("button", { name: /Open Source Commons/ }).click();
   await page.getByRole("button", { name: "Apply", exact: true }).click();

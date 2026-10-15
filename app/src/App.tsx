@@ -206,8 +206,8 @@ export default function App() {
           </h1>
           <p>Explore DAO grant projects and try a short application flow.</p>
           <p>
-            We may ask one optional question. You can skip it. We record
-            anonymous interaction events, never your typed text.
+            We may ask one optional question to help improve the application
+            experience. You can skip it.
           </p>
           <p className="small muted">
             This is a demo. No real wallet or funds are used.

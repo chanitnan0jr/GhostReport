@@ -103,7 +103,7 @@ describe("canonical analytics", () => {
   });
 });
 
-describe("mock wallet evidence gap", () => {
+describe("mock wallet outcomes", () => {
   it("assigns a new attempt on every Connect and attributes success to that attempt", () => {
     const tracker = trackerForTest();
     const callbacks = { onConnected: vi.fn(), onFailure: vi.fn() };
@@ -124,15 +124,32 @@ describe("mock wallet evidence gap", () => {
     expect(callbacks.onConnected).toHaveBeenCalledOnce();
   });
 
-  it("keeps both reject and RPC error uninstrumented by default", () => {
+  it("records a simulated first-attempt error while leaving rejection unrecorded", () => {
     const tracker = trackerForTest();
     const callbacks = { onConnected: vi.fn(), onFailure: vi.fn() };
     connectWallet("p1", callbacks, tracker, () => 0).approve();
     connectWallet("p1", callbacks, tracker, () => 1).reject();
     expect(tracker.pending().map((e) => e.event)).toEqual([
       "wallet_attempted",
+      "wallet_errored",
       "wallet_attempted",
     ]);
     expect(callbacks.onFailure).toHaveBeenCalledTimes(2);
+  });
+
+  it("always succeeds on retry, including after a page reload", () => {
+    const tracker = trackerForTest();
+    const callbacks = { onConnected: vi.fn(), onFailure: vi.fn() };
+    connectWallet("p1", callbacks, tracker, () => 0).approve();
+    expect(callbacks.onFailure).toHaveBeenCalledWith(
+      "Simulated network error (demo) — please try again",
+    );
+    const reloaded = trackerForTest();
+    connectWallet("p1", callbacks, reloaded, () => 0).approve();
+    expect(callbacks.onConnected).toHaveBeenCalledOnce();
+    expect(
+      reloaded.pending().filter((e) => e.event === "wallet_errored"),
+    ).toHaveLength(1);
+    expect(reloaded.pending().at(-1)?.event).toBe("wallet_connected");
   });
 });

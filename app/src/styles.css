@@ -468,6 +468,14 @@ svg {
   color: #a24136 !important;
   line-height: 1.6;
 }
+.simulation-notice {
+  color: #775822 !important;
+  background: #f4ecd9;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 13px !important;
+  line-height: 1.6;
+}
 .connection-label {
   color: #547345;
   font-size: 12px;

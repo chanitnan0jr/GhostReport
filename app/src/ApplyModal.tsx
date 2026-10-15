@@ -55,7 +55,7 @@ function WalletGate({ project, error, onConnect, onNotNow }: Props) {
         This demo uses a mock wallet. No real wallet or funds are involved.
       </p>
       {error && (
-        <p className="error" role="alert">
+        <p className="simulation-notice" role="status">
           {error}
         </p>
       )}
@@ -117,8 +117,7 @@ function ApplicationForm({
             />
           </label>
           <p className="small muted">
-            Demo only. Typed text stays in this form and is never sent to
-            analytics.
+            This is a practice application. Your details are not submitted.
           </p>
           <div className="actions">
             <button className="button primary" type="submit">

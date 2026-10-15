@@ -18,8 +18,9 @@ export function MockWalletPopup({ attempt }: { attempt: WalletAttempt }) {
         </p>
       </div>
       <p className="small muted">
-        Simulated RPC error rate: {Math.round(RPC_ERROR_RATE * 100)}%. No real
-        transaction will be made.
+        First connection only: {Math.round(RPC_ERROR_RATE * 100)}% simulated
+        network error. Retrying always succeeds. No real wallet or funds are
+        used.
       </p>
       <div className="actions">
         <button className="button primary" onClick={attempt.approve}>
