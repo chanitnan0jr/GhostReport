@@ -1,0 +1,341 @@
+:root {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: #ecf1e9;
+  background: #101b20;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --muted: #a8bcb6;
+  --mint: #bfe1c2;
+  --line: #34454a;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+a {
+  outline-offset: 5px;
+}
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #bfe1c2;
+}
+a {
+  color: inherit;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.landing {
+  max-width: 1060px;
+  margin: auto;
+  padding: 0 48px;
+}
+.header {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  gap: 24px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.8px;
+}
+.brand-mark {
+  width: 32px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid #688979;
+  color: var(--mint);
+  font-size: 21px;
+}
+.repo-link {
+  font-size: 12px;
+  text-decoration: none;
+  color: var(--muted);
+}
+.repo-link span {
+  margin-left: 10px;
+}
+.hero {
+  padding: 72px 0 58px;
+  max-width: 850px;
+}
+h1 {
+  font-size: clamp(40px, 5.5vw, 64px);
+  line-height: 1.12;
+  font-weight: 500;
+  letter-spacing: -3px;
+  margin: 0 0 28px;
+}
+h1 span {
+  color: var(--mint);
+}
+.pitch {
+  font-size: 19px;
+  line-height: 1.6;
+  max-width: 600px;
+  color: #c4d3ca;
+  margin: 0 0 24px;
+}
+.simulation-note {
+  font-size: 12px;
+  color: #9fb3a7;
+  line-height: 1.7;
+  max-width: 550px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 32px;
+  padding: 38px 0;
+  border-top: 1px solid var(--line);
+}
+.step-number {
+  font-family: Georgia, serif;
+  font-size: 42px;
+  line-height: 1.2;
+  color: #829d88;
+  letter-spacing: -2px;
+}
+.step h2 {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+  margin: 0 0 16px;
+}
+.step-content > p {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 24px;
+  max-width: 600px;
+}
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  min-height: 50px;
+  padding: 15px 24px;
+  border: 1px solid #bfe1c2;
+  border-radius: 5px;
+  background: var(--mint);
+  color: #17362c;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+.primary:hover:not(:disabled) {
+  background: #d9f0d6;
+}
+.text-link {
+  display: inline-block;
+  text-underline-offset: 6px;
+  color: var(--mint);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.text-link span {
+  margin-left: 14px;
+}
+.integration-levels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin: 30px 0;
+}
+.integration-levels article {
+  display: flex;
+  gap: 14px;
+}
+.level {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #c1d9bd;
+  border: 1px solid #4a6658;
+  border-radius: 4px;
+  height: 26px;
+  padding: 5px;
+  flex-shrink: 0;
+}
+.integration-levels h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 2px 0 10px;
+}
+.integration-levels p {
+  font-size: 12px;
+  color: #9db1a7;
+  line-height: 1.7;
+  margin: 0;
+}
+.config-example {
+  margin: 30px 0;
+  color: #b4cbb9;
+  font-size: 13px;
+}
+.config-example summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.config-example pre {
+  background: #0b1417;
+  padding: 22px;
+  border: 1px solid #30433d;
+  border-radius: 6px;
+  overflow: auto;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #b4cabf;
+}
+.config-example code {
+  font-family: Consolas, "Liberation Mono", monospace;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 0 36px;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: #92aa9c;
+}
+.error {
+  color: #f6c2a6 !important;
+  font-size: 13px !important;
+  margin-top: 20px !important;
+}
+.role-screen {
+  min-height: 100dvh;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 32px;
+  padding: 48px;
+  margin: auto;
+}
+.role-text {
+  font-size: 22px;
+  line-height: 1.8;
+  margin: 0;
+  color: #e1ecdf;
+}
+.role-screen .primary {
+  align-self: flex-start;
+  min-width: 150px;
+}
+@media (max-width: 600px) {
+  .landing {
+    padding: 0 24px;
+  }
+  .header {
+    height: 82px;
+  }
+  .brand {
+    font-size: 18px;
+  }
+  .repo-link {
+    font-size: 10px;
+  }
+  .repo-link span {
+    margin-left: 4px;
+  }
+  .hero {
+    padding: 46px 0 34px;
+  }
+  h1 {
+    font-size: 39px;
+    letter-spacing: -2px;
+    line-height: 1.14;
+  }
+  .pitch {
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .simulation-note {
+    font-size: 11px;
+  }
+  .step {
+    grid-template-columns: 36px 1fr;
+    gap: 18px;
+    padding: 30px 0;
+  }
+  .step-number {
+    font-size: 28px;
+  }
+  .step h2 {
+    font-size: 21px;
+    line-height: 1.3;
+  }
+  .step-content > p {
+    font-size: 13px;
+  }
+  .first-step .primary {
+    width: 100%;
+    gap: 12px;
+    padding: 14px 12px;
+    font-size: 12px;
+  }
+  .integration-levels {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .integration-levels p {
+    font-size: 12px;
+  }
+  .config-example pre {
+    padding: 16px;
+    font-size: 10px;
+    margin-left: -54px;
+    width: calc(100% + 54px);
+  }
+  footer {
+    font-size: 10px;
+  }
+  footer > span:last-child {
+    text-align: right;
+    max-width: 150px;
+  }
+  .role-screen {
+    padding: 28px 24px;
+    gap: 24px;
+    justify-content: center;
+  }
+  .role-text {
+    font-size: 18px;
+    line-height: 1.8;
+  }
+  .role-screen .primary {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
