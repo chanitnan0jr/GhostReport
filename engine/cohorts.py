@@ -53,7 +53,8 @@ def build_cohorts(
                 attempts[event.attempt_id].append(event)
         states: list[str] = []
         reasons: list[str] = []
-        for attempt in attempts.values():
+        for index, attempt in enumerate(attempts.values()):
+            superseded = index < len(attempts) - 1  # a later attempt started
             names = {e.event for e in attempt}
             outcomes = names & {"wallet_connected", "wallet_rejected", "wallet_errored"}
             starts = [e for e in attempt if e.event == "wallet_attempted"]
@@ -65,7 +66,8 @@ def build_cohorts(
                 states.append("rejected")
             elif "wallet_errored" in names:
                 states.append("errored")
-            elif (cutoff - attempt[0].occurred_at).total_seconds() < pending_seconds:
+            elif (not superseded
+                  and (cutoff - attempt[0].occurred_at).total_seconds() < pending_seconds):
                 states.append("pending")
             else:
                 states.append("no_outcome_observed")
@@ -101,9 +103,11 @@ def build_cohorts(
             coverage="unknown" if reasons else "complete",
             coverage_reasons=tuple(sorted(set(reasons))), exit_type=exit_type,
             attempt_states=tuple(states),
-            after_retry=any(
-                e.event == "wallet_rejected" and e.seq < connected.seq
-                for e in ordered for connected in ordered if connected.event == "wallet_connected"
+            # Attempts are in start order; reject is not instrumented, so an unsuccessful
+            # earlier attempt (errored, or no outcome observed) counts as a retry.
+            after_retry="connected" in states and any(
+                s in {"rejected", "errored", "no_outcome_observed"}
+                for s in states[:states.index("connected")]
             ),
             event_ids=tuple(e.event_id for e in ordered),
         ))

@@ -282,3 +282,22 @@ def test_static_frontends_share_one_origin(tmp_path: Path) -> None:
         assert "wallet app" in client.get("/app/").text
         assert "report" in client.get("/report/").text
         assert client.get("/api/health").json()["ok"] is True
+
+
+def test_after_retry_counts_unsuccessful_earlier_attempts(tmp_path: Path, clock: Clock) -> None:
+    settings = Settings(run_id="r", mode="seed", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                        **VERIFIED)
+    events = [
+        event("s1", 1, "project_viewed", "ProjectPage"),
+        event("s1", 2, "apply_clicked", "ProjectPage"),
+        event("s1", 3, "wallet_gate_shown", "ApplyModal"),
+        event("s1", 4, "wallet_attempted", "ApplyModal", "a1"),  # rejected: no outcome event
+        event("s1", 5, "wallet_attempted", "ApplyModal", "a2"),
+        event("s1", 6, "wallet_connected", "MockWalletPopup", "a2"),
+    ]
+    with TestClient(create_app(settings)) as client:
+        client.post("/api/events", json={"events": events})
+        session = client.get("/api/report").json()["current"]["sessions"][0]
+        assert session["cohort"] == "connected"
+        assert session["attempt_states"] == ["no_outcome_observed", "connected"]
+        assert session["after_retry"] is True
