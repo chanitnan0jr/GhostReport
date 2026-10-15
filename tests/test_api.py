@@ -199,3 +199,30 @@ def test_verification_must_match_the_run_commit(tmp_path: Path, clock: Clock) ->
         assert run["build_verified"] is False
         assert run["verification"]["wallet_gate_shown"] == {
             "verified": False, "commit": None, "test": None, "passed_at": None}
+
+
+def test_ingest_maps_event_names_from_config(tmp_path: Path, clock: Clock) -> None:
+    from engine.config import TargetConfig
+
+    config = TargetConfig(events={"Wallet Gate Shown": "wallet_gate_shown"})
+    settings = Settings(run_id="m", mode="seed", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                        config=config, **VERIFIED)
+    with TestClient(create_app(settings)) as client:
+        batch = gate_then_not_now("s1")
+        batch[2]["event"] = "Wallet Gate Shown"
+        batch[3]["event"] = "Some Other Click"
+        result = client.post("/api/events", json={"events": batch}).json()
+        assert result["accepted"] == 3
+        assert "unmapped event 'Some Other Click'" in result["rejected"][0]["reason"]
+        session = client.get("/api/report").json()["current"]["sessions"][0]
+        assert session["cohort"] == "gate_event_no_attempt"
+
+
+def test_repo_config_loads() -> None:
+    from engine.config import load_config
+
+    config = load_config(Path(__file__).resolve().parent.parent / "ghostreport.yaml")
+    assert config.repo.path.name == "app" and config.repo.path.is_dir()
+    assert config.canonical_event("Wallet Gate Shown") == "wallet_gate_shown"
+    assert config.canonical_event("wallet_gate_shown") == "wallet_gate_shown"
+    assert config.canonical_event("nope") is None

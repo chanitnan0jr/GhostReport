@@ -1,0 +1,27 @@
+# GhostReport target config for the Micro Wallet Flow demo app (design §10).
+# A team adopting GhostReport adds one file like this to its repo.
+repo:
+  path: app                     # local checkout; for L0 code-only runs also set url + commit
+  include: ["src/**/*.ts", "src/**/*.tsx"]
+  exclude: ["**/*.test.*", "**/test/**", "**/mocks/**", "**/e2e/**", "**/node_modules/**"]
+workflow:
+  name: wallet_onboarding
+  keywords: [wallet, connect, signer, account, requireWallet]
+mode: behavioral                # or code_only (L0: workflow map + gaps, no behavioral findings)
+events:                         # your analytics name → canonical name
+  "Project Viewed": project_viewed
+  "Apply Clicked": apply_clicked
+  "Wallet Gate Shown": wallet_gate_shown
+  "Wallet Connect Started": wallet_attempted
+  "Wallet Connected": wallet_connected
+  "Wallet Error": wallet_errored
+  "Not Now Clicked": not_now_clicked
+  "Back To List": back_nav
+# Documented for teams; not yet enforced by the engine:
+requires_seq: true              # without seq, coverage is always unknown
+privacy:
+  allowed_props: [project_id, page]
+probe:
+  delivery: component           # <ProbeCard/> at the exit
+  budget: 30
+  consent_required: true

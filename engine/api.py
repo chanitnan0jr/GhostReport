@@ -21,6 +21,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import AwareDatetime, BaseModel, Field, ValidationError
 
+from engine.config import RepoConfig, TargetConfig, load_config
 from engine.context_builder import build_context, git_commit
 from engine.investigation import DEFAULT_FIXTURE, Investigation, load_investigation
 from engine.llm import LLM, LLMError
@@ -61,8 +62,10 @@ class Settings:
     db_dir: Path = field(default_factory=lambda: Path(os.getenv("GHOST_DB_DIR", "runs")))
     fixture: Path = field(
         default_factory=lambda: Path(os.getenv("GHOST_FIXTURE", str(DEFAULT_FIXTURE))))
-    target_repo: Path = field(
-        default_factory=lambda: Path(os.getenv("GHOST_TARGET_REPO", "app")))
+    config: TargetConfig = field(default_factory=lambda: (
+        load_config(path) if (path := Path(os.getenv("GHOST_CONFIG", "ghostreport.yaml"))).exists()
+        else TargetConfig(repo=RepoConfig(path=Path("app")))))
+    target_repo: Path | None = None  # overrides config.repo.path
     ends_at: datetime = field(default_factory=lambda: datetime.fromisoformat(
         os.getenv("GHOST_ENDS_AT", "2026-10-16T18:00:00+07:00")))
     dp0_seconds: float = 30.0
@@ -130,10 +133,17 @@ async def _json(request: Request) -> Any:
         raise HTTPException(400, "body must be JSON") from error
 
 
-def _clean_event(raw: Any, received_at: datetime) -> Event:
-    """Privacy whitelist, then the canonical model. `page` duplicates the top-level field."""
+def _clean_event(raw: Any, received_at: datetime, config: TargetConfig) -> Event:
+    """Name mapping, privacy whitelist, then the canonical model.
+
+    `page` in props duplicates the top-level field and is dropped.
+    """
     if not isinstance(raw, dict):
         raise ValueError("event must be an object")
+    name = config.canonical_event(str(raw.get("event")))
+    if name is None:
+        raise ValueError(f"unmapped event {raw.get('event')!r}: add it to ghostreport.yaml events")
+    raw = {**raw, "event": name}
     props = raw.get("props") or {}
     if not isinstance(props, dict):
         raise ValueError("props must be an object")
@@ -220,7 +230,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         for raw in batch:
             event_id = raw.get("event_id") if isinstance(raw, dict) else None
             try:
-                if store().ingest(_clean_event(raw, now)):
+                if store().ingest(_clean_event(raw, now, settings.config)):
                     accepted += 1
                 else:
                     duplicates += 1
@@ -328,8 +338,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         stats = {"funnel": current["funnel"], "cohorts": current["cohorts"]}
 
         def work() -> InvestigationDraft:
-            root = settings.target_repo
-            pack, llm = build_context(root), settings.llm()
+            root = settings.target_repo or settings.config.repo.path
+            pack = build_context(root, keywords=settings.config.workflow.keywords,
+                                 include=settings.config.repo.include,
+                                 exclude=settings.config.repo.exclude)
+            llm = settings.llm()
             workflow, rejected = run_stage_a(llm, pack, root)
             draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))
             merged = {**draft.rejected, **{f"stage_a_{k}": v for k, v in rejected.items()}}

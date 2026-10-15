@@ -1,6 +1,6 @@
 """CLI: ContextPack → Stage A → Stage B → draft JSON for operator approval.
 
-    uv run python -m engine.analyze app runs/draft.app.json
+    uv run python -m engine.analyze app runs/draft.app.json --config ghostreport.yaml
     uv run python -m engine.analyze path/to/dapp runs/draft.partb.json --code-only
 """
 
@@ -9,6 +9,7 @@ import json
 import time
 from pathlib import Path
 
+from engine.config import TargetConfig, load_config
 from engine.context_builder import build_context
 from engine.llm import LLM
 from engine.stages import run_stage_a, run_stage_b
@@ -21,11 +22,15 @@ def main() -> None:
     parser.add_argument("--code-only", action="store_true",
                         help="L0 mode: no cohort stats, never used for behavioral findings")
     parser.add_argument("--token-cap", type=int, default=30_000)
-    parser.add_argument("--keywords", default="wallet,connect,signer,account,requireWallet")
+    parser.add_argument("--keywords", help="comma-separated; overrides the config")
+    parser.add_argument("--config", type=Path,
+                        help="ghostreport.yaml whose include/exclude/keywords to use")
     args = parser.parse_args()
 
-    pack = build_context(args.repo, keywords=tuple(args.keywords.split(",")),
-                         token_cap=args.token_cap)
+    config = load_config(args.config) if args.config else TargetConfig()
+    keywords = tuple(args.keywords.split(",")) if args.keywords else config.workflow.keywords
+    pack = build_context(args.repo, keywords=keywords, include=config.repo.include,
+                         exclude=config.repo.exclude, token_cap=args.token_cap)
     print(f"ContextPack: {len(pack.scope.searched_files)} files, ~{pack.tokens()} tokens, "
           f"truncated={pack.scope.truncated}, commit={pack.scope.commit_sha}")
     llm = LLM()
