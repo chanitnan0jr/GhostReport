@@ -387,7 +387,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             root = settings.target_repo or settings.config.repo.path
             pack = build_context(root, keywords=settings.config.workflow.keywords,
                                  include=settings.config.repo.include,
-                                 exclude=settings.config.repo.exclude)
+                                 exclude=settings.config.repo.exclude,
+                                 analytics_calls=settings.config.analytics.calls)
             llm = settings.llm()
             workflow, rejected = run_stage_a(llm, pack, root)
             draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))

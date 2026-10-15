@@ -160,3 +160,22 @@ def test_stage_b_guards_and_approval(repo: Path, llm: LLM) -> None:
     assert investigation.plan_for("DP1") is not None and investigation.plan_for("DP2") is not None
     with pytest.raises(ValueError):
         approve(draft, approved_by="mentor", now=NOW, ends_at=NOW)
+
+
+def test_code_only_drops_rules_whose_event_is_unmapped(repo: Path, llm: LLM) -> None:
+    llm.complete = Script([WORKFLOW, HYPOTHESES])
+    pack = build_context(repo)
+    workflow, _ = run_stage_a(llm, pack, repo)
+    draft = run_stage_b(llm, pack, workflow, {"mode": "code_only"},
+                        mapped_events=frozenset({"wallet_connected"}), code_only=True)
+    assert draft.actions == () and draft.mode == "code_only"
+    assert "check_event:unmapped wallet_gate_shown" in draft.rejected["action"]
+    assert [g["rule_id"] for g in draft.cannot_check] == ["R2"]
+
+
+def test_analytics_calls_include_repo_wrappers(tmp_path: Path) -> None:
+    (tmp_path / "Flow.tsx").write_text(
+        "const wallet = 1\nsendEvent('register:start', { wallet })\ntrack('ignored')\n")
+    pack = build_context(tmp_path, analytics_calls=("sendEvent",))
+    assert [(c.function, c.event) for c in pack.analytics_calls] == [
+        ("sendEvent", "register:start")]

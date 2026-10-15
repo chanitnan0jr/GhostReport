@@ -19,7 +19,7 @@ DEFAULT_EXCLUDE = (
     "**/node_modules/**", "**/dist/**", "**/build/**", "**/*.test.*", "**/*.spec.*",
     "**/test/**", "**/tests/**", "**/__tests__/**", "**/e2e/**", "**/mocks/**", "**/*.d.ts",
 )
-ANALYTICS_CALL = re.compile(r"\b(trackOnce|track|capture)\s*\(")
+DEFAULT_ANALYTICS_CALLS = ("trackOnce", "track", "capture")
 STRING = re.compile(r"'([^'\n]*)'|\"([^\"\n]*)\"")
 IMPORT = re.compile(
     r"""(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]"""
@@ -148,14 +148,20 @@ def _call_args(text: str, start: int, limit: int = 600) -> str:
     return ""
 
 
-def _analytics_calls(path: str, text: str) -> list[AnalyticsCall]:
+def _call_pattern(names: tuple[str, ...]) -> re.Pattern[str]:
+    """Longest name first so `trackOnce` is not read as `track`."""
+    alternatives = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
+    return re.compile(rf"\b({alternatives})\s*\(")
+
+
+def _analytics_calls(path: str, text: str, call_re: re.Pattern[str]) -> list[AnalyticsCall]:
     """The first quoted literal in a call's arguments is its event name.
 
     trackOnce's first argument is a template display ID, so quoted literals skip it.
     Calls with only variables (wrappers, definitions) are not events.
     """
     calls = []
-    for match in ANALYTICS_CALL.finditer(text):
+    for match in call_re.finditer(text):
         if re.search(r"function\s*$", text[max(0, match.start() - 20):match.start()]):
             continue
         args = _call_args(text, match.end())
@@ -182,10 +188,12 @@ def build_context(
     root: Path, *, keywords: tuple[str, ...] = DEFAULT_KEYWORDS,
     include: tuple[str, ...] = DEFAULT_INCLUDE, exclude: tuple[str, ...] = DEFAULT_EXCLUDE,
     token_cap: int = 30_000, strip_analytics: bool = False,
+    analytics_calls: tuple[str, ...] = DEFAULT_ANALYTICS_CALLS,
 ) -> ContextPack:
     """Rank keyword files by hits, add one hop of relative imports, then fit the cap.
 
     `strip_analytics` hides the analytics-call list (E1a strip-and-restore runs).
+    `analytics_calls` names the repo's tracking functions (its own wrappers included).
     """
     root = root.resolve()
     globs = _globs(include, exclude)
@@ -215,11 +223,12 @@ def build_context(
     ordered = hit_files + neighbours
     calls: list[AnalyticsCall] = []
     keyword_re = re.compile(pattern, re.IGNORECASE)
+    call_re = _call_pattern(analytics_calls)
     files: list[PackFile] = []
     for path in ordered:
         text = (root / path).read_text(encoding="utf-8", errors="replace")
         lines = tuple(text.splitlines())
-        calls.extend(_analytics_calls(path, text))
+        calls.extend(_analytics_calls(path, text, call_re))
         files.append(PackFile(path, ((1, len(lines)),) if lines else (), lines))
     truncated = False
     pack = ContextPack(

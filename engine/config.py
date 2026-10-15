@@ -1,8 +1,8 @@
 """`ghostreport.yaml`: the one file a target repo adds (design §10, minimal reader).
 
-Read here: repo path/include/exclude, workflow keywords, mode, and the event-name
-mapping applied at ingest. Other keys in the file are documented for teams but
-not yet enforced by the engine.
+Read here: repo path/include/exclude, workflow keywords, mode, analytics call
+names, and the event-name mapping applied at ingest. Other keys in the file are
+documented for teams but not yet enforced by the engine.
 """
 
 from pathlib import Path
@@ -11,7 +11,12 @@ from typing import Literal, get_args
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from engine.context_builder import DEFAULT_EXCLUDE, DEFAULT_INCLUDE, DEFAULT_KEYWORDS
+from engine.context_builder import (
+    DEFAULT_ANALYTICS_CALLS,
+    DEFAULT_EXCLUDE,
+    DEFAULT_INCLUDE,
+    DEFAULT_KEYWORDS,
+)
 from engine.models import EventName
 
 CANONICAL_EVENTS = frozenset(get_args(EventName))
@@ -34,12 +39,19 @@ class WorkflowConfig(BaseModel):
     keywords: tuple[str, ...] = DEFAULT_KEYWORDS
 
 
+class AnalyticsConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    calls: tuple[str, ...] = DEFAULT_ANALYTICS_CALLS  # tracking functions and wrappers
+
+
 class TargetConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     repo: RepoConfig = Field(default_factory=RepoConfig)
     workflow: WorkflowConfig = Field(default_factory=WorkflowConfig)
     mode: Literal["behavioral", "code_only"] = "behavioral"
+    analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
     events: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
