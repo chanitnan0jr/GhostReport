@@ -8,7 +8,7 @@ npm ci
 VITE_MOCK=1 npm run dev
 ```
 
-Open `/app/` on the URL printed by Vite. On a phone use your computer's LAN address and allow port 5173. The development server listens on `0.0.0.0`. Append `?sid=YOUR_QR_SESSION` to preserve the QR-assigned session ID. With no `sid`, a UUID is stored in `sessionStorage`.
+Open `/app/` on the URL printed by Vite. On a phone use your computer's LAN address and allow port 5173. The development server listens on `0.0.0.0`. Append `?sid=YOUR_QR_SESSION` to preserve the QR-assigned session ID. With no `sid`, a UUID is stored in `sessionStorage`. The active ID is also saved as `localStorage['ghost:judge_sid']` for the report highlight. Public entry opens this app directly without a role card; legacy `/try/` redirects here.
 
 For the real engine, run `npm run dev` without `VITE_MOCK=1`. Vite forwards `/api` to `http://127.0.0.1:18000` without rewriting the path. Set `GHOST_API_TARGET` in the shell or app-local `.env.local` to change the backend URL. A production host must provide the equivalent same-origin `/api` reverse proxy.
 
@@ -25,7 +25,7 @@ npm run test:browser      # desktop and mobile mock flow; RPC error rate fixed t
 
 `VITE_RPC_ERROR_RATE=0.10` is the default. The configured rate is clamped to 0–1 and shown in the mock popup. Only the first Connect attempt in a session can produce a simulated network error on Approve. Every retry succeeds on Approve, including after reloading. Use `0` or `1` for deterministic checks. Reject returns to the gate without recording a reject event; network errors remain recorded.
 
-Both DP1 and DP2 plans are fetched independently on entering each ProjectPage. Not now selects DP1; Back selects DP2. A failed plan request disables only that decision point. Refreshing does not clear the session's asked flag. For a new investigation use a new `sid` or a fresh tab.
+Both DP1 and DP2 plans are fetched independently on entering each ProjectPage. Not now selects DP1; Back selects DP2. A failed plan request disables only that decision point. Refreshing does not clear the session's asked flag. For a new investigation use a new `sid` or a fresh tab. Feedback is restricted to sessions that have never clicked Connect, regardless of the plan's target cohort. Rejecting, a simulated network error or reloading does not restore eligibility. Clicking Connect also closes any still-open optional question.
 
 ## Backend contract
 

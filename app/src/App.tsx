@@ -151,6 +151,7 @@ export default function App() {
 
   function connect() {
     if (!project || attempt) return;
+    setInvitation(null);
     setError("");
     setAttempt(
       connectWallet(

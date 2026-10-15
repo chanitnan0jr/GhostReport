@@ -14,6 +14,7 @@ export function getSessionId(): string {
   const fromUrl = new URLSearchParams(window.location.search).get("sid");
   const id = fromUrl || sessionStorage.getItem("ghost:session_id") || uuid();
   sessionStorage.setItem("ghost:session_id", id);
+  localStorage.setItem("ghost:judge_sid", id);
   return id;
 }
 

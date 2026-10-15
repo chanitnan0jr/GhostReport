@@ -11,7 +11,7 @@ export interface ExitContext {
   cohort: Cohort;
 }
 
-/** Pure §4.6 at_exit: loaded plan + local state only; never calls an API. */
+/** Evaluate an optional question using the loaded plan and local session state. */
 export function at_exit(
   plan: ProbePlan | null,
   context: ExitContext,
@@ -24,13 +24,10 @@ export function at_exit(
     plan.decision_point !== context.decisionPoint ||
     !context.consent ||
     context.alreadyAsked ||
-    context.walletPopupOpen
+    context.walletPopupOpen ||
+    context.hasAttempted
   )
     return "no_action";
-  const noAttempt = ["no_gate_event", "gate_event_no_attempt"].includes(
-    plan.target_cohort,
-  );
-  if (noAttempt && context.hasAttempted) return "no_action";
   if (context.cohort !== plan.target_cohort) return "no_action";
   return "show_probe";
 }
