@@ -1,3 +1,4 @@
+import { activeSite } from "../../shared/navigation";
 import { useState } from "react";
 import { sandboxReportUrl, startSandbox } from "../../shared/sandbox";
 import { Shell } from "./HomePage";
@@ -6,6 +7,10 @@ const STEPS = [
   [
     "Generate traffic",
     "Simulated sessions walk the app’s flow and send their events through the normal ingest. Segments update at once.",
+  ],
+  [
+    "Generate journeys",
+    "Review generated recorded-event rules beside the original template. Only your sandbox owner token can approve them, within the shared AI budget.",
   ],
   [
     "Investigate",
@@ -52,6 +57,20 @@ export function SandboxPage() {
     }
   }
 
+  if (activeSite(new URL(location.href)) === "ens")
+    return (
+      <Shell>
+        <main className="gr-page">
+          <h1>ENS data is read-only</h1>
+          <p>
+            No ENS sandbox or traffic is available.{" "}
+            <a href="/report/?project=ens#workflow">
+              Explore the pinned Workflow Map →
+            </a>
+          </p>
+        </main>
+      </Shell>
+    );
   return (
     <Shell>
       <main className="gr-page sandbox-page">
