@@ -20,6 +20,7 @@ export function Segments({ report }: { report: Report | null }) {
   const [choice, setChoice] = useState<PopulationFilter | null>(null);
   const [selected, setSelected] = useState<Cohort | null>(null);
   const [highlightOwn, setHighlightOwn] = useState(true);
+  const [showGenerated, setShowGenerated] = useState(false);
   const sid = useJudgeSession();
   const own = useSessionJourney(sid);
   if (!report)
@@ -67,6 +68,24 @@ export function Segments({ report }: { report: Report | null }) {
                   : report.run.mode.toUpperCase()}
               </strong>
             )}
+            <button
+              type="button"
+              className="generated-journeys-toggle"
+              aria-expanded={showGenerated}
+              aria-controls="generated-journey-comparison"
+              onClick={() => setShowGenerated((open) => !open)}
+            >
+              Generated journeys
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path d="m6 8 4 4 4-4" />
+              </svg>
+            </button>
           </div>
           <p>
             How recorded events move through the application workflow, grouped
@@ -146,7 +165,7 @@ export function Segments({ report }: { report: Report | null }) {
             {own.error}
           </p>
         )}
-        <div className="journey-comparison">
+        <div className={`journey-comparison${showGenerated ? " is-open" : ""}`}>
           <div className="journey-template">
             <h2>Template · original cohorts</h2>
             <CohortFlow
@@ -156,12 +175,18 @@ export function Segments({ report }: { report: Report | null }) {
               onSelect={selectCohort}
             />
           </div>
-          <GeneratedJourneys
-            source={
-              ["seed", "test", "visitor"].includes(filter) ? filter : undefined
-            }
-            exclude={filter === "no_test" ? "test" : undefined}
-          />
+          <div id="generated-journey-comparison" hidden={!showGenerated}>
+            {showGenerated && (
+              <GeneratedJourneys
+                source={
+                  ["seed", "test", "visitor"].includes(filter)
+                    ? filter
+                    : undefined
+                }
+                exclude={filter === "no_test" ? "test" : undefined}
+              />
+            )}
+          </div>
         </div>
       </section>
       <div className="cohort-grouping-note">

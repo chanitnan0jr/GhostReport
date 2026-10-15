@@ -116,6 +116,38 @@
   align-items: center;
   gap: 12px;
 }
+.generated-journeys-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--gr-line);
+  border-radius: 10px;
+  background: var(--gr-surface);
+  color: var(--gr-muted);
+  font: 500 14px var(--gr-font);
+  cursor: pointer;
+}
+.generated-journeys-toggle:hover,
+.generated-journeys-toggle[aria-expanded="true"] {
+  color: var(--gr-accent-ink);
+  border-color: var(--gr-accent);
+  background: var(--gr-accent-soft);
+}
+.generated-journeys-toggle:focus-visible {
+  outline: 2px solid var(--gr-accent);
+  outline-offset: 3px;
+}
+.generated-journeys-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+.generated-journeys-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
 .segment-mode-badge {
   padding: 3px 7px;
   border-radius: 5px;
