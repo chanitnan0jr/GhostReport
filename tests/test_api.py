@@ -321,3 +321,22 @@ def test_seeded_demo_run_reports_and_is_idempotent(tmp_path: Path) -> None:
         assert any(f["respondents"] >= 3 for f in current["findings"])
     with TestClient(create_app(settings)) as client:
         assert client.get("/api/report").json()["current"]["seeded_sessions"] == 20
+
+
+def test_redeploy_on_a_new_commit_keeps_the_run(tmp_path: Path, clock: Clock) -> None:
+    first = Settings(run_id="judging", mode="demo", db_dir=tmp_path, dp0_seconds=0, clock=clock,
+                     autolock=True, **VERIFIED)
+    with TestClient(create_app(first)) as client:
+        client.post("/api/events", json={"events": gate_then_not_now("s1")})
+        digest = client.get("/api/report").json()["v1"]["digest"]
+    redeploy = Settings(run_id="judging", mode="demo", db_dir=tmp_path, dp0_seconds=0,
+                        clock=clock, autolock=True, code_commit="c2", verifications=())
+    with TestClient(create_app(redeploy)) as client:
+        report = client.get("/api/report").json()
+        assert report["v1"]["digest"] == digest
+        assert [b["code_commit"] for b in report["builds"]] == ["c1", "c2"]
+        assert report["run"]["build_verified"] is False
+        assert report["current"]["funnel"]["visitors"] == 1
+    other = Settings(run_id="judging", mode="live", db_dir=tmp_path, dp0_seconds=0, **VERIFIED)
+    with pytest.raises(ValueError, match="another run"), TestClient(create_app(other)):
+        pass

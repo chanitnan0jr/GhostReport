@@ -4,6 +4,7 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
 
@@ -27,6 +28,10 @@ def digest_snapshot(state: InvestigationState, prev_sha256: str | None) -> str:
     }).encode()).hexdigest()
 
 
+# What makes a run the same run across redeploys; build fields may change.
+RUN_IDENTITY = {"run_id", "mode", "policy_version", "catalog_version"}
+
+
 class Store:
     """One run per file. No roles table or role-service access exists here."""
 
@@ -36,6 +41,9 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.executescript("""
             CREATE TABLE IF NOT EXISTS run (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS run_builds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, started_at TEXT NOT NULL, payload TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS attempt_owners (
                 attempt_id TEXT PRIMARY KEY, session_id TEXT NOT NULL
             );
@@ -49,7 +57,7 @@ class Store:
                 PRIMARY KEY(investigation_id, version)
             );
         """)
-        for table in ("run", "attempt_owners", "events", "investigations"):
+        for table in ("run", "run_builds", "attempt_owners", "events", "investigations"):
             for operation in ("UPDATE", "DELETE"):
                 self.connection.execute(f"""
                     CREATE TRIGGER IF NOT EXISTS immutable_{table}_{operation}
@@ -58,11 +66,21 @@ class Store:
                 """)
         payload = canonical_json(run)
         row = self.connection.execute("SELECT payload FROM run WHERE id = 1").fetchone()
-        if row is not None and row[0] != payload:
-            self.connection.close()
-            raise ValueError("database already belongs to another run or build configuration")
+        if row is not None:
+            first = Run.model_validate_json(row[0])
+            if first.model_dump(include=RUN_IDENTITY) != run.model_dump(include=RUN_IDENTITY):
+                self.connection.close()
+                raise ValueError("database already belongs to another run")
+        # A redeploy keeps the run; each distinct build is appended, never overwritten.
+        last = self.connection.execute(
+            "SELECT payload FROM run_builds ORDER BY id DESC LIMIT 1").fetchone()
         with self.connection:
             self.connection.execute("INSERT OR IGNORE INTO run VALUES (1, ?)", (payload,))
+            if last is None or last[0] != payload:
+                self.connection.execute(
+                    "INSERT INTO run_builds (started_at, payload) VALUES (?, ?)",
+                    (datetime.now(UTC).isoformat(), payload),
+                )
 
     def __enter__(self) -> "Store":
         return self
@@ -72,6 +90,12 @@ class Store:
         traceback: TracebackType | None,
     ) -> None:
         self.connection.close()
+
+    def builds(self) -> list[dict[str, object]]:
+        """Every build that served this run, oldest first."""
+        rows = self.connection.execute("SELECT started_at, payload FROM run_builds ORDER BY id")
+        return [{"started_at": started, **Run.model_validate_json(payload).summary()}
+                for started, payload in rows]
 
     def ingest(self, event: Event) -> bool:
         """Atomically dedupe an event; receipt time may differ on retransmission."""

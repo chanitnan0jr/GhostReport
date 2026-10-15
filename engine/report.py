@@ -210,6 +210,7 @@ def build_report(
               "decisions": state.decisions}
     return {
         "run": store.run.summary(),
+        "builds": store.builds(),
         "investigation_id": investigation.investigation_id,
         "workflow": investigation.workflow,
         "hypotheses": investigation.hypotheses.hypotheses,
