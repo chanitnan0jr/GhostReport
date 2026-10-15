@@ -52,7 +52,8 @@ def test_template_passes_its_own_checker() -> None:
     ("Population seed 20 + visitors 3. H1 was chosen by 4 of 7 respondents.", "not in facts"),
     ("Population seed 20 + visitors 3. 9 of 14 sessions reached the gate.", "sessions"),
     ("Population seed 20 + visitors 3. H9 was chosen by 4 of 6 respondents.", "unknown"),
-    ("Population seed 20 + visitors 3. Most respondents chose H1.", "without 'k of n"),
+    ("Population seed 20 + visitors 3. Most respondents chose H1.", "vague quantity"),
+    ("Population seed 20 + visitors 3. Almost half of the users left.", "vague quantity"),
     ("Population seed 20 + visitors 3. H1 was chosen by 4 of 6.", "without a unit"),
     ("Population seed 20 + visitors 3. H1 was chosen by 4 of 6 respondents (seed 2 of 4).",
      "split '2 of 4'"),
@@ -70,14 +71,25 @@ def test_checker_accepts_grounded_claims_and_quoted_statements() -> None:
 
 def test_generate_falls_back_to_the_template(tmp_path: Path) -> None:
     llm = LLM(cache_path=tmp_path / "cache.sqlite")
-    llm.complete = Script([{"paragraph": "Population: seed 20 + visitors 3. H1 caused most "
-                                         "drop-off, with 4 of 6 respondents agreeing."}])
+    bad = {"paragraph": "Population: seed 20 + visitors 3. H1 caused most drop-off, "
+                        "with 4 of 6 respondents agreeing."}
+    llm.complete = script = Script([bad, bad])
     result = generate(llm, FACTS)
     assert result["source"] == "template" and result["text"] == template(FACTS)
     assert any("caus" in p for p in result["rejected"])
+    assert "checker_problems" in script.sent[1][1]["content"]  # one repair round
     good = ("Population: seed 20 + visitors 3, where seed sessions are simulated users. "
             "H1 was selected by 4 of 6 respondents at DP1.")
     llm.complete = Script([{"paragraph": good}])
     fresh = facts({**CURRENT, "population": "seed 20 + visitors 3"}, HYPOTHESES, locked=True)
     assert generate(LLM(cache_path=tmp_path / "other.sqlite", complete=llm.complete),
                     fresh)["source"] == "llm"
+
+
+def test_generate_repairs_once_with_the_checker_problems(tmp_path: Path) -> None:
+    good = ("Population: seed 20 + visitors 3; seed sessions are simulated users. "
+            "H1 was selected by 4 of 6 respondents at DP1.")
+    script = Script([{"paragraph": "Population: seed 20 + visitors 3. H1 is likely."},
+                     {"paragraph": good}])
+    result = generate(LLM(cache_path=tmp_path / "c.sqlite", complete=script), FACTS)
+    assert result == {"text": good, "source": "llm", "rejected": []}

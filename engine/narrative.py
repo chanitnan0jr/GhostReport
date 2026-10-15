@@ -35,6 +35,9 @@ BARE_K_OF_N = re.compile(
 )
 NUMBER = re.compile(r"(?<![\w.])\d+(?![\w.])")
 HYPOTHESIS = re.compile(r"\bH(\d+|_other)\b")
+VAGUE = re.compile(r"\b(most|many|few|all|some|several|half|majority|minority|nearly|almost)"
+                   r"\b(?:\s+of)?(?:\s+the)?\s+(respondents?|sessions?|visitors?|users?|people)\b",
+                   re.IGNORECASE)
 SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
@@ -127,8 +130,8 @@ def check(text: str, value: Mapping[str, Any]) -> list[str]:
         for k, n in SPLIT.findall(sentence):
             if not any((int(k), int(n)) in pairs.get(h, set()) for h in named):
                 problems.append(f"split '{k} of {n}' matches no named hypothesis")
-        if re.search(r"\brespondents?\b", sentence) and not K_OF_N.search(sentence):
-            problems.append("respondents mentioned without 'k of n respondents'")
+        problems += [f"vague quantity {m.group(0)!r}: write 'k of n respondents'"
+                     for m in VAGUE.finditer(sentence)]
     return problems
 
 
@@ -164,17 +167,27 @@ def template(value: Mapping[str, Any]) -> str:
     return " ".join(parts)
 
 
-def generate(llm: LLM, value: Mapping[str, Any]) -> dict[str, Any]:
-    """LLM paragraph if it passes the claim checker, else the template (with reasons)."""
+def generate(llm: LLM, value: Mapping[str, Any], *, attempts: int = 2) -> dict[str, Any]:
+    """LLM paragraph that passes the claim checker, else the template (with reasons).
+
+    A rejected paragraph is sent back once with the checker's problems.
+    """
     fallback = template(value)
-    try:
-        draft = llm.call(*NARRATIVE, NarrativeDraft, context="",
-                         instructions=json.dumps(value, ensure_ascii=False),
-                         system=("narrative_system", 1))
-    except Exception as error:  # noqa: BLE001 - any LLM failure falls back to the template
-        return {"text": fallback, "source": "template", "rejected": [f"llm: {error}"]}
-    problems = check(draft.paragraph, value)
-    if problems:
-        return {"text": fallback, "source": "template", "rejected": problems,
-                "llm_text": draft.paragraph}
-    return {"text": draft.paragraph, "source": "llm", "rejected": []}
+    problems: list[str] = []
+    paragraph = ""
+    for _ in range(attempts):
+        payload: dict[str, Any] = {"facts": value}
+        if problems:
+            payload["previous_paragraph"] = paragraph
+            payload["checker_problems"] = problems
+        try:
+            draft = llm.call(*NARRATIVE, NarrativeDraft, context="",
+                             instructions=json.dumps(payload, ensure_ascii=False),
+                             system=("narrative_system", 1))
+        except Exception as error:  # noqa: BLE001 - any LLM failure falls back to the template
+            return {"text": fallback, "source": "template", "rejected": [f"llm: {error}"]}
+        paragraph = draft.paragraph
+        problems = check(paragraph, value)
+        if not problems:
+            return {"text": paragraph, "source": "llm", "rejected": []}
+    return {"text": fallback, "source": "template", "rejected": problems, "llm_text": paragraph}
