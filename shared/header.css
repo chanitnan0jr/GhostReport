@@ -1,0 +1,78 @@
+@import "./tokens.css";
+
+.gr-site-header-surface {
+  background: var(--gr-surface);
+  border-bottom: 1px solid var(--gr-line);
+  color: var(--gr-ink);
+}
+.gr-site-header-surface .gr-header.gr-shared-header {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  max-width: var(--gr-page);
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 16px 54px;
+  font-family: var(--gr-font);
+  line-height: 1.4;
+}
+.gr-site-header-surface .gr-shared-header .gr-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  color: var(--gr-ink);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gr-site-header-surface .gr-shared-header .gr-brand-logo {
+  display: block;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  object-fit: contain;
+}
+.gr-site-header-surface .gr-shared-header .gr-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 110px;
+}
+.gr-site-header-surface .gr-shared-header .gr-nav a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gr-muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gr-site-header-surface .gr-shared-header .gr-nav a:hover {
+  background: var(--gr-surface-2);
+  color: var(--gr-ink);
+}
+.gr-site-header-surface .gr-shared-header .gr-nav a[aria-current="page"] {
+  background: var(--gr-accent-soft);
+  color: var(--gr-accent-ink);
+  font-weight: 600;
+}
+.gr-site-header-surface .gr-shared-header .gr-github {
+  color: var(--gr-muted);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gr-site-header-surface .gr-shared-header a:focus-visible {
+  outline: 2px solid var(--gr-accent);
+  outline-offset: 5px;
+}
