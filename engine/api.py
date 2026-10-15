@@ -37,6 +37,7 @@ from engine.models import (
     Event,
     Exposure,
     InvestigationState,
+    ProbePlan,
     ProbeResponse,
     Run,
     Verification,
@@ -110,6 +111,10 @@ class Settings:
         Path(os.getenv("GHOST_TARGET_REPO", "app"))))
     verifications: tuple[Verification, ...] = field(default_factory=lambda: load_verifications(
         Path(os.getenv("GHOST_VERIFICATION", "runs/verification.json"))))
+    # Public runs can host sandboxes (engine/sandbox.py): one simulated run per visitor,
+    # each in its own directory under this root. None disables the hub.
+    sandbox_root: Path | None = None
+    sandbox: Any = None  # set on a sandbox run: its runtime (owner, budget, generator)
 
     def run(self) -> Run:
         return Run(
@@ -197,6 +202,27 @@ def _client_plan(investigation: Investigation, plan_id: str) -> dict[str, Any]:
     }
 
 
+@dataclass(frozen=True)
+class Ghost:
+    """One run's internals, for code that drives the run without HTTP (sandboxes)."""
+
+    settings: Settings
+    inv: Callable[[], Investigation]
+    store: Callable[[], Store]
+    records: Callable[[], ProbeRecords]
+    startup: Callable[[], None]
+    shutdown: Callable[[], None]
+    locked: Callable[[], bool]
+    lock: Callable[[], tuple[InvestigationState, str]]
+    serve_plan: Callable[[DecisionPoint], ProbePlan | None]
+    accept_event: Callable[[Any], bool]
+    accept_exposure: Callable[[Any], str]
+    accept_response: Callable[[Any], str]
+    set_investigation: Callable[[Investigation], None]
+    draft_path: Path
+    approved_path: Path
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     approved_path = settings.db_dir / f"{settings.run_id}.investigation.json"
@@ -214,10 +240,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return state["records"]  # type: ignore[no-any-return]
 
     def operator(authorization: Annotated[str | None, Header()] = None) -> None:
-        """Operator-only routes. Public modes (demo, live) require GHOST_OPERATOR_TOKEN."""
+        """Operator-only routes. Public modes (demo, live, sandbox) require a token."""
         token = settings.operator_token
         if token is None:
-            if settings.mode in ("demo", "live"):
+            if settings.mode in ("demo", "live", "sandbox"):
                 raise HTTPException(403, "operator routes are disabled on public runs")
             return
         if not hmac.compare_digest(authorization or "", f"Bearer {token}"):
@@ -288,8 +314,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             except Exception:  # noqa: BLE001 - keep the loop alive; the trace shows gaps
                 log.exception("DP0 evaluation failed")
 
-    @asynccontextmanager
-    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    def startup() -> None:
+        """Open this run's store; a sandbox hub calls it directly (mounted apps get no lifespan)."""
         settings.db_dir.mkdir(parents=True, exist_ok=True)
         state["store"] = Store(settings.db_dir / f"{settings.run_id}.sqlite", settings.run())
         state["records"] = ProbeRecords(state["store"].connection)
@@ -302,13 +328,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 seeded = seed_run(state["store"], state["records"], inv(), settings.clock)
                 if seeded:
                     log.warning("seeded %d synthetic sessions (seed-*)", seeded)
+
+    def shutdown() -> None:
+        state["store"].connection.close()
+
+    hub: Any = None  # the sandbox hub, when this public run hosts sandboxes
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        startup()
         task = asyncio.create_task(dp0_loop()) if settings.dp0_seconds > 0 else None
         try:
             yield
         finally:
             if task:
                 task.cancel()
-            state["store"].connection.close()
+            if hub is not None:
+                hub.close_all()
+            shutdown()
 
     app = FastAPI(title="GhostReport engine", lifespan=lifespan)
     app.add_middleware(
@@ -350,6 +387,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         decision_point: Annotated[DecisionPoint, Query()] = "DP1",
     ) -> dict[str, Any] | None:
         """Plans are served only after v1 is locked; null means no probe for this exit."""
+        plan = serve_plan(decision_point)
+        return None if plan is None else _client_plan(inv(), plan.plan_id)
+
+    def serve_plan(decision_point: DecisionPoint) -> ProbePlan | None:
+        """The approved plan an exit may show now: locked, open, under target and budget."""
         if not snapshots(store(), inv().investigation_id):
             return None
         plan = inv().plan_for(decision_point)
@@ -358,10 +400,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         exposures = [e for e in records().exposures() if e.plan_id == plan.plan_id]
         ids = {e.exposure_id for e in exposures}
         answered = sum(not r.skipped for r in records().responses() if r.exposure_id in ids)
-        if plan_probe(plan, inv().question(plan), inv().hypotheses,
-                      now=settings.clock(), answered=answered, shown=len(exposures)) is None:
-            return None
-        return _client_plan(inv(), plan.plan_id)
+        return plan_probe(plan, inv().question(plan), inv().hypotheses,
+                          now=settings.clock(), answered=answered, shown=len(exposures))
 
     def _exposure(item: ExposureIn | ResponseIn, via: str) -> Exposure:
         plan = inv().plan(item.plan_id or "")
@@ -377,37 +417,50 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "options_shown": tuple(item.options_shown or ()), "received_via": via,
         })
 
+    def accept_exposure(raw: Any) -> str:
+        """What ProbeCard's beacon goes through; raises ValidationError or ValueError."""
+        item = ExposureIn.model_validate(raw)
+        recorded = records().add_exposure(
+            _exposure(item, "beacon"), client_payload=json.dumps(raw, default=str),
+            received_at=settings.clock(),
+        )
+        return "recorded" if recorded else "duplicate"
+
+    def accept_response(raw: Any) -> str:
+        """An answer or skip; infers the exposure when its beacon was lost."""
+        item = ResponseIn.model_validate(raw)
+        now = settings.clock()
+        inferred = False
+        if not records().has_exposure(item.exposure_id) and item.plan_id:
+            records().add_exposure(_exposure(item, "inferred_from_response"),
+                                   client_payload=json.dumps(raw, default=str), received_at=now)
+            inferred = True
+        recorded = records().add_response(ProbeResponse(
+            exposure_id=item.exposure_id, option_ids=tuple(item.option_ids),
+            skipped=item.skipped, responded_at=item.responded_at,
+        ), received_at=now)
+        return "duplicate" if not recorded else "recorded_inferred" if inferred else "recorded"
+
+    def accept_event(raw: Any) -> bool:
+        """The ingest path of POST /api/events for one event; False for a duplicate."""
+        return store().ingest(_clean_event(raw, settings.clock(), settings.config))
+
     @app.post("/api/probe/exposure")
     async def exposure(request: Request) -> dict[str, str]:
         raw = await _json(request)
         try:
-            item = ExposureIn.model_validate(raw)
-            recorded = records().add_exposure(
-                _exposure(item, "beacon"), client_payload=json.dumps(raw),
-                received_at=settings.clock(),
-            )
+            status = accept_exposure(raw)
         except (ValidationError, ValueError) as error:
             raise HTTPException(422, str(error)) from error
-        return {"status": "recorded" if recorded else "duplicate"}
+        return {"status": status}
 
     @app.post("/api/probe/response")
     async def response(request: Request) -> dict[str, str]:
         raw = await _json(request)
         try:
-            item = ResponseIn.model_validate(raw)
-            now = settings.clock()
-            inferred = False
-            if not records().has_exposure(item.exposure_id) and item.plan_id:
-                records().add_exposure(_exposure(item, "inferred_from_response"),
-                                       client_payload=json.dumps(raw), received_at=now)
-                inferred = True
-            recorded = records().add_response(ProbeResponse(
-                exposure_id=item.exposure_id, option_ids=tuple(item.option_ids),
-                skipped=item.skipped, responded_at=item.responded_at,
-            ), received_at=now)
+            status = accept_response(raw)
         except (ValidationError, ValueError) as error:
             raise HTTPException(422, str(error)) from error
-        status = "duplicate" if not recorded else "recorded_inferred" if inferred else "recorded"
         return {"status": status}
 
     @app.post("/api/lock", dependencies=[Depends(operator)])
@@ -547,6 +600,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def partb() -> Any:
         """The committed code-only run on ens-app-v3; static, no LLM call."""
         return load_partb()
+
+    app.state.ghost = Ghost(
+        settings=settings, inv=inv, store=store, records=records, startup=startup,
+        shutdown=shutdown, locked=locked, lock=do_lock, serve_plan=serve_plan,
+        accept_event=accept_event, accept_exposure=accept_exposure,
+        accept_response=accept_response, draft_path=draft_path, approved_path=approved_path,
+        set_investigation=lambda value: state.__setitem__("investigation", value),
+    )
+    if settings.mode == "sandbox":
+        from engine.sandbox import add_sandbox_routes
+
+        add_sandbox_routes(app, app.state.ghost)
+    elif settings.sandbox_root is not None and settings.mode in ("demo", "live"):
+        from engine.sandbox import SandboxHub, add_hub_routes
+
+        hub = SandboxHub(settings)
+        add_hub_routes(app, hub)
 
     if settings.static_dir is not None:
         # One origin for judges: landing at /, the target app at /app/, the report at /report/.

@@ -116,6 +116,7 @@ def serve(args: argparse.Namespace) -> None:
         run_id=args.run_id, mode=args.mode, db_dir=args.db_dir, fixture=investigation_path,
         target_repo=args.repo, verifications=verifications, autolock=True,
         collection_minutes=args.collection_minutes, seed=args.seed,
+        sandbox_root=None if args.no_sandbox else args.db_dir / "sandboxes",
     )
     run = settings.run()
     print(f"run={run.run_id} mode={run.mode} commit={run.code_commit} "
@@ -154,6 +155,8 @@ def main() -> None:
                    help="add ~20 synthetic seed-* sessions once, after the lock")
     s.add_argument("--collection-minutes", type=float,
                    help="live run: close every plan this long after the lock (e.g. 12)")
+    s.add_argument("--no-sandbox", action="store_true",
+                   help="do not host visitor sandboxes (simulated runs) beside this run")
     args = parser.parse_args()
     if args.command == "verify":
         verify(args.app, args.out, args.from_report)

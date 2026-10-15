@@ -71,7 +71,7 @@ class Run(Model):
     """One database belongs to one run, with explicit provenance."""
 
     run_id: Identifier
-    mode: Literal["live", "demo", "seed", "pilot", "replay"]
+    mode: Literal["live", "demo", "seed", "pilot", "replay", "sandbox"]
     code_commit: Identifier
     app_build: Identifier
     verifications: tuple[Verification, ...] = ()
