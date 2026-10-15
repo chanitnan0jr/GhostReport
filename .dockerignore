@@ -1,0 +1,18 @@
+# Secrets and local state never enter an image.
+.env
+.env.*
+runs/
+*.sqlite
+*.sqlite-*
+*.db
+.git/
+.venv/
+**/node_modules/
+**/dist/
+**/test-results/
+**/playwright-report/
+**/.vitest/
+**/__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
