@@ -3,7 +3,9 @@
 Draft: `fixtures/partb/journeys.ens.draft.json`, version 2.
 Digest: `596704bcf58ce8a5b4821198506633960101777ad730f75e1fee453c969a7f16`.
 Source: the existing LLM draft with explicit editorial corrections recorded in
-`revision_notes`. No human approval has been recorded and it is not published.
+`revision_notes`. No human approval has been recorded. The validated draft is
+available as a read-only preview on the ENS Segments page, labelled as awaiting
+operator approval.
 
 ## Corrections
 
@@ -30,8 +32,10 @@ The corrected draft passes schema, vocabulary, exact code-reference, wording,
 state-order, catch-all and reachability checks. The known wrong references in the
 original Workflow Map remain labelled there and are excluded as rule evidence.
 
-The public site currently shows no ENS definitions because the handoff requires
-operator approval of this exact digest before creating the published fixture.
+The API validates the committed draft before returning it and its code-only
+graph. It does not assign sessions, create counts, or mark the draft approved.
+Approval of this exact digest is still required before creating the approved
+fixture. Visitors cannot generate or approve ENS definitions on the website.
 
 ## Approve after review
 

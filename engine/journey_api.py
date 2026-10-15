@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from engine.api import Ghost
 
 ENS_FIXTURE = PARTB_DIR / "journeys.ens.json"
+ENS_DRAFT = PARTB_DIR / "journeys.ens.draft.json"
 
 
 class ApproveJourney(BaseModel):
@@ -87,8 +88,16 @@ class JourneySpecs:
         self.records.append(record)
 
     def latest(self, project: Project, kind: str) -> dict[str, Any] | None:
-        if project == "ens" and kind == "approved" and ENS_FIXTURE.exists():
-            return dict(json.loads(ENS_FIXTURE.read_text(encoding="utf-8")))
+        if project == "ens":
+            path = ENS_FIXTURE if kind == "approved" else ENS_DRAFT
+            if path.exists():
+                try:
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    return None
+                if isinstance(record, dict) and record.get("kind") == kind:
+                    return dict(record)
+                return None
         return next((r for r in reversed(self.records)
                      if r["project"] == project and r["kind"] == kind), None)
 
@@ -96,12 +105,15 @@ class JourneySpecs:
                 workflow: dict[str, Any]) -> dict[str, Any] | None:
         if record is None:
             return None
-        spec = SegmentSpec.model_validate(record["spec"])
+        try:
+            spec = SegmentSpec.model_validate(record.get("spec"))
+        except ValueError:
+            return None
         if (record.get("workflow_sha256") != digest(workflow)
                 or record.get("digest") != digest(spec.model_dump(mode="json"))
                 or validate(spec, workflow, vocabulary(workflow))):
             return None
-        if record["kind"] == "approved" and not (
+        if record.get("kind") == "approved" and not (
                 record.get("approved_by") and record.get("approved_at")):
             return None
         return record
@@ -123,8 +135,10 @@ class JourneySpecs:
             "template": template, "template_digest": digest(template) if template else None,
             "comparison": None,
         }
-        if approved:
-            spec = SegmentSpec.model_validate(approved["spec"])
+        # A code-only draft can be reviewed without assigning any sessions to it.
+        display = approved or (draft if project == "ens" else None)
+        if display:
+            spec = SegmentSpec.model_validate(display["spec"])
             result["comparison"] = comparison(spec, workflow, events, sessions,
                                                code_only=project == "ens")
         return result

@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from engine import journey_api
 from engine.api import Settings, create_app
 from engine.cohorts import build_cohorts
 from engine.demo import INVESTIGATION
@@ -226,6 +227,50 @@ def test_ens_has_no_counts_even_for_proposed_structure() -> None:
     assert all("sessions" not in node for node in value["nodes"])
     assert all("sessions" not in edge for edge in value["edges"])
     assert digest(spec.model_dump(mode="json"))
+
+
+def test_ens_committed_draft_is_reviewable_without_approval_or_llm(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(journey_api, "ENS_FIXTURE", tmp_path / "not-approved.json")
+    calls: list[int] = []
+    with TestClient(create_app(settings(tmp_path, calls))) as client:
+        before = client.get("/api/report").json()
+        value = client.get("/api/journeys/spec?project=ens").json()
+        assert value["draft"]["kind"] == "draft"
+        assert value["approved"] is None and value["validation"] == []
+        assert value["draft"]["digest"] == digest(value["draft"]["spec"])
+        assert value["comparison"]["code_only"] is True
+        assert value["comparison"]["nodes"] and value["comparison"]["edges"]
+        assert "total_sessions" not in value["comparison"]
+        for item in [*value["comparison"]["nodes"], *value["comparison"]["edges"],
+                     *value["comparison"]["segments"]]:
+            assert "sessions" not in item and "by_source" not in item
+        headers = {"Authorization": "Bearer test-operator"}
+        assert client.post("/api/journeys/generate?project=ens", headers=headers).status_code == 403
+        assert client.post("/api/journeys/approve?project=ens", headers=headers, json={
+            "digest": value["draft"]["digest"], "approved_by": "Reviewer",
+        }).status_code == 403
+        after = client.get("/api/report").json()
+        assert before["current"] == after["current"] and before["v1"] == after["v1"]
+    assert calls == []
+
+
+@pytest.mark.parametrize("invalid", ["digest", "workflow_sha256", "spec", "kind", "json"])
+def test_invalid_ens_draft_is_withheld(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, invalid: str,
+) -> None:
+    record = json.loads(journey_api.ENS_DRAFT.read_text())
+    record[invalid] = None
+    path = tmp_path / "invalid-draft.json"
+    path.write_text("{" if invalid == "json" else json.dumps(record))
+    monkeypatch.setattr(journey_api, "ENS_DRAFT", path)
+    monkeypatch.setattr(journey_api, "ENS_FIXTURE", tmp_path / "not-approved.json")
+    with TestClient(create_app(settings(tmp_path, []))) as client:
+        value = client.get("/api/journeys/spec?project=ens").json()
+        assert value["draft"] is None
+        assert value["approved"] is None
+        assert value["comparison"] is None
 
 
 def test_shadowed_rules_are_rejected_before_approval() -> None:
