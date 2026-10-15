@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
@@ -54,6 +54,7 @@ from engine.report import (
 from engine.seed import seed_run
 from engine.stages import InvestigationDraft, approve, run_stage_a, run_stage_b
 from engine.storage import Store
+from engine.workflow_view import workflow_view
 
 log = logging.getLogger("ghostreport")
 ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
@@ -495,6 +496,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if body is None:
             raise HTTPException(404, "only existing seed sessions are served")
         return jsonable_encoder(body)
+
+    @app.get("/api/workflow")
+    async def workflow(target: Literal["app", "ens"] = "app") -> Any:
+        """Validated WorkflowMap nodes for the Workflow Map tab (no layout, no edges)."""
+        return workflow_view(target, inv())
 
     @app.get("/api/partb")
     async def partb() -> Any:

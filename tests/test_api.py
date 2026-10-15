@@ -405,3 +405,16 @@ def test_report_narrative_is_written_once_per_data_change_and_checked(tmp_path: 
                 break
         assert done["source"] == "llm" and done["facts_sha256"] == first["facts_sha256"]
         assert len(calls.sent) == 1  # one write per facts digest, not per request
+
+
+def test_workflow_map_serves_nodes_without_layout(client: TestClient) -> None:
+    ens = client.get("/api/workflow?target=ens").json()
+    assert ens["mode"] == "code_only" and ens["permalinks"] is None
+    assert len(ens["nodes"]) == 22 and "edges" not in ens
+    gate = next(n for n in ens["nodes"] if n["id"] == "pricing_step_gate")
+    assert gate["permalink"].endswith("Pricing.tsx#L184-L185") and gate["quote"]
+    assert gate["ref_check"] == "correct"
+    app = client.get("/api/workflow").json()
+    assert app["target"] == "app" and {n["kind"] for n in app["nodes"]} <= {
+        "state", "outcome", "ui_fact"}
+    assert client.get("/api/workflow?target=other").status_code == 422
