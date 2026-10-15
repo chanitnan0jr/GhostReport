@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { DaoHome } from "./DaoHome";
+import { SiteHeader } from "./SiteHeader";
 import {
   CONFIG_EXAMPLE,
   INTEGRATION_LEVELS,
@@ -19,7 +21,8 @@ function uuid(): string {
 
 export default function App({
   navigate = defaultNavigate,
-}: { navigate?: (url: string) => void } = {}) {
+  page = "guide",
+}: { navigate?: (url: string) => void; page?: "dao" | "guide" } = {}) {
   const [assignment, setAssignment] = useState<{
     sessionId: string;
     role: "A" | "B";
@@ -27,11 +30,13 @@ export default function App({
   const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState("");
   const pendingSession = useRef<string | null>(null);
+  const pendingProject = useRef<string | null>(null);
   const inFlight = useRef<AbortController | null>(null);
   useEffect(() => () => inFlight.current?.abort(), []);
 
-  async function start() {
+  async function start(projectId?: string) {
     if (inFlight.current) return;
+    pendingProject.current = projectId ?? null;
     pendingSession.current ??= uuid();
     const controller = new AbortController();
     inFlight.current = controller;
@@ -71,7 +76,9 @@ export default function App({
         <button
           className="primary"
           onClick={() =>
-            navigate(`/app/?sid=${encodeURIComponent(assignment.sessionId)}`)
+            navigate(
+              `/app/?sid=${encodeURIComponent(assignment.sessionId)}${pendingProject.current ? `#/project/${pendingProject.current}` : ""}`,
+            )
           }
         >
           Start
@@ -79,24 +86,18 @@ export default function App({
       </main>
     );
 
+  if (page === "dao")
+    return (
+      <DaoHome
+        onStart={(id) => void start(id)}
+        preparing={preparing}
+        error={error}
+      />
+    );
+
   return (
     <div className="landing">
-      <header className="header">
-        <a href="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            G
-          </span>
-          GhostReport
-        </a>
-        <a
-          href={REPO_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="repo-link"
-        >
-          View on GitHub <span aria-hidden="true">↗</span>
-        </a>
-      </header>
+      <SiteHeader />
       <main>
         <section className="hero">
           <h1>
@@ -112,6 +113,14 @@ export default function App({
             The wallet is simulated. No real wallet or funds. A network error
             may be simulated once.
           </p>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="repo-link"
+          >
+            View on GitHub ↗
+          </a>
         </section>
         <section className="step first-step" aria-labelledby="step-one">
           <span className="step-number" aria-hidden="true">

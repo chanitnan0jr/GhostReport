@@ -1,4 +1,5 @@
 import { mockPartB } from "./mockPartB";
+import { mockSeedPopulation, mockSeedSession } from "./mockSeed";
 export function installMockRoles() {
   const original = window.fetch.bind(window);
   window.fetch = async (input, init) => {
@@ -6,6 +7,19 @@ export function installMockRoles() {
       input instanceof Request ? input.url : input.toString(),
       location.origin,
     );
+    if (url.origin === location.origin && url.pathname === "/api/report")
+      return Response.json(mockSeedPopulation());
+    if (
+      url.origin === location.origin &&
+      url.pathname.startsWith("/api/seed-sessions/")
+    ) {
+      const value = mockSeedSession(
+        decodeURIComponent(url.pathname.slice("/api/seed-sessions/".length)),
+      );
+      return Response.json(value ?? { detail: "Seed session not found" }, {
+        status: value ? 200 : 404,
+      });
+    }
     if (url.origin === location.origin && url.pathname === "/api/partb")
       return new Response(JSON.stringify(mockPartB()), {
         headers: { "Content-Type": "application/json" },

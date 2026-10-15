@@ -1,6 +1,6 @@
 # GhostReport landing
 
-Public entry point at `/`. Requires Node 22.13 or newer.
+Public entry point at `/`: the Common Ground mock DAO. Requires Node 22.13 or newer.
 
 ```sh
 cd landing
@@ -12,7 +12,7 @@ npx playwright install chromium --no-shell
 npm run test:browser
 ```
 
-The page has three steps: try the grant app, view the investigation, and inspect the four integration levels plus the System Design §10 config example. L3 is explicitly a roadmap item. Role card copy is exactly the approved English text in System Design §7.
+The GhostReport guide at `/about/` has three steps: try the grant app, view the investigation, and inspect the four integration levels plus the System Design §10 config example. L3 is explicitly a roadmap item. Role card copy is exactly the approved English text in System Design §7.
 
 ## Roles and session boundary
 
@@ -77,3 +77,28 @@ link to ENS. Its synthetic UUIDs carry the `e2e-` prefix and must be labeled
 
 The recorded `/demo` page is deferred until Friday after G2. No production
 browser automation or video replay has been added by this change.
+
+## Public navigation
+
+The shared Header links **DAO** (`/`), **Demo User Seed** (`/seed/`) and
+**Report** (`/report/`). App and console headers have the same links. Start
+all three dev servers and enter through port 5175 for one origin; direct
+app/console ports do not host the landing routes.
+
+The DAO homepage reuses `app/src/data/projects.json`. Choosing a grant or
+Try the app requests a role assignment, shows the unchanged role card, and
+passes only the session ID (plus a project hash when selected) to `/app/`.
+The GhostReport introduction and integration instructions moved to `/about/`.
+The ENS page remains at `/ens/`. Each landing route is a separate built HTML
+entry, compatible with the existing static-file server.
+
+`/seed/` reads `/api/report`, selects only sessions explicitly labeled seed
+in `current.session_sources`, then reads `/api/seed-sessions/{session_id}`.
+It displays the recorded cohort, coverage, event sequence, server timestamps
+and optional response. Refresh is read only: it never launches browsers,
+creates sessions or submits answers. Missing data and failed requests have
+visible empty/error states. No visitor or test session detail is requested.
+
+`VITE_MOCK=1` supplies clearly labeled local preview data for this page;
+it is not represented as a recorded Playwright run. The video-based `/demo`
+remains deferred until Friday after G2.

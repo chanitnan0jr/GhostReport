@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPartB, sourceLink, type PartB, type PartBRef } from "./partb";
+import { SiteHeader } from "./SiteHeader";
 const safeText = (value: string) =>
   /\b(?:confirmed|root cause|cause|proved)\b/i.test(value)
     ? "Text withheld by wording guard"
@@ -42,15 +43,7 @@ export function PartBPage() {
 
   return (
     <div className="partb-shell">
-      <header className="partb-nav">
-        <a className="brand" href="/">
-          GhostReport
-        </a>
-        <nav aria-label="Investigation pages">
-          <a href="/report/">Live report</a>
-          <a href="/">Try the grant app</a>
-        </nav>
-      </header>
+      <SiteHeader />
       <main className="partb-page">
         <p className="section-kicker">Part B · Independent repository</p>
         <h1>Tested on a real repo: ENS</h1>

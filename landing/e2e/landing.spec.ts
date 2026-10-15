@@ -20,7 +20,7 @@ test("the exact role card leads to the app with only a session ID, on a 375 px-c
   await page.route("**/app/**", (route) =>
     route.fulfill({ contentType: "text/html", body: "<h1>Grant app</h1>" }),
   );
-  await page.goto("/");
+  await page.goto("/about/");
   await expect(
     page.getByRole("heading", { name: "Add it to your repo" }),
   ).toBeVisible();
