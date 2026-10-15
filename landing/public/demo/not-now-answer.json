@@ -5,22 +5,22 @@
   "video_url": "not-now-answer.webm",
   "events": [
     {
-      "t_ms": 1796,
+      "t_ms": 1830,
       "event": "project_viewed",
       "seq": 1
     },
     {
-      "t_ms": 3028,
+      "t_ms": 3062,
       "event": "apply_clicked",
       "seq": 2
     },
     {
-      "t_ms": 3028,
+      "t_ms": 3062,
       "event": "wallet_gate_shown",
       "seq": 3
     },
     {
-      "t_ms": 4561,
+      "t_ms": 4594,
       "event": "not_now_clicked",
       "seq": 4
     }
@@ -32,9 +32,9 @@
     "decision_point": "DP1",
     "status": "answered",
     "selected": [
-      "I didn't expect applying to need a wallet connection"
+      "I didn't expect a wallet step before I could apply"
     ],
-    "shown_t_ms": 4561,
-    "responded_t_ms": 6078
+    "shown_t_ms": 4594,
+    "responded_t_ms": 6111
   }
 }

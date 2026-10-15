@@ -5,37 +5,37 @@
   "video_url": "error-retry.webm",
   "events": [
     {
-      "t_ms": 1845,
+      "t_ms": 1804,
       "event": "project_viewed",
       "seq": 1
     },
     {
-      "t_ms": 3073,
+      "t_ms": 3037,
       "event": "apply_clicked",
       "seq": 2
     },
     {
-      "t_ms": 3073,
+      "t_ms": 3037,
       "event": "wallet_gate_shown",
       "seq": 3
     },
     {
-      "t_ms": 4608,
+      "t_ms": 4569,
       "event": "wallet_attempted",
       "seq": 4
     },
     {
-      "t_ms": 5342,
+      "t_ms": 5285,
       "event": "wallet_errored",
       "seq": 5
     },
     {
-      "t_ms": 6873,
+      "t_ms": 6820,
       "event": "wallet_attempted",
       "seq": 6
     },
     {
-      "t_ms": 7608,
+      "t_ms": 7554,
       "event": "wallet_connected",
       "seq": 7
     }

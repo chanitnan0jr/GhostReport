@@ -5,27 +5,27 @@
   "video_url": "reject.webm",
   "events": [
     {
-      "t_ms": 1803,
+      "t_ms": 1825,
       "event": "project_viewed",
       "seq": 1
     },
     {
-      "t_ms": 3035,
+      "t_ms": 3059,
       "event": "apply_clicked",
       "seq": 2
     },
     {
-      "t_ms": 3035,
+      "t_ms": 3059,
       "event": "wallet_gate_shown",
       "seq": 3
     },
     {
-      "t_ms": 4570,
+      "t_ms": 4591,
       "event": "wallet_attempted",
       "seq": 4
     },
     {
-      "t_ms": 6836,
+      "t_ms": 6841,
       "event": "not_now_clicked",
       "seq": 5
     }

@@ -5,27 +5,27 @@
   "video_url": "connect.webm",
   "events": [
     {
-      "t_ms": 1903,
+      "t_ms": 1922,
       "event": "project_viewed",
       "seq": 1
     },
     {
-      "t_ms": 3151,
+      "t_ms": 3171,
       "event": "apply_clicked",
       "seq": 2
     },
     {
-      "t_ms": 3151,
+      "t_ms": 3171,
       "event": "wallet_gate_shown",
       "seq": 3
     },
     {
-      "t_ms": 4701,
+      "t_ms": 4702,
       "event": "wallet_attempted",
       "seq": 4
     },
     {
-      "t_ms": 5433,
+      "t_ms": 5418,
       "event": "wallet_connected",
       "seq": 5
     }
