@@ -1,7 +1,13 @@
-const links = [
-  ["DAO", "/"],
-  ["Demo User Seed", "/seed/"],
+// Pitch order; console/ and app/ use the same tabs.
+export const links = [
+  ["Home", "/"],
+  ["Demo", "/seed/"],
+  ["Try the App", "/app/"],
+  ["Segments", "/report/#segments"],
+  ["Workflow Map", "/report/#workflow"],
   ["Report", "/report/"],
+  ["ENS", "/ens/"],
+  ["About", "/about/"],
 ] as const;
 
 export function SiteHeader({ light = false }: { light?: boolean }) {

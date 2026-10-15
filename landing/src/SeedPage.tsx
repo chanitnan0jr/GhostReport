@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DemoClips } from "./DemoClips";
 import { SiteHeader } from "./SiteHeader";
 
 interface SeedSession {
@@ -119,15 +120,29 @@ export function SeedPage() {
       <SiteHeader />
       <main className="seed-page">
         <p className="seed-kicker">Recorded activity · Read only</p>
-        <h1>Demo User Seed</h1>
+        <h1>Four simulated users, one real app</h1>
         <p className="seed-label">Simulated users (Playwright) — seed</p>
+        <p className="seed-intro">
+          Playwright clicked through the real app as four people from the role
+          cards. Every event below came from the app's own <code>track()</code>{" "}
+          and was received by the server; the report counts these sessions as
+          seed, never as visitors. Nothing runs live on this page.
+        </p>
+        <DemoClips />
+        <div className="clips-next">
+          <a className="clips-cta" href="/app/">
+            Now try it yourself →
+          </a>
+          <span>Your session joins the report as a visitor.</span>
+        </div>
+        <h2 className="seed-section">All 20 simulated sessions</h2>
         {import.meta.env.VITE_MOCK === "1" && (
           <p className="seed-error">
             Mock preview — local fixture, not a recorded browser run.
           </p>
         )}
         <p className="seed-intro">
-          Explore the recorded steps of simulated sessions. These are separate
+          Explore the recorded steps of every simulated session. These are separate
           from visitor activity. Opening this page does not create sessions or
           send answers.
         </p>

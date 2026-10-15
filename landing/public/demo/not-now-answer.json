@@ -1,0 +1,40 @@
+{
+  "session_id": "seed-04-not-now",
+  "persona": "not-now-answer",
+  "label": "Simulated users (Playwright) — seed",
+  "video_url": "not-now-answer.webm",
+  "events": [
+    {
+      "t_ms": 1796,
+      "event": "project_viewed",
+      "seq": 1
+    },
+    {
+      "t_ms": 3028,
+      "event": "apply_clicked",
+      "seq": 2
+    },
+    {
+      "t_ms": 3028,
+      "event": "wallet_gate_shown",
+      "seq": 3
+    },
+    {
+      "t_ms": 4561,
+      "event": "not_now_clicked",
+      "seq": 4
+    }
+  ],
+  "cohort": "gate_event_no_attempt",
+  "exit_type": "not_now",
+  "after_retry": false,
+  "probe": {
+    "decision_point": "DP1",
+    "status": "answered",
+    "selected": [
+      "I didn't expect applying to need a wallet connection"
+    ],
+    "shown_t_ms": 4561,
+    "responded_t_ms": 6078
+  }
+}

@@ -11,6 +11,18 @@ import { getTracker } from "./track";
 import type { DecisionPoint, ProbePlan, Project } from "./types";
 import { connectWallet, type Wallet, type WalletAttempt } from "./wallet";
 
+// Same tabs and order as the landing and console headers.
+const NAVIGATION = [
+  ["Home", "/"],
+  ["Demo", "/seed/"],
+  ["Try the App", "/app/"],
+  ["Segments", "/report/#segments"],
+  ["Workflow Map", "/report/#workflow"],
+  ["Report", "/report/"],
+  ["ENS", "/ens/"],
+  ["About", "/about/"],
+] as const;
+
 const projects: Project[] = projectData;
 const projectFromUrl = () =>
   location.hash.match(/^#\/project\/(p\d+)$/)?.[1] ?? null;
@@ -194,11 +206,15 @@ export default function App() {
           common ground
         </a>
         <nav className="main-navigation" aria-label="Main navigation">
-          <a href="/" aria-current="page">
-            DAO
-          </a>
-          <a href="/seed/">Demo User Seed</a>
-          <a href="/report/">Report</a>
+          {NAVIGATION.map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              aria-current={href === "/app/" ? "page" : undefined}
+            >
+              {label}
+            </a>
+          ))}
         </nav>
       </header>
       {consent === null ? (

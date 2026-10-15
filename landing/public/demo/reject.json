@@ -1,0 +1,37 @@
+{
+  "session_id": "seed-02-reject",
+  "persona": "reject",
+  "label": "Simulated users (Playwright) — seed",
+  "video_url": "reject.webm",
+  "events": [
+    {
+      "t_ms": 1803,
+      "event": "project_viewed",
+      "seq": 1
+    },
+    {
+      "t_ms": 3035,
+      "event": "apply_clicked",
+      "seq": 2
+    },
+    {
+      "t_ms": 3035,
+      "event": "wallet_gate_shown",
+      "seq": 3
+    },
+    {
+      "t_ms": 4570,
+      "event": "wallet_attempted",
+      "seq": 4
+    },
+    {
+      "t_ms": 6836,
+      "event": "not_now_clicked",
+      "seq": 5
+    }
+  ],
+  "cohort": "attempted_no_success",
+  "exit_type": "not_now",
+  "after_retry": false,
+  "probe": null
+}

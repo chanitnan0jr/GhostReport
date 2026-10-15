@@ -1,0 +1,37 @@
+{
+  "session_id": "seed-01-connect",
+  "persona": "connect",
+  "label": "Simulated users (Playwright) — seed",
+  "video_url": "connect.webm",
+  "events": [
+    {
+      "t_ms": 1903,
+      "event": "project_viewed",
+      "seq": 1
+    },
+    {
+      "t_ms": 3151,
+      "event": "apply_clicked",
+      "seq": 2
+    },
+    {
+      "t_ms": 3151,
+      "event": "wallet_gate_shown",
+      "seq": 3
+    },
+    {
+      "t_ms": 4701,
+      "event": "wallet_attempted",
+      "seq": 4
+    },
+    {
+      "t_ms": 5433,
+      "event": "wallet_connected",
+      "seq": 5
+    }
+  ],
+  "cohort": "connected",
+  "exit_type": "open",
+  "after_retry": false,
+  "probe": null
+}

@@ -1,0 +1,47 @@
+{
+  "session_id": "seed-03-error-retry",
+  "persona": "error-retry",
+  "label": "Simulated users (Playwright) — seed",
+  "video_url": "error-retry.webm",
+  "events": [
+    {
+      "t_ms": 1845,
+      "event": "project_viewed",
+      "seq": 1
+    },
+    {
+      "t_ms": 3073,
+      "event": "apply_clicked",
+      "seq": 2
+    },
+    {
+      "t_ms": 3073,
+      "event": "wallet_gate_shown",
+      "seq": 3
+    },
+    {
+      "t_ms": 4608,
+      "event": "wallet_attempted",
+      "seq": 4
+    },
+    {
+      "t_ms": 5342,
+      "event": "wallet_errored",
+      "seq": 5
+    },
+    {
+      "t_ms": 6873,
+      "event": "wallet_attempted",
+      "seq": 6
+    },
+    {
+      "t_ms": 7608,
+      "event": "wallet_connected",
+      "seq": 7
+    }
+  ],
+  "cohort": "connected",
+  "exit_type": "open",
+  "after_retry": true,
+  "probe": null
+}
