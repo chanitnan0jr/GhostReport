@@ -13,6 +13,12 @@ interface Finding {
   selected: number;
   respondents: number;
   text: string;
+  by_source?: Partial<
+    Record<
+      "seed" | "test" | "visitor",
+      { selected: number; respondents: number }
+    >
+  >;
 }
 interface Report {
   locked: boolean;
@@ -25,6 +31,7 @@ interface Report {
     }[];
     findings: Finding[];
     errors: unknown[];
+    session_sources: Record<string, "seed" | "test" | "visitor">;
   };
 }
 interface Plan {
@@ -168,7 +175,21 @@ for (const point of ["DP1", "DP2"] as const) {
           )!.counts.answered,
       )
       .toBe(previousCount + 1);
+    await expect
+      .poll(
+        async () =>
+          groupFinding(
+            await report(request, origin),
+            point,
+            plan.target_cohort,
+            plan.question_version,
+            hypothesisId,
+          ).respondents,
+      )
+      .toBe(previous.respondents + 1);
     const after = await report(request, origin);
+    expect(sid.startsWith("e2e-")).toBe(true);
+    expect(after.current.session_sources[sid]).toBe("test");
     expect(
       after.current.sessions.find((s) => s.session_id === sid)?.cohort,
     ).toBe(point === "DP1" ? "gate_event_no_attempt" : "no_gate_event");
@@ -181,9 +202,22 @@ for (const point of ["DP1", "DP2"] as const) {
     );
     expect(finding.respondents).toBe(previous.respondents + 1);
     expect(finding.selected).toBe(previous.selected + 1);
-    expect(finding.text).toBe(
-      `${finding.selected} of ${finding.respondents} respondents`,
+    expect(finding.text).toMatch(
+      new RegExp(
+        `^${finding.selected} of ${finding.respondents} respondents(?: \\(|$)`,
+      ),
     );
+    if (finding.by_source) {
+      expect(finding.by_source.test?.respondents).toBe(
+        (previous.by_source?.test?.respondents ?? 0) + 1,
+      );
+      expect(finding.by_source.test?.selected).toBe(
+        (previous.by_source?.test?.selected ?? 0) + 1,
+      );
+      expect(finding.by_source.visitor?.respondents ?? 0).toBe(
+        previous.by_source?.visitor?.respondents ?? 0,
+      );
+    }
     expect(after.current.errors).toEqual([]);
     expect(
       await page.evaluate(
@@ -256,8 +290,13 @@ test("Skip is counted separately and leaves self-report findings unchanged", asy
         text: f.text,
       })),
   ).toEqual(unchanged);
-  expect(after.current.sessions.find((s) => s.session_id === sid)?.cohort).toBe(
-    "gate_event_no_attempt",
-  );
+  await expect
+    .poll(
+      async () =>
+        (await report(request, origin)).current.sessions.find(
+          (s) => s.session_id === sid,
+        )?.cohort,
+    )
+    .toBe("gate_event_no_attempt");
   expect(after.current.errors).toEqual([]);
 });
