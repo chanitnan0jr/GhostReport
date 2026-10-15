@@ -68,30 +68,44 @@ export function Segments({ report }: { report: Report | null }) {
                   : report.run.mode.toUpperCase()}
               </strong>
             )}
-            <button
-              type="button"
-              className="generated-journeys-toggle"
-              aria-expanded={showGenerated}
-              aria-controls="generated-journey-comparison"
-              onClick={() => setShowGenerated((open) => !open)}
-            >
-              Generated journeys
-              <svg
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="m6 8 4 4 4-4" />
-              </svg>
-            </button>
           </div>
           <p>
             How recorded events move through the application workflow, grouped
             by what was recorded, not by inferred intent.
           </p>
         </header>
+        <div className="generated-journeys-disclosure">
+          <button
+            type="button"
+            className="generated-journeys-toggle"
+            aria-expanded={showGenerated}
+            aria-controls="generated-journey-comparison"
+            onClick={() => setShowGenerated((open) => !open)}
+          >
+            Generated journeys
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <path d="m6 8 4 4 4-4" />
+            </svg>
+          </button>
+          <div id="generated-journey-comparison" hidden={!showGenerated}>
+            {showGenerated && (
+              <GeneratedJourneys
+                source={
+                  ["seed", "test", "visitor"].includes(filter)
+                    ? filter
+                    : undefined
+                }
+                exclude={filter === "no_test" ? "test" : undefined}
+              />
+            )}
+          </div>
+        </div>
         <div className="workflow-toolbar">
           <div
             className="source-filter"
@@ -165,28 +179,14 @@ export function Segments({ report }: { report: Report | null }) {
             {own.error}
           </p>
         )}
-        <div className={`journey-comparison${showGenerated ? " is-open" : ""}`}>
-          <div className="journey-template">
-            <h2>Template · original cohorts</h2>
-            <CohortFlow
-              population={population}
-              selected={focus}
-              personal={Boolean(personal && focus === personal.cohort)}
-              onSelect={selectCohort}
-            />
-          </div>
-          <div id="generated-journey-comparison" hidden={!showGenerated}>
-            {showGenerated && (
-              <GeneratedJourneys
-                source={
-                  ["seed", "test", "visitor"].includes(filter)
-                    ? filter
-                    : undefined
-                }
-                exclude={filter === "no_test" ? "test" : undefined}
-              />
-            )}
-          </div>
+        <div className="journey-template">
+          <h2>Template · original cohorts</h2>
+          <CohortFlow
+            population={population}
+            selected={focus}
+            personal={Boolean(personal && focus === personal.cohort)}
+            onSelect={selectCohort}
+          />
         </div>
       </section>
       <div className="cohort-grouping-note">
