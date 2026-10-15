@@ -28,7 +28,6 @@ export function projectHref(project: Project, current: URL): string {
   if (project === "ens") {
     destination.searchParams.set("project", "ens");
     destination.searchParams.delete("sandbox");
-    destination.searchParams.delete("operator");
     if (/^\/(app|try|sandbox)(\/|$)/.test(destination.pathname)) {
       destination.pathname = "/report/";
       destination.hash = "#workflow";
@@ -61,7 +60,6 @@ export function navigationHref(href: string, current: URL): string {
   if (activeSite(current) === "ens") {
     destination.searchParams.set("project", "ens");
     destination.searchParams.delete("sandbox");
-    destination.searchParams.delete("operator");
   }
   return destination.pathname + destination.search + destination.hash;
 }
