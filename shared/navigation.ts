@@ -17,7 +17,7 @@ export const siteNavigation = [
 
 export const siteDestinations = [
   { id: "ghostreport", label: "GhostReport", href: "/" },
-  { id: "dao", label: "DAO Mock", href: "/try/" },
+  { id: "dao", label: "DAO Mock", href: "/app/" },
 ] as const;
 
 export function activeSite(url: URL): string {
