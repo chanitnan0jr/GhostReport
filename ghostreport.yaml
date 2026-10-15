@@ -8,6 +8,8 @@ workflow:
   name: wallet_onboarding
   keywords: [wallet, connect, signer, account, requireWallet]
 mode: behavioral                # or code_only (L0: workflow map + gaps, no behavioral findings)
+analytics:
+  calls: [trackOnce, tracker.track, track, capture]  # tracking functions and wrappers
 events:                         # your analytics name → canonical name
   "Project Viewed": project_viewed
   "Apply Clicked": apply_clicked

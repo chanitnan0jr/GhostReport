@@ -65,7 +65,8 @@ def fact(id: str, file: str, lines: list[int], quote: str, inst: str = "unknown"
 
 
 WORKFLOW = {
-    "states": [fact("apply_gated", "src/ApplyModal.tsx", [3, 3], "if (!wallet) return")],
+    "states": [fact("apply_gated", "src/ApplyModal.tsx", [3, 3], "if (!wallet) return"),
+               fact("gate_tracked", "src/ApplyModal.tsx", [4, 4], "track('wallet_gate_shown'")],
     "outcomes": [
         fact("rejected", "src/wallet.ts", [1, 3], "onReject(error)", "found_in_code"),
         fact("connected", "src/wallet.ts", [4, 6], "track('wallet_connected'", "found_in_code"),
@@ -115,6 +116,9 @@ def test_stage_a_guards(repo: Path, llm: LLM) -> None:
     assert "made_up" not in outcomes and rejected["invalid_ref"] == ["made_up"]
     assert outcomes == {"rejected": "unknown", "connected": "found_in_code"}
     assert rejected["downgraded"] == ["rejected"]
+    # A state is tracked only where a detected call sits in its range.
+    assert {s.id: s.instrumentation for s in workflow.states} == {
+        "apply_gated": "unknown", "gate_tracked": "found_in_code"}
 
 
 def test_stage_a_repairs_once_then_fails(repo: Path, llm: LLM) -> None:

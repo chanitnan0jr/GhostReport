@@ -163,6 +163,8 @@ def run_stage_a(
 
     `found_in_code` must be backed by a detected analytics call in the cited
     range; otherwise it degrades to `unknown` (never to `not_found_in_scope`).
+    A state with a detected call in its range is `found_in_code`; other states are
+    `unknown`.
     """
     draft = llm.call(*STAGE_A, WorkflowDraft, context=pack.render(),
                      instructions=json.dumps({"workflow": workflow_name}))
@@ -170,7 +172,8 @@ def run_stage_a(
     rejected: dict[str, list[str]] = {"duplicate_id": [], "invalid_ref": [], "downgraded": []}
     seen: set[str] = set()
 
-    def facts(items: list[FactDraft], outcome: bool) -> tuple[CodeFact, ...]:
+    def facts(items: list[FactDraft], outcome: bool,
+              state: bool = False) -> tuple[CodeFact, ...]:
         result = []
         for item in items:
             if item.id in seen:
@@ -180,10 +183,15 @@ def run_stage_a(
             if item.code_ref.lines[0] < 1 or item.code_ref.lines[0] > item.code_ref.lines[1]:
                 rejected["invalid_ref"].append(item.id)
                 continue
+            # A state is tracked only where a detected analytics call sits in its cited
+            # range; the model's own claim counts for outcomes alone (checked below).
             fact = CodeFact.model_validate({
                 **item.model_dump(),
                 "instrumentation": item.instrumentation if outcome else "unknown",
             })
+            if state and _calls_in(pack, fact):
+                fact = CodeFact.model_validate({**fact.model_dump(),
+                                                "instrumentation": "found_in_code"})
             if outcome and fact.instrumentation == "found_in_code" and not _calls_in(pack, fact):
                 fact = CodeFact.model_validate({**fact.model_dump(), "instrumentation": "unknown"})
                 rejected["downgraded"].append(fact.id)
@@ -191,7 +199,7 @@ def run_stage_a(
         return tuple(result)
 
     workflow = WorkflowMap(
-        version=version, scope=pack.scope, states=facts(draft.states, False),
+        version=version, scope=pack.scope, states=facts(draft.states, False, state=True),
         outcomes=facts(draft.outcomes, True), ui_facts=facts(draft.ui_facts, False),
     )
     workflow, invalid = validate_workflow(root, workflow)
