@@ -49,6 +49,13 @@ export default function App() {
       </aside>
       <main id="top" className="workspace">
         <header className="workspace-top">
+          <nav className="main-navigation" aria-label="Main navigation">
+            <a href="/">DAO</a>
+            <a href="/seed/">Demo User Seed</a>
+            <a href="/report/" aria-current="page">
+              Report
+            </a>
+          </nav>
           <span>
             {new URLSearchParams(location.search).get("operator") === "1"
               ? "Operator console"

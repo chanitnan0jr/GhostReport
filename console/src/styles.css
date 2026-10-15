@@ -1368,3 +1368,42 @@ pre code {
     gap: 22px;
   }
 }
+
+.workspace-top {
+  flex-wrap: wrap;
+  padding: 18px 0;
+  row-gap: 14px;
+}
+.main-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.main-navigation a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 13px;
+  text-decoration: none;
+  border-radius: 999px;
+}
+.main-navigation a[aria-current="page"] {
+  background: #bfe1c21a;
+  color: var(--mint);
+}
+.main-navigation a:hover {
+  background: #ffffff0d;
+}
+@media (max-width: 800px) {
+  .main-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .main-navigation a {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
