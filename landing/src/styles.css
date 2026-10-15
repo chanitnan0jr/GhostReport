@@ -1200,3 +1200,42 @@ footer {
     transform: translateY(4px);
   }
 }
+
+/* Install: three steps with real snippets (laptop layout). */
+.install-step {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 24px;
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+.install-body h2 {
+  margin: 4px 0 12px;
+  font-size: 26px;
+}
+.install-body p {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.install-body a {
+  color: var(--mint);
+}
+.install-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.install-code {
+  margin: 12px 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0b1316;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.install-note {
+  font-size: 13px;
+}

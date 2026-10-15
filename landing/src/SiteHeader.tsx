@@ -7,6 +7,7 @@ export const links = [
   ["Workflow Map", "/report/#workflow"],
   ["Report", "/report/"],
   ["ENS", "/ens/"],
+  ["Install", "/install/"],
   ["About", "/about/"],
 ] as const;
 

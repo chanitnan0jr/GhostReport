@@ -4,7 +4,9 @@ import { expect, test, type Page } from "@playwright/test";
 //   BASE_URL=http://localhost npm run smoke
 // Read-only except /app/, which is opened as an e2e-* session (reported as "test").
 const PERSONAS = ["connect", "reject", "error-retry", "not-now-answer"];
-const TABS = ["Home", "Demo", "Try the App", "Segments", "Workflow Map", "Report", "ENS", "About"];
+const TABS = [
+  "Home", "Demo", "Try the App", "Segments", "Workflow Map", "Report", "ENS", "Install", "About",
+];
 
 function watchErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -76,6 +78,7 @@ test.describe("pages", () => {
     ["/report/", "seed"],
     ["/ens/", "Pricing.tsx"],
     ["/about/", "GhostReport"],
+    ["/install/", "Add GhostReport to your repo"],
   ] as const) {
     test(`${path} renders with the header`, async ({ page }) => {
       const errors = watchErrors(page);

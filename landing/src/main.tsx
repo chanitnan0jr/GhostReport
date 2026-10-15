@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { InstallPage } from "./InstallPage";
 import { PartBPage } from "./PartBPage";
 import { SeedPage } from "./SeedPage";
 import "./styles.css";
@@ -15,6 +16,8 @@ async function main() {
         <PartBPage />
       ) : path === "/seed" ? (
         <SeedPage />
+      ) : path === "/install" ? (
+        <InstallPage />
       ) : (
         <App page={path === "/about" ? "guide" : "dao"} />
       )}
