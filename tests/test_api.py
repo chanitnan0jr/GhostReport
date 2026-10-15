@@ -452,6 +452,24 @@ def test_journeys_map_every_session_to_one_segment_left_to_right(tmp_path: Path)
             assert node["column"] == 0 or into == node["count"]
         assert nodes["c4:errored"]["count"] == 1 and nodes["c5:retry_connected"]["count"] == 1
         assert nodes["c8:answered"]["count"] == 10  # 6 at DP1 + 4 at DP2
+        # Cohort paths list recorded events only; a missing result is a separate note.
+        rows = {row["cohort"]: row for row in graph["cohorts"]}
+        assert {c: row["sessions"] for c, row in rows.items() if row["sessions"]} == cohorts
+        events = {"project_viewed", "apply_clicked", "wallet_gate_shown", "wallet_attempted",
+                  "wallet_connected", "wallet_errored", "wallet_rejected",
+                  "not_now_clicked", "back_nav"}
+        for row in rows.values():
+            assert sum(p["sessions"] for p in row["top_paths"]) <= row["sessions"]
+            for step in (step for p in row["top_paths"] for step in p["steps"]):
+                assert step.get("event") in events or step.get("note") in {
+                    "no_outcome_observed", "pending"}
+        stalled = [p["steps"] for p in rows["attempted_no_success"]["top_paths"]]
+        notes = [i for steps in stalled for i, step in enumerate(steps) if "note" in step]
+        assert notes and all(steps[i - 1] == {"event": "wallet_attempted"}
+                             for steps in stalled for i, step in enumerate(steps)
+                             if "note" in step)
+        assert sum(sum(v.values()) for row in rows.values() for v in row["probes"].values()) \
+            == sum(n["count"] for n in graph["nodes"] if n["column"] == 8)
         assert "seed-" not in str(graph)  # counts only, never session IDs
         assert client.get("/api/journeys?source=visitor").json()["sessions"] == 0
         own = client.get("/api/journeys/session/seed-14").json()

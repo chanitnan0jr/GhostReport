@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from typing import Any
 
+from engine.cohorts import unique_events
 from engine.models import Event, Exposure, ProbeResponse, SessionStats
 from engine.seed import SOURCES, Source, session_source
 
@@ -91,6 +92,26 @@ def path(session: SessionStats, names: Sequence[str], probe: str | None) -> list
     return steps
 
 
+COHORTS = ("no_gate_event", "gate_event_no_attempt", "attempted_no_success", "connected")
+UNRESOLVED = {"no_outcome_observed", "pending"}
+
+
+def recorded_steps(events: Sequence[Event], states: Sequence[str]) -> tuple[tuple[str, str], ...]:
+    """One session's recorded event names in `seq` order. An attempt with no result
+    gets a separate ("note", state) after its last event; it is never an event."""
+    ordered = sorted(events, key=lambda e: e.seq)
+    attempts = list(dict.fromkeys(e.attempt_id for e in ordered if e.attempt_id))
+    last = {e.attempt_id: e.seq for e in ordered if e.attempt_id}
+    steps: list[tuple[str, str]] = []
+    for event in ordered:
+        steps.append(("event", event.event))
+        if event.attempt_id and event.seq == last[event.attempt_id]:
+            index = attempts.index(event.attempt_id)
+            if index < len(states) and states[index] in UNRESOLVED:
+                steps.append(("note", states[index]))
+    return tuple(steps)
+
+
 def _split(counter: Counter[Source]) -> dict[Source, int]:
     return {source: counter[source] for source in SOURCES}
 
@@ -106,6 +127,13 @@ def journeys(
     answered = {r.exposure_id: ("skipped" if r.skipped else "answered") for r in responses}
     probes = {e.session_id: answered.get(e.exposure_id, "shown_no_response")
               for e in exposures}
+    asked = {e.session_id: e.decision_point for e in exposures}
+    by_session: dict[str, list[Event]] = defaultdict(list)
+    for event in unique_events(events):
+        by_session[event.session_id].append(event)
+    cohort_total: Counter[str] = Counter()
+    cohort_paths: dict[str, Counter[tuple[tuple[str, str], ...]]] = defaultdict(Counter)
+    cohort_probes: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
     node_counts: dict[str, Counter[Source]] = defaultdict(Counter)
     edge_counts: dict[tuple[str, str], Counter[Source]] = defaultdict(Counter)
     coverage: dict[str, Counter[str]] = defaultdict(Counter)
@@ -127,6 +155,12 @@ def journeys(
         cohorts[segment][session.cohort] += 1
         # The flow up to the exit; the segment and probe columns are the same for all.
         paths[segment][tuple(step for step in steps if not step.startswith(("c7:", "c8:")))] += 1
+        cohort_total[session.cohort] += 1
+        cohort_paths[session.cohort][recorded_steps(by_session[session.session_id],
+                                                    session.attempt_states)] += 1
+        if session.session_id in probes:
+            cohort_probes[session.cohort][asked[session.session_id]][
+                probes[session.session_id]] += 1
     order = {node_id(c, k): i for i, (c, k) in enumerate(NODES)}
     nodes = [{
         "id": node_id(column, key), "column": column, "row": order[node_id(column, key)],
@@ -152,10 +186,22 @@ def journeys(
                                                  key=lambda item: (-item[1], item[0]))
                       [:TOP_PATHS]],
     } for key, spec in SEGMENTS.items()]
+    # Per report cohort: the most common recorded event sequences (event names only)
+    # and question outcomes by current membership.
+    cohort_rows = [{
+        "cohort": cohort, "sessions": cohort_total[cohort],
+        "probes": {point: {status: counts[status]
+                           for status in ("answered", "skipped", "shown_no_response")}
+                   for point, counts in sorted(cohort_probes[cohort].items())},
+        "top_paths": [{"steps": [{kind: value} for kind, value in steps], "sessions": count}
+                      for steps, count in sorted(cohort_paths[cohort].items(),
+                                                 key=lambda item: (-item[1], item[0]))
+                      [:TOP_PATHS]],
+    } for cohort in COHORTS]
     return {
         "direction": "LR",
         "columns": [{"index": i, "label": label} for i, label in enumerate(COLUMNS)],
-        "nodes": nodes, "edges": edges, "segments": segments,
+        "nodes": nodes, "edges": edges, "segments": segments, "cohorts": cohort_rows,
         "sessions": sum(total.values()), "by_source": _split(total), "only": only,
         "notes": [
             "Rejecting the wallet is not instrumented, so a rejection shows as "
