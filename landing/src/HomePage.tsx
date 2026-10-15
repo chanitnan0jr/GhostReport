@@ -2,6 +2,7 @@ import { HomeDemo } from "./HomeDemo";
 import { useHomePopulation } from "./useHomePopulation";
 import { REPO_URL } from "./content";
 import { SiteHeader } from "./SiteHeader";
+import "./home.css";
 
 type IconName =
   | "code"
@@ -77,241 +78,189 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-// Read clockwise: top-left, top-right, bottom-right, bottom-left.
-const LOOP = [
-  ["code", "1. Read the code", "Map the workflow and what it does not record."],
-  ["lock", "2. Lock hypotheses", "Approved and digested before any answer."],
-  [
-    "question",
-    "3. Ask at the exit",
-    "One optional question, to the right people at the moment they leave.",
-  ],
-  ["report", "4. Report k of n", "Self-reports and recorded observations."],
+const STEPS = [
+  ["code", "Read\nthe code"],
+  ["lock", "Lock\nhypotheses"],
+  ["question", "Ask at\nthe exit"],
+  ["report", "Report\nk of n"],
 ] as const;
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="gr-site">
+    <div className={`gr-site ${className}`.trim()}>
       <SiteHeader />
       {children}
     </div>
   );
 }
 
-function Mountains() {
-  return (
-    <img className="home-mountains" src="/images/hero-mountains.png" alt="" />
-  );
-}
-
 export function HomePage() {
   const { population, unavailable } = useHomePopulation();
-  const facts: [IconName, React.ReactNode][] = [
-    ["code", "Real app code. Events recorded by the app."],
-    [
-      "people",
-      population ? (
-        <span>
-          {population.seed} of {population.total} sessions are seed ·{" "}
-          {population.visitor} of {population.total} sessions are visitors
-          {population.test > 0 && (
-            <>
-              {" "}
-              · {population.test} of {population.total} sessions are tests
-            </>
-          )}
-        </span>
-      ) : (
-        <span>
-          {unavailable
-            ? "Session counts temporarily unavailable."
-            : "Loading session counts…"}
-        </span>
-      ),
-    ],
-    [
-      "database",
-      import.meta.env.VITE_MOCK === "1"
-        ? "Preview data · sample population."
-        : "Session counts refresh from the live API.",
-    ],
-    ["shield", "Same app across Demo, Segments and Report."],
-  ];
   return (
-    <Shell>
-      <main>
-        <section className="home-hero-band">
-          <div className="home-hero">
-            <div className="home-hero-copy">
-              <ul className="home-tags" aria-label="About GhostReport">
-                <li>Open source</li>
-                <li>Reads the code</li>
-                <li>Finds what isn’t measured</li>
-              </ul>
-              <h1>
-                Your users stop
-                <br />
-                at the wallet step.
-              </h1>
-              <p className="home-subhead">
-                Your analytics shows <em>where</em>, <em>not why</em>.
-              </p>
-              <p className="gr-lead">
-                GhostReport reads the code to find what isn’t measured, locks
-                hypotheses before any answers, asks one optional question of the
-                right people at the moment they leave, and reports “k of n
-                respondents”. Answers stay separate from recorded observations.
-              </p>
-              <div className="gr-actions">
-                <a className="gr-button" href="#demo">
-                  Watch the demo ↓
-                </a>
-                <a className="gr-button-quiet" href="#how-it-works">
-                  How it works
-                </a>
-              </div>
-            </div>
-            <div
-              id="how-it-works"
-              className="home-loop"
-              aria-label="The GhostReport loop"
-            >
-              <svg
-                className="home-loop-ring"
-                viewBox="0 0 460 400"
-                aria-hidden="true"
+    <Shell className="home-site">
+      <main className="ink-home">
+        <section className="ink-hero" aria-labelledby="home-title">
+          <div className="ink-hero-copy">
+            <p className="home-eyebrow">Find the unmeasured</p>
+            <h1 id="home-title">
+              Your users stop at the wallet step.
+              <br />
+              Your analytics shows <em>where, not why.</em>
+            </h1>
+            <p className="ink-lead">
+              GhostReport reads the code to find what isn’t measured, locks
+              hypotheses before any answers, asks one optional question of the
+              right people at the moment they leave, and reports “k of n
+              respondents”. Answers stay separate from recorded observations.
+            </p>
+            <div className="ink-actions">
+              <a className="ink-button" href="#demo">
+                Watch the demo <span aria-hidden="true">→</span>
+              </a>
+              <a
+                className="ink-button ink-button-secondary"
+                href="#how-it-works"
               >
-                <defs>
-                  <marker
-                    id="home-arrow"
-                    viewBox="0 0 10 10"
-                    refX="6"
-                    refY="5"
-                    markerWidth="7"
-                    markerHeight="7"
-                    orient="auto-start-reverse"
-                  >
-                    <path
-                      d="M1 1l6 4-6 4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                    />
-                  </marker>
-                </defs>
-                <path
-                  d="M128 22 Q 230 -8 332 22"
-                  markerEnd="url(#home-arrow)"
-                />
-                <path
-                  d="M282 345 Q 230 372 178 345"
-                  markerEnd="url(#home-arrow)"
-                />
-                <path d="M370 160 V 194" markerEnd="url(#home-arrow)" />
-                <path d="M90 194 V 160" markerEnd="url(#home-arrow)" />
-              </svg>
-              <ol>
-                {LOOP.map(([icon, title, text]) => (
-                  <li className="home-loop-step" key={title}>
-                    <span className="home-loop-icon">
-                      <Icon name={icon} />
-                    </span>
-                    <strong>{title}</strong>
-                    <small>{text}</small>
-                  </li>
-                ))}
-              </ol>
-              <div className="home-loop-center" aria-hidden="true">
-                <img
-                  src="/images/ghostreport-mark.png"
-                  width="60"
-                  height="68"
-                  alt=""
-                />
-                GhostReport
-              </div>
+                How it works
+              </a>
             </div>
-            <Mountains />
+          </div>
+          <ol
+            id="how-it-works"
+            className="ink-process"
+            aria-label="How GhostReport works"
+          >
+            {STEPS.map(([icon, title], index) => (
+              <li className="ink-step" key={icon}>
+                <span className="ink-step-number">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="ink-step-icon">
+                  <Icon name={icon} />
+                </span>
+                <span className="ink-step-title">{title}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+        <HomeDemo />
+        <section className="ink-feature" aria-labelledby="featured-app-title">
+          <a
+            href="/try/"
+            className="ink-app-preview"
+            aria-label="Try Common Ground DAO"
+          >
+            <img
+              src="/images/common-ground-preview.png"
+              alt="The real Common Ground DAO grant app: Good ideas. Common ground."
+            />
+          </a>
+          <div className="ink-feature-copy">
+            <img
+              className="ink-dao-symbol"
+              src="/images/common-ground-dao.jpg"
+              alt="DAO"
+            />
+            <p className="home-eyebrow">Featured app</p>
+            <h2 id="featured-app-title">Common Ground DAO</h2>
+            <ul className="ink-tags">
+              <li>
+                <Icon name="database" />
+                Simulated wallet
+              </li>
+              <li>
+                <Icon name="shield" />
+                No real funds
+              </li>
+              <li>
+                <Icon name="github" />
+                Open source
+              </li>
+            </ul>
+            <p>
+              The app we investigate: a mock grant app with a simulated wallet,
+              in{" "}
+              <a href={REPO_URL} target="_blank" rel="noreferrer">
+                this repo
+              </a>
+              . No real wallet or funds.
+            </p>
+            <p className="ink-population">
+              {population ? (
+                <>
+                  {population.seed} of {population.total} sessions are seed ·{" "}
+                  {population.visitor} of {population.total} sessions are
+                  visitors
+                  {population.test > 0 && (
+                    <>
+                      {" "}
+                      · {population.test} of {population.total} sessions are
+                      tests
+                    </>
+                  )}
+                </>
+              ) : unavailable ? (
+                "Session counts temporarily unavailable."
+              ) : (
+                "Loading session counts…"
+              )}
+              {import.meta.env.VITE_MOCK === "1" && " · Preview data"}
+            </p>
+            <div className="ink-actions">
+              <a className="ink-button" href="#demo">
+                Watch simulated users <span aria-hidden="true">→</span>
+              </a>
+              <a className="ink-button ink-button-secondary" href="/try/">
+                Try it yourself <span aria-hidden="true">↗</span>
+              </a>
+            </div>
           </div>
         </section>
-
-        <div className="gr-page home-page">
-          <section className="gr-card home-target">
-            <img
-              className="home-target-art"
-              src="/images/common-ground-dao.jpg"
-              alt="DAO — decentralized autonomous organization"
-            />
-            <div className="home-target-body">
-              <ul className="home-tags home-tags-plain">
-                <li>Simulated wallet</li>
-                <li>No real funds</li>
-                <li>Open source</li>
-              </ul>
-              <h2>Common Ground DAO</h2>
-              <p className="gr-muted">
-                The app we investigate: a mock grant app with a simulated
-                wallet, in{" "}
-                <a href={REPO_URL} target="_blank" rel="noreferrer">
-                  this repo
-                </a>
-                . No real wallet or funds.
-              </p>
-              <div className="gr-actions">
-                <a className="gr-button" href="#demo">
-                  Watch simulated users ▷
-                </a>
-                <a className="gr-button-quiet" href="/try/">
-                  Try it yourself →
-                </a>
-              </div>
-            </div>
-            <ul className="home-facts">
-              {facts.map(([icon, text]) => (
-                <li key={icon}>
-                  <Icon name={icon} />
-                  {text}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <HomeDemo seedCount={population?.seed ?? null} />
-
-          <section className="home-more">
-            <a className="gr-card" href="/ens/">
-              <span className="home-more-icon home-more-github">
-                <Icon name="github" />
-              </span>
-              <div>
-                <h3>Tested on a repo we didn’t write →</h3>
-                <p className="gr-muted">
-                  ENS app, read-only at a pinned commit. Explore the workflow
-                  and code references checked by hand.
-                </p>
-              </div>
-            </a>
-            <a className="gr-card" href="/install/">
-              <span className="home-more-icon">
-                <Icon name="cube" />
-              </span>
-              <div>
-                <h3>Add it to your app in 3 steps →</h3>
-                <p className="gr-muted">
-                  One config file, <code>track()</code>, and one optional
-                  question at the exit.
-                </p>
-              </div>
-            </a>
-          </section>
-          <footer className="home-footer">
-            <span>
-              The wallet is simulated. No real wallet or funds. A network error
-              may be simulated once.
+        <section className="ink-next-links" aria-label="Explore GhostReport">
+          <a className="ink-next" href="/ens/">
+            <span className="ink-next-icon">
+              <Icon name="code" />
             </span>
-            <a href="/about/">About GhostReport →</a>
-          </footer>
-        </div>
+            <div>
+              <h2>Tested on a repo we didn’t write</h2>
+              <p>
+                ENS app, read-only at a pinned commit. Explore its workflow and
+                code references checked by hand.
+              </p>
+            </div>
+            <span className="ink-next-action">
+              View details <span aria-hidden="true">→</span>
+            </span>
+          </a>
+          <a className="ink-next" href="/install/">
+            <span className="ink-next-icon">
+              <Icon name="cube" />
+            </span>
+            <div>
+              <h2>Add it to your app in 3 steps</h2>
+              <p>
+                One config file, <code>track()</code>, and one optional question
+                at the exit.
+              </p>
+            </div>
+            <span className="ink-next-action">
+              See the steps <span aria-hidden="true">→</span>
+            </span>
+          </a>
+        </section>
+        <footer className="ink-footer">
+          <span>
+            The wallet is simulated. No real wallet or funds. A network error
+            may be simulated once.
+          </span>
+          <a href="/about/">About GhostReport →</a>
+        </footer>
       </main>
     </Shell>
   );

@@ -27,6 +27,13 @@ export const PERSONAS = [
   ["not-now-answer", "Not now, then answers"],
 ] as const;
 
+const DESCRIPTIONS: Record<string, string> = {
+  connect: "Approves the simulated wallet and reaches the application form.",
+  reject: "Declines the wallet request in the recorded session.",
+  "error-retry": "A simulated network error, then a successful retry.",
+  "not-now-answer": "Chooses Not now, then answers an optional exit question.",
+};
+
 const EVENT_LABELS: Record<string, string> = {
   project_viewed: "Viewed a project",
   apply_clicked: "Clicked Apply",
@@ -91,12 +98,22 @@ function ClipCard({
   clip,
   now,
   register,
+  featured,
+  index,
+  onPlayback,
+  onPlaybackError,
 }: {
   title: string;
   clip: Clip;
   now: number;
   register: (video: HTMLVideoElement | null) => void;
+  featured: boolean;
+  index: number;
+  onPlayback: () => void;
+  onPlaybackError: () => void;
 }) {
+  const player = useRef<HTMLVideoElement | null>(null);
+  const [started, setStarted] = useState(false);
   const items = marks(clip);
   const shown = items.filter((m) => m.t <= now);
   const last = items.length ? items[items.length - 1].t : 0;
@@ -105,18 +122,51 @@ function ClipCard({
   return (
     <article className="clip-card">
       <header>
-        <h3>{title}</h3>
+        {featured ? (
+          <div className="clip-featured-heading">
+            <span className="clip-index">{String(index).padStart(2, "0")}</span>
+            <div>
+              <h3>{title}</h3>
+              <p className="clip-description">{DESCRIPTIONS[clip.persona]}</p>
+            </div>
+          </div>
+        ) : (
+          <h3>{title}</h3>
+        )}
         <code>{clip.session_id}</code>
       </header>
-      <video
-        ref={register}
-        src={`/demo/${clip.video_url}`}
-        poster={`/demo/${clip.persona}-poster.jpg`}
-        aria-label={`${title}: recorded app screen`}
-        muted
-        playsInline
-        preload="auto"
-      />
+      <div className="clip-video">
+        <video
+          ref={(element) => {
+            player.current = element;
+            register(element);
+          }}
+          src={`/demo/${clip.video_url}`}
+          poster={`/demo/${clip.persona}-poster.jpg`}
+          aria-label={`${title}: recorded app screen`}
+          muted
+          playsInline
+          preload="auto"
+          controls={featured && started}
+          onPlay={() => {
+            setStarted(true);
+            onPlayback();
+          }}
+        />
+        {featured && !started && (
+          <button
+            className="clip-individual-play"
+            aria-label={`Play: ${title}`}
+            onClick={() => {
+              void player.current?.play().catch(onPlaybackError);
+            }}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16l13-8z" fill="currentColor" />
+            </svg>
+          </button>
+        )}
+      </div>
       <ol className="clip-log" aria-live="polite">
         {shown.map((mark, index) => (
           <li key={index} className={`clip-${mark.kind}`}>
@@ -145,7 +195,9 @@ function ClipCard({
   );
 }
 
-export function DemoClips() {
+export function DemoClips({
+  variant = "default",
+}: { variant?: "default" | "featured" } = {}) {
   const [clips, setClips] = useState<Record<string, Clip>>({});
   const [error, setError] = useState("");
   const [now, setNow] = useState(0);
@@ -190,6 +242,12 @@ export function DemoClips() {
     else setPlaying(false);
   }
 
+  function startPlayback() {
+    cancelAnimationFrame(frame.current);
+    setPlaying(true);
+    frame.current = requestAnimationFrame(tick);
+  }
+
   function playAll() {
     cancelAnimationFrame(frame.current);
     const all = Object.values(videos.current).filter(
@@ -204,6 +262,7 @@ export function DemoClips() {
         setPlaybackError(
           "Some recordings could not start. Please try Play all four again.",
         );
+      cancelAnimationFrame(frame.current);
       frame.current = requestAnimationFrame(tick);
     });
   }
@@ -218,7 +277,10 @@ export function DemoClips() {
     return <p role="status">Loading recordings…</p>;
 
   return (
-    <section className="clips" aria-label="Recorded simulated users">
+    <section
+      className={`clips${variant === "featured" ? " clips-featured" : ""}`}
+      aria-label="Recorded simulated users"
+    >
       <div className="clips-bar">
         <button className="clips-play" onClick={playAll} disabled={playing}>
           {playing
@@ -238,10 +300,18 @@ export function DemoClips() {
         </p>
       )}
       <div className="clips-grid">
-        {PERSONAS.map(([persona, title]) => (
+        {PERSONAS.map(([persona, title], index) => (
           <ClipCard
             key={persona}
             title={title}
+            featured={variant === "featured"}
+            index={index + 1}
+            onPlayback={startPlayback}
+            onPlaybackError={() =>
+              setPlaybackError(
+                "This recording could not start. Please try again.",
+              )
+            }
             clip={clips[persona]}
             now={(videos.current[persona]?.currentTime ?? 0) * 1000}
             register={(video) => {

@@ -16,8 +16,10 @@ The GhostReport guide at `/about/` has three steps: try the grant app, view the 
 
 ## Home + demo
 
-Home follows the approved light blue reference: explanation and four-step loop,
-Common Ground DAO card, four real Playwright recordings, ENS and installation links.
+Home follows the approved ink-mountain reference: serif headings, a floating shared
+header, four horizontal process cards, real Playwright recordings, the featured
+Common Ground DAO app, and ENS/installation links. Home styling lives in `src/home.css`;
+other landing routes keep the light page shell.
 **Watch the demo** and **Watch simulated users** scroll to `/#demo` on the same page.
 `/seed/` remains the detailed recording/session explorer; `/try/` assigns a role.
 The landing header uses Home, Try the App, Segments, Workflow Map, Report, Install.
@@ -37,11 +39,20 @@ recordings use `object-fit: contain`; there are no people illustrations or
 invented reject events. Posters were extracted from those recordings with
 ffmpeg, without changing the videos.
 
-`public/images/hero-mountains.png` is decorative AI-generated artwork. The loop,
-brand use native SVG. The Common Ground DAO illustration is the user-supplied
-`public/images/common-ground-dao.jpg`, displayed uncropped on white. No generated text or data appears
-inside the UI. Desktop visual review used local mock mode at 1240 and 1280 px;
-this redesign did not run unit or E2E suites or validate a live API.
+Home's featured player adds numbered headings, descriptions and individual play
+buttons; the full recordings remain 460px tall as requested. Native video controls
+appear after starting a clip. The original `/seed/` player remains available.
+
+`public/images/ink-mountains.png` is decorative artwork generated from the approved
+reference with all UI/text removed. The ghost logo remains in the shared header.
+`public/images/common-ground-preview.png` is a real screenshot of the app's project
+list intro, captured with a test-prefixed session and no feedback consent. The
+user-supplied DAO logo remains unframed beside the featured app description.
+No wallet extensions, invented events, screenshots of fictional app flows or
+synthetic visitor counts are introduced by the redesign.
+
+Desktop visual review uses 1448×1086 (reference size) and 1280×960. Unit/E2E suites
+and mobile checks were not run for this redesign.
 
 ## Roles and session boundary
 

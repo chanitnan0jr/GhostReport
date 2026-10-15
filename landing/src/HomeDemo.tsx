@@ -1,23 +1,25 @@
 import { DemoClips } from "./DemoClips";
 
-export function HomeDemo({ seedCount }: { seedCount: number | null }) {
+export function HomeDemo() {
   return (
     <section
       id="demo"
-      className="gr-card home-demo"
-      aria-label="Demo recordings"
+      className="home-demo ink-demo"
+      aria-labelledby="home-demo-title"
     >
-      <header>
-        <span className="home-demo-label">DEMO</span>
-        <span className="gr-muted">Simulated users (Playwright) — seed</span>
+      <header className="ink-section-heading">
+        <div>
+          <p className="home-eyebrow">See it in action</p>
+          <h2 id="home-demo-title">Simulated user sessions</h2>
+          <p className="ink-source-label">
+            Simulated users (Playwright) — seed
+          </p>
+        </div>
         <a href="/seed/">
-          {seedCount === null
-            ? "See recorded sessions"
-            : `See ${seedCount} of ${seedCount} seed sessions`}{" "}
-          →
+          Watch all sessions <span aria-hidden="true">→</span>
         </a>
       </header>
-      <DemoClips />
+      <DemoClips variant="featured" />
     </section>
   );
 }
