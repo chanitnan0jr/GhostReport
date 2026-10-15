@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
           ens: "ens/index.html",
           about: "about/index.html",
           seed: "seed/index.html",
+          install: "install/index.html",
         },
       },
     },
