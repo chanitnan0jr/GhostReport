@@ -1,6 +1,7 @@
 """Sandboxes: isolated simulated runs that go through the real ingest and probe paths."""
 
 import random
+import sqlite3
 import time
 from collections.abc import Iterator
 from datetime import timedelta
@@ -10,9 +11,14 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from engine import sandbox as sandbox_module
 from engine.api import Settings, create_app
-from engine.llm import LLM
+from engine.demo import INVESTIGATION
+from engine.investigation import load_investigation
+from engine.llm import LLM, LLMError
 from engine.sandbox import BRANCHES, MAX_ATTEMPTS, SandboxHub, walk
+from engine.segment_spec import template_spec
+from engine.workflow_view import workflow_view
 from tests.test_api import GATE_VERIFIED, Clock
 from tests.test_stages import HYPOTHESES, Script
 
@@ -328,3 +334,142 @@ def test_reset_waits_for_a_running_investigation(tmp_path: Path, clock: Clock) -
         release.set()
         assert wait_for_investigation(client, sid)["investigate"]["status"] == "done"
         assert client.post(f"/api/sandbox/{sid}/reset", headers=owner).status_code == 200
+
+
+def test_failed_reinvestigation_cannot_approve_an_older_draft(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sid, owner = start(client)
+    traffic(client, sid, owner, n=20, seed=9)
+    client.post(f"/api/sandbox/{sid}/investigate", headers=owner)
+    assert wait_for_investigation(client, sid)["draft"] is not None
+    traffic(client, sid, owner, n=10, seed=4)
+
+    def fail(*args: Any, **kwargs: Any) -> Any:
+        raise LLMError("Simulated upstream failure")
+
+    monkeypatch.setattr(sandbox_module, "run_stage_b", fail)
+    assert client.post(f"/api/sandbox/{sid}/investigate", headers=owner).status_code == 202
+    state = wait_for_investigation(client, sid)
+    assert state["investigate"]["status"] == "failed"
+    assert state["phase"] == "pre_lock" and state["draft"] is None
+    assert client.post(f"/api/sandbox/{sid}/lock", json={"source": "ai"},
+                       headers=owner).status_code == 409
+    assert client.post(f"/api/sandbox/{sid}/lock", json={"source": "prepared"},
+                       headers=owner).status_code == 200
+
+
+def test_legacy_failed_run_with_a_draft_is_not_approvable(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sid, owner = start(client)
+    traffic(client, sid, owner, n=20, seed=9)
+    client.post(f"/api/sandbox/{sid}/investigate", headers=owner)
+    assert wait_for_investigation(client, sid)["draft"] is not None
+    original = sandbox_module.Sandbox.state
+
+    def legacy_failed_state(sandbox: sandbox_module.Sandbox) -> Any:
+        sandbox.meta["investigate"]["status"] = "failed"
+        return original(sandbox)
+
+    monkeypatch.setattr(sandbox_module.Sandbox, "state", legacy_failed_state)
+    state = client.get(f"/api/sandbox/{sid}/state").json()
+    assert state["draft"] is None and state["phase"] == "pre_lock"
+    assert client.post(f"/api/sandbox/{sid}/lock", json={"source": "ai"},
+                       headers=owner).status_code == 409
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_investigation_closes_llm_cache_on_success_and_failure(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, failure: bool,
+) -> None:
+    opened: list[sqlite3.Connection] = []
+    closed: list[sqlite3.Connection] = []
+    original_connect = sqlite3.connect
+
+    class TrackedConnection(sqlite3.Connection):
+        def close(self) -> None:
+            closed.append(self)
+            super().close()
+
+    def connect(database: Any, *args: Any, **kwargs: Any) -> sqlite3.Connection:
+        if str(database).endswith("cache.sqlite"):
+            kwargs["factory"] = TrackedConnection
+        connection: sqlite3.Connection = original_connect(database, *args, **kwargs)
+        if isinstance(connection, TrackedConnection):
+            opened.append(connection)
+        return connection
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    if failure:
+        def fail(*args: Any, **kwargs: Any) -> Any:
+            raise LLMError("DEEPSEEK_API_KEY is not set")
+        monkeypatch.setattr(sandbox_module, "run_stage_b", fail)
+    sid, owner = start(client)
+    traffic(client, sid, owner, n=20, seed=9)
+    before = client.get(f"/api/sandbox/{sid}/state").json()["investigate"]
+    assert client.post(f"/api/sandbox/{sid}/investigate", headers=owner).status_code == 202
+    state = wait_for_investigation(client, sid)
+    assert len(opened) == 1 and closed == opened
+    if failure:
+        assert state["investigate"]["status"] == "failed"
+        assert state["investigate"]["runs_used"] == 0
+        assert state["investigate"]["global_runs_left"] == before["global_runs_left"]
+    else:
+        assert state["investigate"]["status"] == "done"
+
+
+def test_full_sandbox_loop_and_restart_preserve_the_locked_run(
+    tmp_path: Path, clock: Clock,
+) -> None:
+    workflow = workflow_view("app", load_investigation(INVESTIGATION))
+    script = Script([template_spec(workflow).model_dump(mode="json"), HYPOTHESES])
+    config = Settings(
+        run_id="judging", mode="demo", db_dir=tmp_path / "runs",
+        sandbox_root=tmp_path / "sandboxes", fixture=INVESTIGATION, dp0_seconds=0,
+        clock=clock, target_repo=APP, narrative="template",
+        llm=lambda: LLM(cache_path=tmp_path / "cache.sqlite", complete=script),
+    )
+    with TestClient(create_app(config)) as client:
+        sid, owner = start(client)
+        prefix = f"/api/sandbox/{sid}"
+        traffic(client, sid, owner, n=20, seed=9)
+        assert client.post(f"{prefix}/journeys/generate", headers=owner).status_code == 202
+        for _ in range(200):
+            journeys = client.get(f"{prefix}/journeys/spec").json()
+            if journeys["status"] != "running":
+                break
+            time.sleep(0.02)
+        assert journeys["draft"] and journeys["validation"] == []
+        approved = client.post(f"{prefix}/journeys/approve", headers=owner, json={
+            "digest": journeys["draft"]["digest"], "approved_by": "Sandbox owner"})
+        assert approved.status_code == 200
+        assert client.post(f"{prefix}/investigate", headers=owner).status_code == 202
+        assert wait_for_investigation(client, sid)["draft"] is not None
+        locked = client.post(f"{prefix}/lock", json={"source": "ai"}, headers=owner)
+        assert locked.status_code == 200
+        lock_digest = locked.json()["digest"]
+        clock.now += timedelta(minutes=1)
+        result = traffic(client, sid, owner, n=30, seed=3, answer_rate=1, skip_rate=0,
+                         branches={"project": {"back": 0, "apply": 1, "idle": 0},
+                                   "gate": {"not_now": 1, "connect": 0, "idle": 0}})
+        clock.now += timedelta(seconds=30)
+        reveal = client.get(f"{prefix}/reveal").json()
+        dp1 = next(q for q in reveal["questions"] if q["decision_point"] == "DP1")
+        assert reveal["available"] and reveal["journeys"]
+        assert dp1["counted"]["respondents"] == result["probes"]["answered"] == 30
+        report = client.get(f"{prefix}/report").json()
+        assert report["v1"]["digest"] == lock_digest and report["current"]["errors"] == []
+        assert report["current"]["sources"]["seed"] == 50
+        assert report["current"]["sources"]["visitor"] == 0
+        assert client.get("/api/report").json()["current"]["sessions"] == []
+        assert client.get(f"{prefix}/state").json()["investigate"]["runs_used"] == 2
+    with TestClient(create_app(config)) as client:
+        state = client.get(f"{prefix}/state").json()
+        assert state["phase"] == "locked" and state["locked"]["digest"] == lock_digest
+        assert state["journeys"]["approved_digest"] == approved.json()["digest"]
+        assert state["investigate"]["runs_used"] == 2
+        assert client.get(f"{prefix}/reveal").json() == reveal
+        assert client.get(f"{prefix}/report").json()["current"] == report["current"]
+        assert traffic(client, sid, owner, n=1, seed=8)["sessions_total"] == 51
+    assert len(script.sent) == 2

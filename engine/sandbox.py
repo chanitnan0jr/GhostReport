@@ -23,6 +23,7 @@ import random
 import re
 import secrets
 import shutil
+from contextlib import closing
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -376,33 +377,34 @@ class Sandbox:
 
         def work() -> InvestigationDraft:
             llm = settings.llm()
-            base = llm.complete
-            client: list[Any] = []
+            with closing(llm.db):
+                base = llm.complete
+                client: list[Any] = []
 
-            def complete(messages: Any, model: str, thinking: bool) -> Any:
-                if not client:  # no key, no call: a cache hit never gets here
-                    client.append(base or deepseek_completion())
-                calls[0] += 1
-                return client[0](messages, model, thinking)
+                def complete(messages: Any, model: str, thinking: bool) -> Any:
+                    if not client:  # no key, no call: a cache hit never gets here
+                        client.append(base or deepseek_completion())
+                    calls[0] += 1
+                    return client[0](messages, model, thinking)
 
-            llm.complete = complete
-            root = settings.target_repo or settings.config.repo.path
-            # Stage A reads only the code, which every sandbox shares: reuse the prepared
-            # investigation's Workflow Map, re-checked against the code as it is now.
-            workflow, stale = validate_workflow(root, load_investigation(settings.fixture).workflow)
-            pack = build_context(root, keywords=settings.config.workflow.keywords,
-                                 include=settings.config.repo.include,
-                                 exclude=settings.config.repo.exclude,
-                                 analytics_calls=settings.config.analytics.calls)
-            try:
-                draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))
-            except LLMError as error:
-                if "validation" not in str(error):
-                    raise
-                # Malformed JSON twice in a row: one fresh attempt before giving up.
-                draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))
-            return draft.model_copy(update={
-                "rejected": {**draft.rejected, "stage_a_stale_ref": list(stale)}})
+                llm.complete = complete
+                root = settings.target_repo or settings.config.repo.path
+                # Reuse Stage A's map, re-checking it against the current code.
+                workflow, stale = validate_workflow(
+                    root, load_investigation(settings.fixture).workflow)
+                pack = build_context(root, keywords=settings.config.workflow.keywords,
+                                     include=settings.config.repo.include,
+                                     exclude=settings.config.repo.exclude,
+                                     analytics_calls=settings.config.analytics.calls)
+                try:
+                    draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))
+                except LLMError as error:
+                    if "validation" not in str(error):
+                        raise
+                    # Malformed JSON twice in a row: one fresh attempt before giving up.
+                    draft = run_stage_b(llm, pack, workflow, stats, repo_root=str(root))
+                return draft.model_copy(update={
+                    "rejected": {**draft.rejected, "stage_a_stale_ref": list(stale)}})
 
         try:
             async with self.hub.semaphore:
@@ -443,7 +445,8 @@ class Sandbox:
         investigation = ghost.inv()
         chain = snapshots(ghost.store(), investigation.investigation_id)
         draft_view = None
-        if not chain and ghost.draft_path.exists():
+        if (not chain and self.meta["investigate"]["status"] == "done"
+                and ghost.draft_path.exists()):
             draft = InvestigationDraft.model_validate_json(
                 ghost.draft_path.read_text(encoding="utf-8"))
             draft_view = {
@@ -877,6 +880,8 @@ def add_sandbox_routes(app: FastAPI, ghost: Ghost) -> None:
             info.update(status="running", error=None, started_at=now.isoformat(),
                         finished_at=None, cached=None,
                         snapshot_sessions=len(current["sessions"]))
+            # A new snapshot must not leave an older draft available for approval.
+            ghost.draft_path.unlink(missing_ok=True)
             sandbox.save()
             sandbox.task = asyncio.create_task(sandbox.investigate(
                 {"funnel": current["funnel"], "cohorts": current["cohorts"]}))
@@ -930,9 +935,10 @@ def add_sandbox_routes(app: FastAPI, ghost: Ghost) -> None:
             now = ghost.settings.clock()
             ends = now + timedelta(minutes=COLLECTION_MINUTES)
             if body.source == "ai":
-                if not ghost.draft_path.exists():
-                    raise HTTPException(409, "Run Investigate first, or use the prepared "
-                                             "investigation.")
+                if (sandbox.meta["investigate"]["status"] != "done"
+                        or not ghost.draft_path.exists()):
+                    raise HTTPException(409, "Investigate must finish successfully first, "
+                                             "or use the prepared investigation.")
                 draft = InvestigationDraft.model_validate_json(
                     ghost.draft_path.read_text(encoding="utf-8"))
                 try:
