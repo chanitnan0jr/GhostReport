@@ -9,7 +9,7 @@ import json
 import os
 import sqlite3
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -26,6 +26,10 @@ Completion = Callable[[list[Message], str, bool], tuple[str, dict[str, Any]]]
 
 class LLMError(RuntimeError):
     """The stage produced no valid output; callers fall back to templates."""
+
+    def __init__(self, message: str, *, validation_errors: Sequence[str] = ()) -> None:
+        super().__init__(message)
+        self.validation_errors = tuple(validation_errors)
 
 
 def api_key() -> str:
@@ -89,8 +93,9 @@ class LLM:
     def call(
         self, stage: str, version: int, schema: type[T], *, context: str, instructions: str,
         system: tuple[str, int] = ("system", 1),
+        validate_result: Callable[[T], Sequence[str]] | None = None,
     ) -> T:
-        """Validate against `schema`; send the error back once, then fail."""
+        """Validate schema and optional domain rules before caching; repair once."""
         system_prompt = load_prompt(*system)
         task = load_prompt(stage, version)
         schema_text = json.dumps(schema.model_json_schema(), ensure_ascii=False)
@@ -108,33 +113,47 @@ class LLM:
             "SELECT output_json FROM llm_calls WHERE cache_key = ?", (key,),
         ).fetchone()
         if row is not None:
-            return schema.model_validate_json(row[0])
+            cached = schema.model_validate_json(row[0])
+            problems = list(validate_result(cached)) if validate_result else []
+            if not problems:
+                return cached
+            if self.replay:
+                raise LLMError(f"Cached {stage}.v{version} failed validation",
+                               validation_errors=problems)
+            with self.db:
+                self.db.execute("DELETE FROM llm_calls WHERE cache_key = ?", (key,))
         if self.replay:
             raise LLMError(f"REPLAY=1 and no cached output for {stage}.v{version}")
         complete = self.complete or deepseek_completion()
         started, usage_total, last_error = time.monotonic(), [], ""
+        problems = []
         for attempt in (1, 2):
             content, usage = complete(messages, self.model, self.thinking)
             usage_total.append(usage)
             try:
                 result = schema.model_validate_json(content)
             except ValidationError as error:
+                problems = []
                 last_error = str(error)[:2000]
-                messages = [*messages, {"role": "assistant", "content": content}, {
-                    "role": "user",
-                    "content": f"Your JSON failed validation:\n{last_error}\n"
-                               "Return the corrected JSON object only.",
-                }]
-                continue
-            with self.db:
-                self.db.execute(
-                    "INSERT OR REPLACE INTO llm_calls VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (key, stage, version, input_hash, self.model, int(self.thinking),
-                     result.model_dump_json(), int((time.monotonic() - started) * 1000),
-                     json.dumps(usage_total), attempt, time.time()),
-                )
-            return result
-        raise LLMError(f"{stage}.v{version} output failed validation twice: {last_error[:300]}")
+            else:
+                problems = list(validate_result(result)) if validate_result else []
+                if not problems:
+                    with self.db:
+                        self.db.execute(
+                            "INSERT OR REPLACE INTO llm_calls VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (key, stage, version, input_hash, self.model, int(self.thinking),
+                             result.model_dump_json(), int((time.monotonic() - started) * 1000),
+                             json.dumps(usage_total), attempt, time.time()),
+                        )
+                    return result
+                last_error = "\n".join(problems)[:2000]
+            messages = [*messages, {"role": "assistant", "content": content}, {
+                "role": "user",
+                "content": f"Your JSON failed validation. Repair these validation problems:\n"
+                           f"{last_error}\nReturn the corrected JSON object only.",
+            }]
+        raise LLMError(f"{stage}.v{version} output failed validation twice: {last_error[:300]}",
+                       validation_errors=problems)
 
     def stats(self) -> list[dict[str, Any]]:
         """Latency and tokens per call, for the cost-per-investigation question."""

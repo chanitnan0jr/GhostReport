@@ -154,16 +154,25 @@ def implies(later: Predicate, earlier: Predicate) -> bool:
     return False
 
 
+def ordered_state_ids(workflow: dict[str, Any]) -> list[str]:
+    return [n["id"] for n in sorted(workflow["nodes"], key=lambda n: n["order"])
+            if n["kind"] == "state"]
+
+
 def validate(spec: SegmentSpec, workflow: dict[str, Any], vocabulary: Sequence[str]) -> list[str]:
     """References must equal the checked Workflow Map; text is never trusted."""
     errors: list[str] = []
     nodes = {n["id"]: n for n in workflow["nodes"]}
-    states = [n["id"] for n in sorted(workflow["nodes"], key=lambda n: n["order"])
-              if n["kind"] == "state"]
+    states = ordered_state_ids(workflow)
     if spec.project != workflow["target"]:
         errors.append("project does not match Workflow Map")
-    if [c.state_id for c in spec.columns] != states:
-        errors.append("columns must follow every Workflow Map state in order")
+    received = [c.state_id for c in spec.columns]
+    if received != states:
+        errors.append("columns must follow every Workflow Map state in order; "
+                      f"expected state_ids={json.dumps(states)}; "
+                      f"received state_ids={json.dumps(received)}. "
+                      "Include each state exactly once, even without recorded events; "
+                      "exclude outcome and ui_fact nodes.")
     for kind, ids in (("rule", [r.id for r in spec.rules]),
                       ("segment", [s.id for s in spec.segments])):
         if len(ids) != len(set(ids)):
@@ -369,19 +378,19 @@ def template_spec(workflow: dict[str, Any]) -> SegmentSpec:
 
 
 def generate(llm: LLM, context: dict[str, Any]) -> dict[str, Any]:
-    errors: list[str] = []
-    for attempt in range(2):
-        try:
-            spec = llm.call("journeys", 2, SegmentSpec,
-                            context=json.dumps(context, ensure_ascii=False),
-                            instructions="Propose recorded-event definitions. "
-                            + (f"Repair these validation problems: {errors}" if attempt else ""),
-                            system=("journeys_system", 1))
-        except LLMError as error:
-            return {"draft": None, "validation": [f"llm: {error}"], "digest": None}
-        errors = validate(spec, context["workflow"], context["event_vocabulary"])
-        if not errors:
-            spec = resolve_refs(spec, context["workflow"])
-            data = spec.model_dump(mode="json")
-            return {"draft": data, "validation": [], "digest": digest(data)}
-    return {"draft": None, "validation": errors, "digest": None}
+    supplied = {**context, "required_columns": [
+        {"state_id": state_id, "events": []}
+        for state_id in ordered_state_ids(context["workflow"])]}
+    try:
+        spec = llm.call("journeys", 3, SegmentSpec,
+                        context=json.dumps(supplied, ensure_ascii=False),
+                        instructions="Propose recorded-event definitions.",
+                        system=("journeys_system", 1),
+                        validate_result=lambda draft: validate(
+                            draft, context["workflow"], context["event_vocabulary"]))
+    except LLMError as error:
+        return {"draft": None, "validation": list(error.validation_errors) or [f"llm: {error}"],
+                "digest": None}
+    spec = resolve_refs(spec, context["workflow"])
+    data = spec.model_dump(mode="json")
+    return {"draft": data, "validation": [], "digest": digest(data)}

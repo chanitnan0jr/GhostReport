@@ -127,6 +127,125 @@ def test_generation_repairs_once_and_withholds_invalid_output(tmp_path: Path) ->
     llm.db.close()
 
 
+@pytest.mark.parametrize("change", ["missing", "reversed", "duplicate", "unknown", "outcome"])
+def test_column_errors_explain_expected_and_received_ids(change: str) -> None:
+    data = TEMPLATE.model_dump(mode="json")
+    if change == "missing":
+        data["columns"].pop()
+    elif change == "reversed":
+        data["columns"].reverse()
+    elif change == "duplicate":
+        data["columns"][1] = data["columns"][0]
+    elif change == "unknown":
+        data["columns"][0]["state_id"] = "invented_state"
+    else:
+        outcome = next(n for n in WORKFLOW["nodes"] if n["kind"] == "outcome")
+        data["columns"].append({"state_id": outcome["id"], "events": []})
+    errors = validate(SegmentSpec.model_validate(data), WORKFLOW, vocabulary(WORKFLOW))
+    problem = next(e for e in errors if e.startswith("columns must follow"))
+    expected = [c.state_id for c in TEMPLATE.columns]
+    received = [c["state_id"] for c in data["columns"]]
+    assert f"expected state_ids={json.dumps(expected)}" in problem
+    assert f"received state_ids={json.dumps(received)}" in problem
+
+
+@pytest.mark.parametrize("repair", [True, False])
+def test_column_repair_receives_the_contract_and_previous_draft(
+    tmp_path: Path, repair: bool,
+) -> None:
+    invalid = TEMPLATE.model_dump(mode="json")
+    invalid["columns"] = invalid["columns"][1:]
+    previous = SegmentSpec.model_validate(invalid)
+    replies = [invalid, TEMPLATE.model_dump(mode="json") if repair else invalid]
+    sent: list[Any] = []
+
+    def complete(messages: Any, model: str, thinking: bool) -> Any:
+        sent.append(messages)
+        return json.dumps(replies.pop(0)), {}
+
+    llm = LLM(cache_path=tmp_path / "cache.sqlite", complete=complete)
+    # The contract is derived from the checked map, not a caller's supplied scaffold
+    # or only the states that happened to have traffic.
+    context = {"workflow": WORKFLOW, "event_vocabulary": vocabulary(WORKFLOW),
+               "required_columns": [{"state_id": "invented_state", "events": []}],
+               "observations": {"paths": [{"events": ["project_viewed"], "sessions": 1}]}}
+    try:
+        result = generate(llm, context)
+        assert len(sent) == 2
+        supplied = json.loads(sent[0][1]["content"].split("\n\n", 1)[0])
+        assert supplied["required_columns"] == TEMPLATE.model_dump(mode="json")["columns"]
+        assert "Copy every state_id from required_columns in exactly that order" in sent[0][1][
+            "content"]
+        assert sent[1][-2]["role"] == "assistant"
+        assert json.loads(sent[1][-2]["content"]) == previous.model_dump(mode="json")
+        assert "expected state_ids=" in sent[1][-1]["content"]
+        if repair:
+            assert result["validation"] == [] and result["draft"] is not None
+            assert result["draft"]["columns"] == TEMPLATE.model_dump(mode="json")["columns"]
+            assert result["digest"] == digest(result["draft"])
+        else:
+            assert result["draft"] is None and result["digest"] is None
+            assert result["validation"][0].startswith("columns must follow")
+        assert all(row["prompt_version"] == 3 for row in llm.stats())
+    finally:
+        llm.db.close()
+
+
+def test_invalid_columns_are_not_cached_for_the_next_generate(tmp_path: Path) -> None:
+    invalid = TEMPLATE.model_dump(mode="json")
+    invalid["columns"] = invalid["columns"][1:]
+    script = [invalid, invalid, TEMPLATE.model_dump(mode="json")]
+    calls: list[int] = []
+
+    def complete(messages: Any, model: str, thinking: bool) -> Any:
+        calls.append(1)
+        return json.dumps(script.pop(0)), {}
+
+    llm = LLM(cache_path=tmp_path / "cache.sqlite", complete=complete)
+    context = {"workflow": WORKFLOW, "event_vocabulary": vocabulary(WORKFLOW)}
+    try:
+        first = generate(llm, context)
+        assert first["draft"] is None
+        assert llm.stats() == []
+        second = generate(llm, context)
+        assert second["draft"] is not None and second["validation"] == []
+        assert len(calls) == 3
+        assert generate(llm, context) == second
+        assert len(calls) == 3  # fully validated output still benefits from the cache
+    finally:
+        llm.db.close()
+
+
+@pytest.mark.parametrize("replay", [True, False])
+def test_cached_journeys_are_checked_against_domain_rules(tmp_path: Path, replay: bool) -> None:
+    calls: list[int] = []
+
+    def complete(messages: Any, model: str, thinking: bool) -> Any:
+        calls.append(1)
+        return TEMPLATE.model_dump_json(), {}
+
+    llm = LLM(cache_path=tmp_path / "cache.sqlite", complete=complete)
+    context = {"workflow": WORKFLOW, "event_vocabulary": vocabulary(WORKFLOW)}
+    try:
+        assert generate(llm, context)["draft"] is not None
+        invalid = TEMPLATE.model_dump(mode="json")
+        invalid["columns"] = invalid["columns"][1:]
+        with llm.db:
+            llm.db.execute("UPDATE llm_calls SET output_json = ?", (json.dumps(invalid),))
+        llm.replay = replay
+        result = generate(llm, context)
+        if replay:
+            assert result["draft"] is None and result["digest"] is None
+            assert result["validation"][0].startswith("columns must follow")
+            assert len(calls) == 1
+        else:
+            assert result["draft"] is not None and result["validation"] == []
+            assert len(calls) == 2
+            assert len(llm.stats()) == 1
+    finally:
+        llm.db.close()
+
+
 @pytest.mark.parametrize("op,low,high", [
     ("has", 1, 1), ("lacks", 1, 1), ("has_after", 2, 2), ("last_event_in", 1, 20),
 ])
@@ -184,11 +303,11 @@ def test_generation_repairs_nested_multi_event_lacks(tmp_path: Path, repair: boo
         if repair:
             assert result["draft"] and result["validation"] == []
             assert result["digest"] == digest(result["draft"])
-            assert llm.stats()[0]["prompt_version"] == 2
+            assert llm.stats()[0]["prompt_version"] == 3
             assert llm.stats()[0]["attempts"] == 2
         else:
             assert result["draft"] is None and result["digest"] is None
-            assert "journeys.v2 output failed validation twice" in result["validation"][0]
+            assert "journeys.v3 output failed validation twice" in result["validation"][0]
             assert llm.stats() == []
     finally:
         llm.db.close()
