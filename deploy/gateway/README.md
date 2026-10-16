@@ -15,22 +15,24 @@ already serves landing, app and console static files.
    Set **Healthcheck Path** to `/api/health`, timeout to 120 seconds, and
    replicas to 1. Disable application sleeping and use an **On Failure**
    restart policy with 5 retries.
-4. Set these gateway variables, matching the existing service names and ports:
+4. Set the gateway variables using references to the actual upstream services:
 
    ```dotenv
    PORT=8080
    RAILWAY_DOCKERFILE_PATH=deploy/gateway/Dockerfile
-   API_UPSTREAM=api.railway.internal:8000
-   ROLES_UPSTREAM=roles.railway.internal:8100
-   ```
-
-   The port and upstreams are also the image defaults. If a service name differs, use its private domain
-   and listening port. Railway reference-variable equivalents are:
-
-   ```dotenv
    API_UPSTREAM=${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}
    ROLES_UPSTREAM=${{roles.RAILWAY_PRIVATE_DOMAIN}}:${{roles.PORT}}
    ```
+
+   These references assume services named `api` and `roles`, with explicit `PORT`
+   variables. If a service has a different name, such as `service roles`, select
+   that service in Railway's variable-reference picker for both its private
+   domain and port. Keep each upstream in `hostname:port` form.
+
+   Read `RAILWAY_PRIVATE_DOMAIN` from the upstream service rather than guessing
+   its hostname from the display name. The Caddyfile's fallback hostnames are
+   examples that only work when those domains actually exist. API/roles must
+   be running in the same Railway project and environment as the gateway.
 
 5. Apply the staged changes and deploy. The health check requests `/api/health`
    through the API upstream. The new deployment must build the Caddy image from
@@ -111,6 +113,30 @@ Report pages. A passing gateway health check covers the API upstream; verify
 roles health separately. A `502` usually needs a check of the upstream's private
 domain, listening port and service health.
 
+### DNS lookup failures
+
+`lookup api.railway.internal ... no such host` means the configured API hostname
+could not be resolved from the gateway. Check the corresponding upstream
+reference, service status, private networking, and project/environment first.
+The same applies to the roles hostname. This error occurs before connecting to
+the upstream port or checking any LLM credentials.
+
+If setting upstreams manually, run the following inside each upstream service's
+SSH session and use the result for the matching gateway variable:
+
+```sh
+printf '%s:%s\n' "$RAILWAY_PRIVATE_DOMAIN" "$PORT"
+```
+
+Confirm `PORT` is set and matches the listening port; the roles image otherwise
+defaults to `8100` and the API image to `8000`. Apply the gateway variable changes
+and deploy. From a running Caddy gateway, this read-only request checks API
+connectivity without calling an LLM:
+
+```sh
+wget -S -O /dev/null -T 5 "http://${API_UPSTREAM}/api/health"
+```
+
 Local image build and configuration validation:
 
 ```bash
@@ -133,3 +159,4 @@ updates do not require database resets or changes to API/roles volumes.
 - [Railway monorepo configuration](https://docs.railway.com/deployments/monorepo)
 - [Railway start commands](https://docs.railway.com/deployments/start-command)
 - [Railway Dockerfile selection](https://docs.railway.com/builds/dockerfiles)
+- [Railway variable references and private domains](https://docs.railway.com/variables/reference)
