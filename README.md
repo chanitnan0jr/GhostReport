@@ -1,64 +1,277 @@
+<p align="center">
+  <img src="shared/assets/ghostreport-mark.png" width="64" height="64" alt="GhostReport logo">
+</p>
+
 # GhostReport
 
-GhostReport ช่วยทีม product และ developer สืบหาว่า **ยังขาดหลักฐานอะไรในการอธิบายจุดที่ผู้ใช้หยุดทำงานต่อ** โดยอ่าน source code ประกอบกับ event ที่มีอยู่ เสนอสมมติฐานให้คนตรวจ และถามผู้ใช้เพิ่มเติมแบบข้ามได้ในจังหวะที่เหมาะสม
+**Find what your analytics does not measure.**
 
-ผลลัพธ์คือ Report ที่แยกสิ่งที่สังเกตได้ สิ่งที่ผู้ใช้บอก และข้อที่ยังตอบไม่ได้ พร้อมอ้างอิงโค้ดและหลักฐาน ไม่สรุปว่าพบสาเหตุแน่นอนจากคำตอบไม่กี่คน
+GhostReport helps product and engineering teams investigate where users stop in a workflow. It reads source code, maps recorded events, proposes hypotheses for human review, and asks an optional question at eligible exits. Reports keep recorded observations, user statements, and unresolved hypotheses separate.
 
-**สถานะ:** hackathon prototype ของ workflow สมัครทุน DAO พร้อม mock wallet การวิเคราะห์และ rule ปัจจุบันออกแบบสำหรับ wallet onboarding การนำไปใช้กับ workflow อื่นต้องปรับ integration และทบทวน rule เพิ่ม
+[Quickstart](#quickstart) · [How it works](#how-it-works) · [ENS case study](#ens-case-study) · [Development](#development) · [Railway deployment](#railway-deployment) · [Documentation](#documentation)
 
-## เริ่มอ่านและใช้งาน
+> **Status: Evidence Investigation MVP.** The complete investigation pipeline is demonstrated on a controlled DAO grant application with a simulated wallet. External repository analysis and isolated ENS report simulations are available. Integrating live analytics from arbitrary applications still requires an adapter and reviewed rules.
 
-**[คู่มือภาษาไทย: ภาพรวม แนวคิดจาก Paper และการติดตั้ง](docs/PROJECT_GUIDE.th.md)**
+## Why GhostReport?
 
-- [ใครใช้ และระบบทำงานอย่างไร](docs/PROJECT_GUIDE.th.md#overview)
-- [งานวิจัยที่อยู่เบื้องหลัง และขอบเขตที่อ้างได้](docs/PROJECT_GUIDE.th.md#research)
-- [ติดตั้งผ่าน Shell และเปิดเดโม](docs/PROJECT_GUIDE.th.md#quickstart)
-- [ตั้ง API key วิเคราะห์ใหม่ และเปิดรับคำตอบ 12 นาที](docs/PROJECT_GUIDE.th.md#live)
-- [การกำหนดเวลาและการอ่าน Report](docs/PROJECT_GUIDE.th.md#timing)
-- [นำไปใช้กับ repository ของทีม](docs/PROJECT_GUIDE.th.md#integration)
+A successful wallet connection event tells you that a connection happened. It does not tell you who saw the request, who declined, or why someone left. Missing instrumentation can make different user journeys look identical.
 
-## เส้นทางใช้งาน
+GhostReport brings code evidence, recorded events, and optional feedback into the same investigation:
 
-1. **ทีมตั้ง investigation:** เชื่อม repo กับ events ให้ AI เสนอ workflow และสมมติฐาน จากนั้นคนตรวจและล็อก baseline v1
-2. **ผู้ใช้ลองแอป:** ระบบเก็บ event และเสนอคำถามเพิ่มเติมเฉพาะทางออกที่เข้าเกณฑ์ ผู้ใช้ข้ามได้และออกจากหน้าได้ทันที
-3. **ทีมดู Report:** เปรียบเทียบ v1 กับหลักฐานปัจจุบัน ดู coverage, คำตอบ, decision trace และคำแนะนำว่าควรเก็บหลักฐานเพิ่มตรงไหน
+- **Code references:** workflow states, outcomes, and UI facts link to source files and literal quotes.
+- **Reviewable AI output:** workflow, hypothesis, and journey drafts are validated and reviewed before approval.
+- **Deterministic counts:** the engine applies rules to events and computes session assignments and reported numbers.
+- **A frozen baseline:** v1 is locked before collecting the investigation's probe responses; its digest makes later comparisons auditable.
+- **Explicit uncertainty:** reports include coverage, skips, nonresponse, and unresolved findings, using “k of n respondents” or “k of n sessions.”
 
-Report เปิดดูได้ระหว่างเก็บข้อมูลและ refresh ทุก 3 วินาที เวลา 12 นาทีในตัวอย่างคือช่วงเปิดรับคำตอบ ไม่ใช่เวลาที่ต้องรอก่อนมี Report
+**Who uses it?** Product teams and researchers review hypotheses, coverage, and findings. Developers connect the application's code and events. An operator reviews AI drafts and controls the investigation; application visitors only encounter an optional, dismissible question.
 
-## โครงสร้าง
+## What you can try
 
-| ส่วน       | หน้าที่                                         | เอกสาร                                                  |
-| ---------- | ----------------------------------------------- | ------------------------------------------------------- |
-| `landing/` | หน้าเริ่มต้น แจก role card และพาไปดูผล          | [Landing README](landing/README.md)                     |
-| `app/`     | แอปขอทุนที่เป็นเป้าหมายการสืบสวน                | [App README](app/README.md)                             |
-| `console/` | Report และเครื่องมือสำหรับ operator             | [Console README](console/README.md)                     |
-| `engine/`  | อ่านโค้ด เรียก LLM ตรวจหลักฐาน และประกอบ Report | [คู่มือการทำงาน](docs/PROJECT_GUIDE.th.md#architecture) |
-| `roles/`   | สุ่มบทบาทใน process และฐานข้อมูลแยกจาก engine   | [ขอบเขตข้อมูล](docs/PROJECT_GUIDE.th.md#privacy)        |
+| Experience            | What it demonstrates                                                                            | Data                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **DAO Mock**          | Project browsing, a wallet gate, optional exit feedback, and the investigation report           | Visitor events and separately labelled seed/test sessions        |
+| **Sandbox**           | Generate traffic, review an investigation, lock v1, add traffic, and inspect the report         | An isolated simulated run owned by the visitor                   |
+| **ENS code analysis** | Workflow mapping and instrumentation review of an external repository at a pinned commit        | Source code and manually checked references; no ENS visitor logs |
+| **ENS Simulation**    | Apply approved journey rules to generated logs and feedback, then inspect segments and findings | Explicitly synthetic events and answers in a separate run        |
 
-เอกสารออกแบบฉบับเต็ม: [System Design](<GhostReport v5 — System Design.md>) · [Core Paper Review](<GhostReport — Core Paper Review.md>)
+The existing Playwright seed runner drives **DAO Mock**. ENS Simulation generates authored event sequences and feedback; it does not execute ENS or Playwright.
 
-## Local URLs
+## Quickstart
 
-หลังทำตาม Quick Start ให้เข้าผ่าน `http://localhost:5175/` เพื่อให้ทุกหน้ามี origin เดียวกัน:
+### Run the prepared demo with Docker
 
-| URL                   | หน้า                                |
-| --------------------- | ----------------------------------- |
-| `/`                   | Landing                             |
-| `/app/`               | แอปขอทุน                            |
-| `/report/`            | Report สาธารณะ                      |
-| `/report/?operator=1` | เครื่องมือ operator ต้องกรอก token  |
-| `/sandbox/`           | Sandbox: run จำลองของผู้เยี่ยมชมเอง |
+**Requirements:** Git, Docker, and Docker Compose. Host Python and Node installations are not required for this path.
 
-### Sandbox
+```bash
+git clone https://github.com/chanitnan0jr/GhostReport.git
+cd GhostReport
+GIT_SHA=$(git rev-parse HEAD) docker compose up -d --build
+```
 
-`/sandbox/` สร้าง run จำลองแยกต่อผู้เยี่ยมชม (mode `sandbox`, SQLite ของตัวเอง ไม่ปนกับ judging run และลบเองหลัง 3 ชั่วโมง) แล้วพาเดินครบวงจรในหน้า Segments และ Report:
+Open **[http://localhost](http://localhost)**. The stack starts the engine, all built frontends, the separate roles service, and a gateway on one origin. SQLite data persists in Docker volumes.
 
-1. สร้าง traffic ก่อนล็อก: session จำลองเดินตาม flow ของแอปทีละทางแยก ส่ง event ผ่าน ingest ปกติ
-2. Investigate: AI เขียนสมมติฐานและคำถามจาก snapshot (Stage B ครั้งเดียว ใช้ Workflow Map ที่เตรียมไว้) หรือใช้ investigation ที่เตรียมไว้โดยไม่เรียก AI
-3. Approve and lock v1 และแสดง sha256
-4. สร้าง traffic หลังล็อก พร้อมกำหนดคำตอบที่ซ่อนไว้ ทางออกที่เข้าเกณฑ์จะเจอคำถามผ่านโค้ดตรวจ eligibility และ exposure ชุดเดียวกับแอป
-5. Reveal เทียบสัดส่วนที่ตั้งไว้กับ "k of n respondents" ใน Report
+Passing `GIT_SHA` lets the image associate the gate instrumentation check with the deployed commit. If verification is unavailable or does not match the run's commit, the report shows it as unverified.
 
-ทุกหน้าที่เปิด sandbox มีป้าย "Simulation — answers come from the mix you set. This shows the pipeline, not real user insight." เพดาน AI คือ 3 ครั้งต่อ sandbox และ 30 ครั้งรวมทุก sandbox (`GHOST_SANDBOX_LLM_RUNS`) ปิด sandbox ได้ด้วย `engine.demo serve --no-sandbox` โค้ดอยู่ที่ [engine/sandbox.py](engine/sandbox.py) และ [console/src/sandbox/](console/src/sandbox/)
+| Local URL              | Purpose                                                       |
+| ---------------------- | ------------------------------------------------------------- |
+| `/app/`                | Try the DAO grant application                                 |
+| `/report/#workflow`    | Inspect the application Workflow Map                          |
+| `/report/#segments`    | Explore recorded sessions and cohorts                         |
+| `/report/`             | Read the investigation report                                 |
+| `/sandbox/`            | Create an isolated simulation                                 |
+| `/ens/`                | Read the external ENS code review                             |
+| `/report/?project=ens` | Start an ENS synthetic report exercise after journey approval |
+| `/report/?operator=1`  | Unlock operator controls with the configured token            |
 
-ใช้ Python 3.11+, uv, Node.js 22.13+, npm และ ripgrep ดูคำสั่งติดตั้ง dependency และการตั้งค่า server ใน[คู่มือ](docs/PROJECT_GUIDE.th.md#quickstart) การเปิดเดโมที่เตรียมไว้แล้วไม่ต้องมี LLM API key; การกด Analyze หรือวิเคราะห์ repo ใหม่ต้องมี `DEEPSEEK_API_KEY`
+To try the visitor flow, open a DAO project, select **Apply**, and choose **Not now** without starting a wallet connection. An optional question is offered when the consent, plan window, budget, and session eligibility rules permit it. The report refreshes every three seconds and is available while data is being collected.
+
+If port 80 is occupied:
+
+```bash
+GIT_SHA=$(git rev-parse HEAD) DEMO_PORT=8080 docker compose up -d --build
+```
+
+Then use `http://localhost:8080`. Stop the stack with `docker compose down`; its named volumes are retained.
+
+### Configure AI and operator access
+
+The prepared investigation can be explored without an LLM API key. Fresh code analysis and AI investigation generation require `DEEPSEEK_API_KEY`.
+
+Create a `.env` file at the repository root when enabling those features:
+
+```dotenv
+DEEPSEEK_API_KEY=your-deepseek-api-key
+GHOST_OPERATOR_TOKEN=replace-with-a-long-random-value
+```
+
+Apply the variables by running the Docker startup command again. Open `/report/?operator=1` and enter your operator token. Keep API keys on the server; use separate production credentials instead of the Compose development defaults.
+
+### Add DAO seed sessions with Playwright
+
+With Node.js 22.13+ and npm installed, run this from the repository root against a running, unseeded demo:
+
+```bash
+cd scripts/seed
+npm ci
+npx playwright install chromium
+BASE_URL=http://localhost npm run seed
+```
+
+The runner drives the application through browser interactions and records the events it emits. Sessions are labelled **“Simulated users (Playwright) — seed”**, separately from visitors. It skips a run that already contains seed sessions and respects probe eligibility and plan windows.
+
+Use the same public origin in `BASE_URL` when seeding a deployed instance. Leave `GHOST_DB_SEED` unset if you intend to seed through Playwright: that alternative writes synthetic rows directly.
+
+## How it works
+
+```mermaid
+flowchart LR
+    Code["Repository source"] --> Draft["AI workflow and hypothesis drafts"]
+    Draft --> Review["Human review and v1 lock"]
+    Review --> Rules["Deterministic evidence rules"]
+    Events["Recorded events"] --> Rules
+    Rules --> Probe["Optional exit question"]
+    Rules --> Report["Evidence report"]
+    Probe --> Report
+```
+
+1. **Inspect:** build a bounded source context and map workflow states, analytics calls, and UI facts to code references.
+2. **Review and lock:** review the investigation, hypotheses, questions, and applicable rules. Store the v1 snapshot and digest.
+3. **Collect:** ingest events with session IDs, sequence numbers, and retry-stable event IDs. Offer a dismissible question at eligible exits.
+4. **Reconcile:** compute cohorts and response counts, keeping rule observations and self-reports as separate evidence dimensions.
+5. **Report:** inspect the summary, hypotheses, findings, coverage, code evidence gaps, policy trace, next actions, and limitations.
+
+The LLM proposes definitions; the engine performs assignments and aggregation. The current report keeps using the original reviewed cohort template. Generated journey definitions are shown as a comparison and do not rewrite the locked baseline.
+
+### Evidence boundaries
+
+- A code reference describes what was found within the searched scope.
+- A recorded event is a proxy for an action or UI exposure; it does not establish what a person perceived.
+- Missing events support absence-based checks only under the rule's required coverage and instrumentation verification.
+- Optional feedback describes respondents. It does not automatically generalize to nonrespondents or everyone who left.
+- Synthetic feedback exercises the pipeline. It is not evidence about real ENS visitors.
+
+The design draws on research into software observability, diagnostic query selection, experience sampling, permission attribution, and survey bias. The [core paper review](<GhostReport — Core Paper Review.md>) explains which ideas transfer to this MVP and which assumptions remain untested. Those papers are design influences, not evaluations of GhostReport.
+
+## ENS case study
+
+GhostReport also analysed [`ensdomains/ens-app-v3`](https://github.com/ensdomains/ens-app-v3) at commit [`3c10925f`](https://github.com/ensdomains/ens-app-v3/tree/3c10925fa042568d4affd6897d34e42159abd7a3), an external repository licensed under MIT.
+
+The reviewed scope found a wallet Connect button replacing Next on the Pricing step without an exposure or click event in the searched files. A successful connection is recorded elsewhere. This leaves a gap between seeing the connection request and completing a connection.
+
+- [Pricing button source at the pinned commit](https://github.com/ensdomains/ens-app-v3/blob/3c10925fa042568d4affd6897d34e42159abd7a3/src/components/pages/profile/%5Bname%5D/registration/steps/Pricing/Pricing.tsx#L185)
+- [Code-only investigation and human reference review](fixtures/partb/REVIEW.md)
+- [ENS journey definitions and approval](docs/reviews/2026-10-16-ens-journeys.md)
+
+The scope was bounded to 16 files and a 30,000-token context cap. The reference review records correct, wrong, and partial checks. This case study demonstrates code analysis; it does not contain production ENS analytics or visitor findings.
+
+### Exercise the ENS report with synthetic feedback
+
+1. Open `/report/?project=ens#segments` and review the proposed journey rules.
+2. Use **Review and approve this draft**, unlock operator access, enter a reviewer name, and approve the displayed digest.
+3. Open `/report/?project=ens`, select **Start ENS simulation**, and add simulated load and feedback.
+
+You can exercise answers, skips, nonresponse, and questions not shown. Each creator owns a separate run; shared report links are read-only in other browsers. The simulation freezes its journey definitions, question, options, and event paths before load is added.
+
+Approvals saved locally do not transfer to a new deployment automatically. Download the approved fixture and commit it as `fixtures/partb/journeys.ens.json` when packaging it for deployment.
+
+See [ENS Simulation](docs/ENS-Simulation.md) for the API, persistence, limits, and provenance details.
+
+## Development
+
+**Requirements:** Python 3.11+, uv, Node.js 22.13+, npm, and ripgrep. The frontends use React, Vite, and TypeScript; the engine uses FastAPI, SQLite, and DeepSeek for AI stages.
+
+Install dependencies from the repository root:
+
+```bash
+uv sync --frozen
+npm ci --prefix app
+npm ci --prefix console
+npm ci --prefix landing
+```
+
+To develop the frontends against the Docker backend, keep the stack running and start each Vite server in a separate terminal:
+
+```bash
+GHOST_API_TARGET=http://127.0.0.1 GHOST_ROLES_TARGET=http://127.0.0.1 npm --prefix app run dev -- --port 5173
+GHOST_API_TARGET=http://127.0.0.1 GHOST_ROLES_TARGET=http://127.0.0.1 npm --prefix console run dev
+GHOST_API_TARGET=http://127.0.0.1 GHOST_ROLES_TARGET=http://127.0.0.1 npm --prefix landing run dev
+```
+
+Enter through `http://localhost:5175` so app navigation, API requests, and browser storage share one origin. Adjust both targets if the Docker gateway uses another port. Without overrides, Vite targets engine port 18000 and roles port 18100.
+
+For a static frontend preview, each frontend supports `VITE_MOCK=1 npm run dev` from its own directory. ENS mock mode shows a static report whose counts were computed by the backend; it does not generate new data in the browser.
+
+### Collection windows
+
+Prepared runs use the deadlines in their approved probe plans. For a native backend run, the CLI can shorten the collection window relative to the first v1 lock:
+
+```bash
+uv run python -m engine.demo serve --run-id local-live --mode live --port 18000 --collection-minutes 12
+```
+
+The effective deadline is the earlier of the approved plan deadline and 12 minutes after lock. Restarting an existing run preserves its locked window; it does not extend an expired plan. Review and approve a new plan for a later investigation. The report is available throughout collection, so there is no need to wait for the window to close before reading it.
+
+### Checks
+
+```bash
+uv run pytest -q
+uv run mypy engine
+uv run ruff check engine tests
+npm test --prefix app
+npm test --prefix console
+npm test --prefix landing
+npm run build --prefix app
+npm run build --prefix console
+npm run build --prefix landing
+```
+
+Browser checks are documented in the [app](app/README.md) and [console](console/README.md) guides.
+
+### Integrating another repository
+
+[`ghostreport.yaml`](ghostreport.yaml) configures source scope, workflow keywords, analytics function names, and event-name mappings. The analysis CLI writes a draft for review:
+
+```bash
+uv run --env-file .env python -m engine.analyze app runs/draft.app.json --config ghostreport.yaml
+```
+
+External repositories can be analysed in code-only mode with a target-specific config, as shown in [`fixtures/partb/ghostreport.ens.yaml`](fixtures/partb/ghostreport.ens.yaml). Live event ingestion, probe delivery, and rule applicability need a reviewed integration. There is no published GhostReport npm SDK or general analytics importer yet.
+
+## Railway deployment
+
+The deployment uses three services on one public origin:
+
+| Service                                        | Dockerfile                                               | Health check    | Persistent storage        |
+| ---------------------------------------------- | -------------------------------------------------------- | --------------- | ------------------------- |
+| `api` — engine and built frontends             | [`Dockerfile`](Dockerfile)                               | `/api/health`   | Its own volume at `/data` |
+| `roles` — separate role-assignment process     | [`roles/Dockerfile`](roles/Dockerfile)                   | `/roles/health` | Its own volume at `/data` |
+| `gateway` — Caddy routing to private upstreams | [`deploy/gateway/Dockerfile`](deploy/gateway/Dockerfile) | `/api/health`   | None required             |
+
+Keep the repository root as the build context for all three services. Generate the public domain on the gateway and keep the SQLite services at one replica. The gateway routes `/roles/*` to roles and all other paths to the API, preserving the frontend's relative URLs.
+
+Follow the [Railway deployment guide](deploy/gateway/README.md) for exact settings and health checks. The API Dockerfile runs the gate instrumentation check and records the build commit when Railway supplies `RAILWAY_GIT_COMMIT_SHA`.
+
+Configure new services through the Railway dashboard using the Dockerfiles above. The repository's `railway.json` files are legacy configuration: [Railway has deprecated Config as Code](https://docs.railway.com/config-as-code), with existing service support ending on December 1, 2026. This repository does not yet provide the replacement Infrastructure as Code setup.
+
+## Project layout
+
+| Directory                        | Responsibility                                                           |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| [`engine/`](engine/)             | Source analysis, validation, ingestion, policy, reports, and simulations |
+| [`app/`](app/)                   | The controlled DAO grant application and simulated wallet                |
+| [`console/`](console/)           | Workflow Map, Segments, Report, and operator controls                    |
+| [`landing/`](landing/)           | Home, recorded demos, ENS review, installation, and sandbox entry        |
+| [`shared/`](shared/)             | Shared header, navigation, and design assets                             |
+| [`roles/`](roles/)               | Role assignment in a separate process and database                       |
+| [`prompts/`](prompts/)           | Versioned AI-stage prompts                                               |
+| [`fixtures/`](fixtures/)         | Prepared investigations, sample reports, and ENS review artifacts        |
+| [`scripts/seed/`](scripts/seed/) | DAO Playwright seed sessions and recordings                              |
+| [`tests/`](tests/)               | Engine and integration checks                                            |
+| [`deploy/`](deploy/)             | Local and Railway gateway configuration                                  |
+
+## Roadmap
+
+The current MVP demonstrates the investigation pipeline. The longer-term direction is a reusable investigation layer across applications, codebases, and analytics systems:
+
+- Repository and analytics integrations.
+- Configurable cohorts grounded in recorded evidence.
+- Adaptive selection of diagnostic questions and telemetry checks.
+- Continuous investigations with traceable evidence and versioned decisions.
+
+These are platform goals, not claims that arbitrary applications are supported today.
+
+## Documentation
+
+- [System design](<GhostReport v5 — System Design.md>) — contracts, workflow, guards, and integration levels.
+- [Core paper review](<GhostReport — Core Paper Review.md>) — research influences, assumptions, and limits of transferring those findings to this demo.
+- [User and setup guide in Thai](docs/PROJECT_GUIDE.th.md) — shell setup, collection windows, operator workflows, and detailed usage.
+- [ENS Simulation](docs/ENS-Simulation.md) — generated events and feedback, isolation, and API contracts.
+- [App guide](app/README.md) · [Console guide](console/README.md) · [Landing guide](landing/README.md).
+- [Railway gateway guide](deploy/gateway/README.md).
+
+## Contributing
+
+Use [GitHub Issues](https://github.com/chanitnan0jr/GhostReport/issues) to describe a workflow, integration need, or reproducible problem. Include the run mode, relevant commit, expected behaviour, and actual result; omit API keys, tokens, and private user data.
+
+For changes, keep code references reviewable, add appropriate checks, preserve the separation between synthetic and visitor data, and describe how the change affects evidence or report interpretation.
