@@ -1,8 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { saveSandboxToken } from "../../../shared/sandbox";
 import { RevealPanel } from "./RevealPanel";
 import { SandboxPanel } from "./SandboxPanel";
+import { fetchState } from "./sandboxApi";
 import type { Reveal, SandboxState, TrafficResult } from "./types";
 
 const ID = "sbx-0123456789abcdef";
@@ -266,6 +273,100 @@ it("says when a sandbox has expired", async () => {
   expect(
     screen.getByRole("link", { name: "Start a new sandbox" }),
   ).toHaveAttribute("href", "/sandbox/");
+});
+
+it("reopens the journeys step while journey generation is running", async () => {
+  server(
+    state({
+      phase: "investigating",
+      sessions_total: 20,
+      journeys: { status: "running", approved_digest: null },
+    }),
+  );
+  render(<SandboxPanel sandboxId={ID} report={null} refresh={refresh()} />);
+  expect(
+    await screen.findByRole("button", { name: /Step 2:\s*Generate journeys/ }),
+  ).toHaveAttribute("aria-current", "step");
+  expect(screen.queryByText(/Reading the snapshot/)).not.toBeInTheDocument();
+});
+
+it("shows an initial API failure and lets the user retry", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ detail: "Sandbox temporarily unavailable" }),
+          { status: 503 },
+        ),
+    ),
+  );
+  render(<SandboxPanel sandboxId={ID} report={null} refresh={refresh()} />);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Sandbox temporarily unavailable",
+  );
+  server(state());
+  fireEvent.click(
+    screen.getByRole("button", { name: "Retry loading sandbox" }),
+  );
+  expect(
+    await screen.findByRole("button", { name: /Generate \d+ sessions/ }),
+  ).toBeVisible();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it.each(["caller", "deadline"])(
+  "aborts sandbox requests from the %s signal",
+  async (source) => {
+    const caller = new AbortController();
+    const deadline = new AbortController();
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValueOnce(deadline.signal);
+    const fetch = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify(state())),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await fetchState(ID, caller.signal);
+    expect(timeout).toHaveBeenCalledWith(20_000);
+    const requestSignal = fetch.mock.calls[0][1]?.signal;
+    (source === "caller" ? caller : deadline).abort();
+    expect(requestSignal?.aborted).toBe(true);
+    expect(caller.signal.aborted).toBe(source === "caller");
+  },
+);
+
+it("warns when polling fails and clears that warning on recovery", async () => {
+  vi.useFakeTimers();
+  let unavailable = false;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify(
+            unavailable ? { detail: "Temporarily offline" } : state(),
+          ),
+          { status: unavailable ? 503 : 200 },
+        ),
+    ),
+  );
+  await act(async () => {
+    render(<SandboxPanel sandboxId={ID} report={null} refresh={refresh()} />);
+  });
+  unavailable = true;
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3000);
+  });
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Displaying the last loaded state",
+  );
+  unavailable = false;
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(6000);
+  });
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
 
 it("reveals the mix that was set beside what the report counted", () => {

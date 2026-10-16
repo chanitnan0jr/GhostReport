@@ -39,7 +39,9 @@ async function call<T>(
   const response = await fetch(`/api/sandbox/${id}/${path}`, {
     ...rest,
     headers,
-    signal: rest.signal ?? AbortSignal.timeout(20_000),
+    signal: rest.signal
+      ? AbortSignal.any([rest.signal, AbortSignal.timeout(20_000)])
+      : AbortSignal.timeout(20_000),
   });
   const value: unknown = await response.json().catch(() => null);
   if (!response.ok) {

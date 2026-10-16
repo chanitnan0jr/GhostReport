@@ -56,7 +56,8 @@ function suggested(state: SandboxState): Step {
       ? "reveal"
       : "after";
   if (state.phase === "draft_ready") return "lock";
-  if (state.phase === "investigating") return "investigate";
+  if (state.phase === "investigating")
+    return state.journeys?.status === "running" ? "journeys" : "investigate";
   return state.sessions_total > 0 ? "investigate" : "before";
 }
 
@@ -152,6 +153,8 @@ export function SandboxPanel({
     null,
   );
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
   const [open, setOpen] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
   const owner = canControl(sandboxId);
@@ -160,6 +163,7 @@ export function SandboxPanel({
   const load = useCallback(
     async (signal?: AbortSignal) => {
       const next = await fetchState(sandboxId, signal);
+      if (signal?.aborted) return next;
       setState(next);
       if (phase.current !== next.phase) {
         // A new phase moves the panel to the step that comes next.
@@ -180,6 +184,7 @@ export function SandboxPanel({
       let delay = 3000;
       try {
         const next = await load(controller.signal);
+        setLoadError("");
         if (next.phase === "investigating") delay = 1500;
         setError((current) => (current?.status === 404 ? null : current));
       } catch (failure) {
@@ -188,6 +193,11 @@ export function SandboxPanel({
           setError({ status: 404, text: failure.message });
           return; // expired: stop polling
         }
+        setLoadError(
+          failure instanceof Error
+            ? failure.message
+            : "Could not load the sandbox.",
+        );
         delay = 6000;
       }
       if (!controller.signal.aborted) timer = setTimeout(tick, delay);
@@ -197,7 +207,7 @@ export function SandboxPanel({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [load]);
+  }, [load, retry]);
 
   async function act(name: string, action: () => Promise<string>) {
     setBusy(name);
@@ -256,9 +266,27 @@ export function SandboxPanel({
   if (!state)
     return (
       <section className="sbx" aria-label="Sandbox controls">
-        <p className="sbx-hint" role="status">
-          Opening the sandbox…
-        </p>
+        {loadError ? (
+          <>
+            <p className="sbx-error" role="alert">
+              {loadError}
+            </p>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setLoadError("");
+                setRetry((value) => value + 1);
+              }}
+            >
+              Retry loading sandbox
+            </button>
+          </>
+        ) : (
+          <p className="sbx-hint" role="status">
+            Opening the sandbox…
+          </p>
+        )}
       </section>
     );
 
@@ -342,6 +370,13 @@ export function SandboxPanel({
           {open ? "Hide controls" : "Show controls"}
         </button>
       </header>
+
+      {loadError && (
+        <p className="sbx-error" role="alert">
+          Could not refresh the sandbox. Displaying the last loaded state.{" "}
+          {loadError}
+        </p>
+      )}
 
       <ol className="sbx-steps" aria-label="Sandbox steps">
         {STEPS.map(([id, label], index) => {
