@@ -1,0 +1,15 @@
+{
+	admin off
+	persist_config off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	handle /roles/* {
+		reverse_proxy {$ROLES_UPSTREAM:roles.railway.internal:8100}
+	}
+
+	handle {
+		reverse_proxy {$API_UPSTREAM:api.railway.internal:8000}
+	}
+}
