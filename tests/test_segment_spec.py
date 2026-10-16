@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from engine import journey_api
 from engine.api import Settings, create_app
@@ -124,6 +125,73 @@ def test_generation_repairs_once_and_withholds_invalid_output(tmp_path: Path) ->
     assert result["draft"] and result["validation"] == [] and len(sent) == 2
     assert "Repair these" in sent[1][-1]["content"]
     llm.db.close()
+
+
+@pytest.mark.parametrize("op,low,high", [
+    ("has", 1, 1), ("lacks", 1, 1), ("has_after", 2, 2), ("last_event_in", 1, 20),
+])
+def test_predicate_schema_exposes_event_cardinality(op: str, low: int, high: int) -> None:
+    schema = SegmentSpec.model_json_schema()["$defs"]["Predicate"]
+    branch = next(b["then"] for b in schema["allOf"]
+                  if b["if"]["properties"]["op"]["const"] == op)
+    assert "events" in branch["required"]
+    assert branch["properties"]["events"] == {"minItems": low, "maxItems": high}
+    assert branch["properties"]["children"] == {"maxItems": 0}
+    assert branch["properties"]["outcome"] == {"type": "null"}
+
+
+def test_multi_event_lacks_reports_an_actionable_error() -> None:
+    with pytest.raises(ValidationError, match="lacks requires exactly 1 event; received 2"):
+        Predicate(op="lacks", events=("wallet_connected", "wallet_rejected"))
+
+
+def test_compound_absence_keeps_explicit_logic_and_unknown_coverage() -> None:
+    children = tuple(Predicate(op="lacks", events=(event,))
+                     for event in ("wallet_connected", "wallet_rejected"))
+    both = Predicate(op="all", children=children)
+    either = Predicate(op="any", children=children)
+    assert matches(both, ["wallet_connected"], True) is False
+    assert matches(either, ["wallet_connected"], True) is True
+    assert matches(both, [], False) is None
+    assert matches(either, [], False) is None
+
+
+@pytest.mark.parametrize("repair", [True, False])
+def test_generation_repairs_nested_multi_event_lacks(tmp_path: Path, repair: bool) -> None:
+    valid = TEMPLATE.model_dump(mode="json")
+    valid["rules"][0]["predicate"] = {"op": "all", "children": [
+        {"op": "lacks", "events": ["wallet_connected"]},
+        {"op": "lacks", "events": ["wallet_rejected"]},
+    ]}
+    invalid = json.loads(json.dumps(valid))
+    invalid["rules"][0]["predicate"]["children"][1]["events"] = [
+        "wallet_connected", "wallet_rejected"]
+    replies = [invalid, valid if repair else invalid]
+    sent: list[Any] = []
+
+    def complete(messages: Any, model: str, thinking: bool) -> Any:
+        sent.append(messages)
+        return json.dumps(replies.pop(0)), {}
+
+    llm = LLM(cache_path=tmp_path / "cache.sqlite", complete=complete)
+    try:
+        result = generate(llm, {"workflow": WORKFLOW,
+                                "event_vocabulary": vocabulary(WORKFLOW)})
+        assert len(sent) == 2
+        assert "lacks requires exactly 1 event; received 2" in sent[1][-1]["content"]
+        assert "Use all/any" in sent[1][-1]["content"]
+        assert "has and lacks require exactly 1 event" in sent[0][1]["content"]
+        if repair:
+            assert result["draft"] and result["validation"] == []
+            assert result["digest"] == digest(result["draft"])
+            assert llm.stats()[0]["prompt_version"] == 2
+            assert llm.stats()[0]["attempts"] == 2
+        else:
+            assert result["draft"] is None and result["digest"] is None
+            assert "journeys.v2 output failed validation twice" in result["validation"][0]
+            assert llm.stats() == []
+    finally:
+        llm.db.close()
 
 
 def wait(client: TestClient, path: str) -> dict[str, Any]:

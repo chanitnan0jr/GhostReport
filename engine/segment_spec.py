@@ -24,6 +24,32 @@ WORDING = re.compile(
     r"afraid|unaware|distrust|reluctant|zero|one|two|three|four|five|six|seven|eight|"
     r"nine|ten|twenty|half|most|majority)\b", re.IGNORECASE)
 KEY = r"^[A-Za-z][A-Za-z0-9_.:-]{0,95}$"
+EVENT_ARITY = {"has": (1, 1), "lacks": (1, 1), "has_after": (2, 2),
+               "last_event_in": (1, 20)}
+
+
+def predicate_schema(schema: dict[str, Any]) -> None:
+    """Publish the same operator shapes that the runtime validator enforces."""
+    branches = []
+    for op in (*EVENT_ARITY, "all", "any", "attempt_outcome", "always"):
+        properties: dict[str, Any] = {
+            "events": {"maxItems": 0}, "children": {"maxItems": 0},
+            "outcome": {"type": "null"},
+        }
+        required = []
+        if op in EVENT_ARITY:
+            low, high = EVENT_ARITY[op]
+            properties["events"] = {"minItems": low, "maxItems": high}
+            required = ["events"]
+        elif op in ("all", "any"):
+            properties["children"] = {"minItems": 1, "maxItems": 10}
+            required = ["children"]
+        elif op == "attempt_outcome":
+            properties["outcome"] = {"enum": ["none", "connected", "errored"]}
+            required = ["outcome"]
+        branches.append({"if": {"properties": {"op": {"const": op}}, "required": ["op"]},
+                         "then": {"properties": properties, "required": required}})
+    schema["allOf"] = branches
 
 
 class Model(BaseModel):
@@ -31,6 +57,8 @@ class Model(BaseModel):
 
 
 class Predicate(Model):
+    model_config = ConfigDict(json_schema_extra=predicate_schema)
+
     op: Literal["has", "lacks", "has_after", "last_event_in", "attempt_outcome",
                 "all", "any", "always"]
     events: tuple[str, ...] = Field(default=(), max_length=20)
@@ -39,12 +67,16 @@ class Predicate(Model):
 
     @model_validator(mode="after")
     def shape(self) -> "Predicate":
-        sizes = {"has": (1, 1), "lacks": (1, 1), "has_after": (2, 2),
-                 "last_event_in": (1, 20)}
-        if self.op in sizes:
-            low, high = sizes[self.op]
-            if not low <= len(self.events) <= high or self.children or self.outcome:
-                raise ValueError("event predicate has invalid arguments")
+        if self.op in EVENT_ARITY:
+            low, high = EVENT_ARITY[self.op]
+            if not low <= len(self.events) <= high:
+                expected = f"exactly {low} event" if low == high == 1 else (
+                    f"exactly {low} events" if low == high else f"{low} to {high} events")
+                raise ValueError(
+                    f"{self.op} requires {expected}; received {len(self.events)}. "
+                    "Use all/any with separate predicates to combine event conditions.")
+            if self.children or self.outcome:
+                raise ValueError(f"{self.op} accepts only events, not children or outcome")
         elif self.op in ("all", "any"):
             if not self.children or self.events or self.outcome:
                 raise ValueError("compound predicate needs only children")
@@ -340,7 +372,7 @@ def generate(llm: LLM, context: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     for attempt in range(2):
         try:
-            spec = llm.call("journeys", 1, SegmentSpec,
+            spec = llm.call("journeys", 2, SegmentSpec,
                             context=json.dumps(context, ensure_ascii=False),
                             instructions="Propose recorded-event definitions. "
                             + (f"Repair these validation problems: {errors}" if attempt else ""),
