@@ -234,6 +234,14 @@ Follow the [Railway deployment guide](deploy/gateway/README.md) for exact settin
 
 Configure new services through the Railway dashboard using the Dockerfiles above. The repository's `railway.json` files are legacy configuration: [Railway has deprecated Config as Code](https://docs.railway.com/config-as-code), with existing service support ending on December 1, 2026. This repository does not yet provide the replacement Infrastructure as Code setup.
 
+For existing services using Config as Code, select the service's own file:
+[`deploy/api/railway.json`](deploy/api/railway.json),
+[`roles/railway.json`](roles/railway.json), or
+[`deploy/gateway/railway.json`](deploy/gateway/railway.json).
+The former root `/railway.json` has moved to `/deploy/api/railway.json` so its API
+build settings are not automatically selected for other services. Update that
+path on any legacy API service before deploying this change.
+
 ## Project layout
 
 | Directory                        | Responsibility                                                           |

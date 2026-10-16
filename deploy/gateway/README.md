@@ -9,7 +9,9 @@ already serves landing, app and console static files.
 2. Add a service from the same GitHub repository and name it `gateway`.
 3. Keep **Root Directory** at `/`. In the dashboard, set **Builder** to
    **Dockerfile** and **Dockerfile Path** to `/deploy/gateway/Dockerfile`.
-   Clear any custom **Start Command** so the image runs its Caddy command.
+   Set **Start Command** explicitly to
+   `caddy run --config /etc/caddy/Caddyfile --adapter caddyfile`.
+   This also makes a mistakenly selected API image fail to start visibly.
    Set **Healthcheck Path** to `/api/health`, timeout to 120 seconds, and
    replicas to 1. Disable application sleeping and use an **On Failure**
    restart policy with 5 retries.
@@ -17,11 +19,12 @@ already serves landing, app and console static files.
 
    ```dotenv
    PORT=8080
+   RAILWAY_DOCKERFILE_PATH=deploy/gateway/Dockerfile
    API_UPSTREAM=api.railway.internal:8000
    ROLES_UPSTREAM=roles.railway.internal:8100
    ```
 
-   They are also the defaults. If a service name differs, use its private domain
+   The port and upstreams are also the image defaults. If a service name differs, use its private domain
    and listening port. Railway reference-variable equivalents are:
 
    ```dotenv
@@ -49,6 +52,44 @@ repository does not yet provide Railway's replacement Infrastructure as Code.
 
 On a legacy service already using Config as Code, the config file is
 `/deploy/gateway/railway.json`; file settings override dashboard settings.
+
+## Existing services: select each service's configuration
+
+There is deliberately no `railway.json` at the repository root. The former
+root file selected the API Dockerfile; automatic discovery could apply those
+API settings to another service from the same repository. The API's legacy
+configuration now lives at `deploy/api/railway.json`.
+
+For legacy services that use configuration files, select these exact paths:
+
+| Service   | Railway Config File            | Dockerfile Path              | Healthcheck Path |
+| --------- | ------------------------------ | ---------------------------- | ---------------- |
+| `api`     | `/deploy/api/railway.json`     | `/Dockerfile`                | `/api/health`    |
+| `roles`   | `/roles/railway.json`          | `/roles/Dockerfile`          | `/roles/health`  |
+| `gateway` | `/deploy/gateway/railway.json` | `/deploy/gateway/Dockerfile` | `/api/health`    |
+
+All three retain **Root Directory** `/`. For new services, set Dockerfile and
+health checks in the dashboard instead of opting into deprecated Config as Code.
+Keep API/roles volume mounts and their variables on their existing services.
+
+When updating a legacy API service, change an explicit `/railway.json` reference
+to `/deploy/api/railway.json` for the deployment containing this move. Use a new
+deployment of the updated commit: restarting or redeploying an older commit still
+uses that commit's old files. Confirm the config source in Deployment Details,
+where Railway records the settings actually used by that deployment.
+
+### Detect a gateway running the API image
+
+The gateway build must use `caddy:2.10.0-alpine` and copy the Caddyfile. Node,
+Python, `COPY engine`, or frontend build stages identify the API image.
+Inside a gateway SSH session, `caddy version` must succeed. Runtime logs must
+show Caddy starting. A response from `/api/health` alone does not distinguish a
+working proxy from an accidentally deployed engine.
+
+If visitors created sandboxes on an accidental gateway engine, those records
+belong to that instance. Correct routing does not transfer them into the real
+API database; start a new sandbox after the gateway is repaired. Preserve the
+real API and roles volumes throughout recovery.
 
 ## Routes
 
@@ -91,3 +132,4 @@ updates do not require database resets or changes to API/roles volumes.
 - [Railway private networking](https://docs.railway.com/networking/private-networking)
 - [Railway monorepo configuration](https://docs.railway.com/deployments/monorepo)
 - [Railway start commands](https://docs.railway.com/deployments/start-command)
+- [Railway Dockerfile selection](https://docs.railway.com/builds/dockerfiles)

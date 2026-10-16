@@ -5,6 +5,7 @@
     "dockerfilePath": "deploy/gateway/Dockerfile"
   },
   "deploy": {
+    "startCommand": "caddy run --config /etc/caddy/Caddyfile --adapter caddyfile",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120,
     "numReplicas": 1,

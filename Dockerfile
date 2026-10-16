@@ -1,5 +1,6 @@
 # GhostReport "api" service: engine + landing/, app/, console/ on one origin.
-# Railway: Dockerfile builder, volume at /data, healthcheck /api/health (railway.json).
+# Railway: Dockerfile builder, volume at /data, healthcheck /api/health.
+# Legacy service config: deploy/api/railway.json (select explicitly for api only).
 
 FROM node:22.22.0-bookworm-slim AS web
 WORKDIR /web
